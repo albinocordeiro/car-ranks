@@ -1,0 +1,33 @@
+{
+  "vehicle_uid": "1df2e819-c57e-4fd6-9808-65fcb5f613b0",
+  "generated_at": "2026-02-17T11:00:00Z",
+  "timeframe": "90d",
+  "temperature_bin": "all",
+  "ranking_type": "ev_range_efficiency",
+  "kpis": [
+    {
+      "kpi_key": "ev_estimated_practical_range",
+      "value": 125.0,
+      "unit": "km",
+      "direction": "higher_is_better",
+      "confidence_level": "preview",
+      "sample_count": 4
+    },
+    {
+      "kpi_key": "ev_range_efficiency_score",
+      "value": 42.4,
+      "unit": "score",
+      "direction": "higher_is_better",
+      "confidence_level": "preview",
+      "sample_count": 4
+    },
+    {
+      "kpi_key": "soc_depletion_rate_per_100km",
+      "value": 48.0,
+      "unit": "%_per_100km",
+      "direction": "lower_is_better",
+      "confidence_level": "preview",
+      "sample_count": 4
+    }
+  ]
+}

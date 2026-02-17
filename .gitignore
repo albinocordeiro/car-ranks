@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Rust build artifacts
+**/target/
+
+# Local databases and runtime artifacts
+**/*.db
+**/*.db-journal
+**/*.db-shm
+**/*.db-wal
+**/*.db.prev.*
+
+# Local logs/temp
+*.log
+/tmp/
+
+# Preserve but do not track old nested git metadata
+.repo-metadata-backup/

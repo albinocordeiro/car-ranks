@@ -1,0 +1,347 @@
+{
+  "schema_version": "0.1",
+  "generated_on": "2026-02-17",
+  "canonical_units": {
+    "distance": "km",
+    "speed": "km/h",
+    "pressure": "kPa",
+    "temperature": "C"
+  },
+  "status_values": [
+    "ok",
+    "stale",
+    "unavailable",
+    "not_supported",
+    "permission_denied",
+    "error"
+  ],
+  "sources": [
+    "SMARTCAR",
+    "OBD"
+  ],
+  "signals": [
+    {
+      "signal_key": "vehicle.vin",
+      "category": "identity",
+      "value_type": "string",
+      "canonical_unit": null,
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/vin",
+        "permission": "read_vin"
+      },
+      "obd": {
+        "mode": "09",
+        "pid": null,
+        "notes": "Vehicle info support varies by ECU"
+      }
+    },
+    {
+      "signal_key": "vehicle.make",
+      "category": "identity",
+      "value_type": "string",
+      "canonical_unit": null,
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}",
+        "permission": "read_vehicle_info"
+      },
+      "obd": {
+        "mode": "09",
+        "pid": null,
+        "notes": "Vehicle info support varies by ECU"
+      }
+    },
+    {
+      "signal_key": "vehicle.model",
+      "category": "identity",
+      "value_type": "string",
+      "canonical_unit": null,
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}",
+        "permission": "read_vehicle_info"
+      },
+      "obd": {
+        "mode": "09",
+        "pid": null,
+        "notes": "Vehicle info support varies by ECU"
+      }
+    },
+    {
+      "signal_key": "vehicle.model_year",
+      "category": "identity",
+      "value_type": "integer",
+      "canonical_unit": "year",
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}",
+        "permission": "read_vehicle_info"
+      },
+      "obd": {
+        "mode": "09",
+        "pid": null,
+        "notes": "Vehicle info support varies by ECU"
+      }
+    },
+    {
+      "signal_key": "distance.odometer",
+      "category": "telemetry",
+      "value_type": "number",
+      "canonical_unit": "km",
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/odometer",
+        "permission": "read_odometer"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Adapter/app-dependent support"
+      }
+    },
+    {
+      "signal_key": "position.latitude",
+      "category": "location",
+      "value_type": "number",
+      "canonical_unit": "deg",
+      "priority": "smartcar_only",
+      "freshness_ttl_seconds": 600,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/location",
+        "permission": "read_location"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Not a standard OBD-II emissions PID"
+      }
+    },
+    {
+      "signal_key": "position.longitude",
+      "category": "location",
+      "value_type": "number",
+      "canonical_unit": "deg",
+      "priority": "smartcar_only",
+      "freshness_ttl_seconds": 600,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/location",
+        "permission": "read_location"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Not a standard OBD-II emissions PID"
+      }
+    },
+    {
+      "signal_key": "fuel.level_pct",
+      "category": "telemetry",
+      "value_type": "number",
+      "canonical_unit": "%",
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/fuel",
+        "permission": "read_fuel"
+      },
+      "obd": {
+        "mode": "01",
+        "pid": null,
+        "notes": "Vehicle-dependent availability"
+      }
+    },
+    {
+      "signal_key": "ev.soc_pct",
+      "category": "ev",
+      "value_type": "number",
+      "canonical_unit": "%",
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/battery",
+        "permission": "read_battery"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "EV OBD support varies by make/model"
+      }
+    },
+    {
+      "signal_key": "ev.charging_state",
+      "category": "ev",
+      "value_type": "enum",
+      "canonical_unit": null,
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/charge",
+        "permission": "read_charge"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "EV OBD support varies by make/model"
+      }
+    },
+    {
+      "signal_key": "speed.vehicle",
+      "category": "telemetry",
+      "value_type": "number",
+      "canonical_unit": "km/h",
+      "priority": "obd_over_smartcar",
+      "freshness_ttl_seconds": 5,
+      "smartcar": {
+        "endpoint": "signal/read_speedometer (if enabled)",
+        "permission": "read_speedometer"
+      },
+      "obd": {
+        "mode": "01",
+        "pid": null,
+        "notes": "Preferred for high-frequency live telemetry"
+      }
+    },
+    {
+      "signal_key": "engine.rpm",
+      "category": "telemetry",
+      "value_type": "number",
+      "canonical_unit": "rpm",
+      "priority": "obd_only",
+      "freshness_ttl_seconds": 5,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": "01",
+        "pid": null,
+        "notes": "Core live telemetry"
+      }
+    },
+    {
+      "signal_key": "power.battery_voltage",
+      "category": "telemetry",
+      "value_type": "number",
+      "canonical_unit": "V",
+      "priority": "obd_only",
+      "freshness_ttl_seconds": 5,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": "01",
+        "pid": null,
+        "notes": "Often adapter/ecu-derived"
+      }
+    },
+    {
+      "signal_key": "diag.mil_on",
+      "category": "diagnostics",
+      "value_type": "boolean",
+      "canonical_unit": null,
+      "priority": "obd_over_smartcar",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "diagnostics/webhook-derived where available",
+        "permission": "read_diagnostics"
+      },
+      "obd": {
+        "mode": "01",
+        "pid": "01",
+        "notes": "MIL bit in readiness response"
+      }
+    },
+    {
+      "signal_key": "diag.readiness_summary",
+      "category": "diagnostics",
+      "value_type": "json",
+      "canonical_unit": null,
+      "priority": "obd_only",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": "01",
+        "pid": "01",
+        "notes": "Track supported/complete monitors"
+      }
+    },
+    {
+      "signal_key": "diag.dtcs_active",
+      "category": "diagnostics",
+      "value_type": "array<string>",
+      "canonical_unit": null,
+      "priority": "merged",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/diagnostics/dtcs",
+        "permission": "read_diagnostics"
+      },
+      "obd": {
+        "mode": "03",
+        "pid": null,
+        "notes": "Merge and retain source provenance"
+      }
+    },
+    {
+      "signal_key": "diag.system_status",
+      "category": "diagnostics",
+      "value_type": "json",
+      "canonical_unit": null,
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/diagnostics/system_status",
+        "permission": "read_diagnostics"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Manufacturer/adapter-dependent if available"
+      }
+    },
+    {
+      "signal_key": "security.locked",
+      "category": "security",
+      "value_type": "boolean",
+      "canonical_unit": null,
+      "priority": "smartcar_only",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/security",
+        "permission": "read_security"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Not standard OBD-II"
+      }
+    },
+    {
+      "signal_key": "tires.pressure",
+      "category": "telemetry",
+      "value_type": "json",
+      "canonical_unit": "kPa",
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/tires/pressure",
+        "permission": "read_tires"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Adapter/manufacturer-dependent"
+      }
+    }
+  ]
+}

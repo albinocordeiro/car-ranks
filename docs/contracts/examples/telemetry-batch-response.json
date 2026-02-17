@@ -1,0 +1,11 @@
+{
+  "accepted": true,
+  "batch_id": "6d6401de-02b6-45df-86ab-3e97c95cf80c",
+  "ingest_id": "ed7f1db7-23b8-43ae-a72c-cdd76f9a7f8d",
+  "duplicate": false,
+  "records_received": 5,
+  "records_accepted": 5,
+  "records_rejected": 0,
+  "errors": [],
+  "next_upload_after_seconds": 60
+}

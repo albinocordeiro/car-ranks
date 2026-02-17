@@ -1,0 +1,488 @@
+{
+  "schema_version": "0.2",
+  "generated_on": "2026-02-17",
+  "notes": "v0.2 adds EV temperature and charging telemetry needed for cold-climate KPI comparisons.",
+  "canonical_units": {
+    "distance": "km",
+    "speed": "km/h",
+    "pressure": "kPa",
+    "temperature": "C",
+    "current": "A",
+    "power": "kW",
+    "energy": "Wh",
+    "soc": "%"
+  },
+  "status_values": [
+    "ok",
+    "stale",
+    "unavailable",
+    "not_supported",
+    "permission_denied",
+    "error"
+  ],
+  "sources": [
+    "OBD",
+    "SMARTCAR"
+  ],
+  "temperature_bins": [
+    {
+      "bin": "very_cold",
+      "min_c": null,
+      "max_c": -5
+    },
+    {
+      "bin": "cold",
+      "min_c": -5,
+      "max_c": 5
+    },
+    {
+      "bin": "cool",
+      "min_c": 5,
+      "max_c": 15
+    },
+    {
+      "bin": "mild",
+      "min_c": 15,
+      "max_c": 25
+    },
+    {
+      "bin": "hot",
+      "min_c": 25,
+      "max_c": null
+    }
+  ],
+  "signals": [
+    {
+      "signal_key": "vehicle.vin_hash",
+      "category": "identity",
+      "value_type": "string",
+      "canonical_unit": null,
+      "priority": "derived",
+      "freshness_ttl_seconds": 86400,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": "09",
+        "pid": null,
+        "notes": "Hash generated in backend from VIN with application salt; raw VIN not persisted"
+      }
+    },
+    {
+      "signal_key": "vehicle.make",
+      "category": "identity",
+      "value_type": "string",
+      "canonical_unit": null,
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}",
+        "permission": "read_vehicle_info"
+      },
+      "obd": {
+        "mode": "09",
+        "pid": null,
+        "notes": "Vehicle info support varies by ECU"
+      }
+    },
+    {
+      "signal_key": "vehicle.model",
+      "category": "identity",
+      "value_type": "string",
+      "canonical_unit": null,
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}",
+        "permission": "read_vehicle_info"
+      },
+      "obd": {
+        "mode": "09",
+        "pid": null,
+        "notes": "Vehicle info support varies by ECU"
+      }
+    },
+    {
+      "signal_key": "vehicle.trim",
+      "category": "identity",
+      "value_type": "string",
+      "canonical_unit": null,
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "mvp_required": false,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}",
+        "permission": "read_vehicle_info"
+      },
+      "obd": {
+        "mode": "09",
+        "pid": null,
+        "notes": "Often unavailable from standard OBD"
+      }
+    },
+    {
+      "signal_key": "vehicle.model_year",
+      "category": "identity",
+      "value_type": "integer",
+      "canonical_unit": "year",
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}",
+        "permission": "read_vehicle_info"
+      },
+      "obd": {
+        "mode": "09",
+        "pid": null,
+        "notes": "Vehicle info support varies by ECU"
+      }
+    },
+    {
+      "signal_key": "distance.odometer",
+      "category": "telemetry",
+      "value_type": "number",
+      "canonical_unit": "km",
+      "priority": "obd_over_smartcar",
+      "freshness_ttl_seconds": 30,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/odometer",
+        "permission": "read_odometer"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Adapter/app-dependent support"
+      }
+    },
+    {
+      "signal_key": "speed.vehicle",
+      "category": "telemetry",
+      "value_type": "number",
+      "canonical_unit": "km/h",
+      "priority": "obd_over_smartcar",
+      "freshness_ttl_seconds": 5,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": "signal/read_speedometer (if enabled)",
+        "permission": "read_speedometer"
+      },
+      "obd": {
+        "mode": "01",
+        "pid": null,
+        "notes": "Preferred for high-frequency live telemetry"
+      }
+    },
+    {
+      "signal_key": "ev.soc_pct",
+      "category": "ev",
+      "value_type": "number",
+      "canonical_unit": "%",
+      "priority": "obd_over_smartcar",
+      "freshness_ttl_seconds": 30,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/battery",
+        "permission": "read_battery"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "EV OBD support varies by make/model"
+      }
+    },
+    {
+      "signal_key": "ev.charging_state",
+      "category": "ev",
+      "value_type": "enum",
+      "canonical_unit": null,
+      "priority": "obd_over_smartcar",
+      "freshness_ttl_seconds": 15,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/charge",
+        "permission": "read_charge"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "State values normalized to charging/not_charging/complete/unknown"
+      }
+    },
+    {
+      "signal_key": "ev.charger_type",
+      "category": "ev",
+      "value_type": "enum",
+      "canonical_unit": null,
+      "priority": "obd_over_smartcar",
+      "freshness_ttl_seconds": 60,
+      "mvp_required": false,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/charge",
+        "permission": "read_charge"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Normalized values ac/dc/unknown; often OEM-specific"
+      }
+    },
+    {
+      "signal_key": "power.battery_voltage",
+      "category": "telemetry",
+      "value_type": "number",
+      "canonical_unit": "V",
+      "priority": "obd_only",
+      "freshness_ttl_seconds": 5,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": "01",
+        "pid": null,
+        "notes": "Often adapter/ecu-derived"
+      }
+    },
+    {
+      "signal_key": "power.battery_current",
+      "category": "telemetry",
+      "value_type": "number",
+      "canonical_unit": "A",
+      "priority": "obd_only",
+      "freshness_ttl_seconds": 5,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Usually OEM PID; sign convention normalized by ingestion"
+      }
+    },
+    {
+      "signal_key": "power.battery_power_kw",
+      "category": "derived",
+      "value_type": "number",
+      "canonical_unit": "kW",
+      "priority": "derived",
+      "freshness_ttl_seconds": 5,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Derived from voltage/current when direct power not available"
+      }
+    },
+    {
+      "signal_key": "ev.charge_power_kw",
+      "category": "ev",
+      "value_type": "number",
+      "canonical_unit": "kW",
+      "priority": "derived",
+      "freshness_ttl_seconds": 10,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/charge",
+        "permission": "read_charge"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Preferred direct if available; fallback to battery_power_kw during charging"
+      }
+    },
+    {
+      "signal_key": "ev.battery_temp_c",
+      "category": "ev",
+      "value_type": "number",
+      "canonical_unit": "C",
+      "priority": "obd_over_smartcar",
+      "freshness_ttl_seconds": 30,
+      "mvp_required": false,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Usually OEM PID; key input for temperature-adjusted charging KPIs"
+      }
+    },
+    {
+      "signal_key": "environment.ambient_temp_c",
+      "category": "environment",
+      "value_type": "number",
+      "canonical_unit": "C",
+      "priority": "obd_over_smartcar",
+      "freshness_ttl_seconds": 300,
+      "mvp_required": false,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": "01",
+        "pid": "46",
+        "notes": "Ambient temp PID support varies; fallback may come from coarse weather estimate"
+      }
+    },
+    {
+      "signal_key": "ev.regen_power_kw",
+      "category": "ev",
+      "value_type": "number",
+      "canonical_unit": "kW",
+      "priority": "derived",
+      "freshness_ttl_seconds": 5,
+      "mvp_required": false,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Optional split from signed traction power for regeneration KPI"
+      }
+    },
+    {
+      "signal_key": "ev.traction_power_kw",
+      "category": "ev",
+      "value_type": "number",
+      "canonical_unit": "kW",
+      "priority": "derived",
+      "freshness_ttl_seconds": 5,
+      "mvp_required": false,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Optional split from signed power for traction consumption"
+      }
+    },
+    {
+      "signal_key": "diag.mil_on",
+      "category": "diagnostics",
+      "value_type": "boolean",
+      "canonical_unit": null,
+      "priority": "obd_over_smartcar",
+      "freshness_ttl_seconds": 86400,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": "diagnostics/webhook-derived where available",
+        "permission": "read_diagnostics"
+      },
+      "obd": {
+        "mode": "01",
+        "pid": "01",
+        "notes": "MIL bit in readiness response"
+      }
+    },
+    {
+      "signal_key": "diag.readiness_summary",
+      "category": "diagnostics",
+      "value_type": "json",
+      "canonical_unit": null,
+      "priority": "obd_only",
+      "freshness_ttl_seconds": 86400,
+      "mvp_required": false,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": "01",
+        "pid": "01",
+        "notes": "Tracks supported/complete monitors"
+      }
+    },
+    {
+      "signal_key": "diag.dtcs_active",
+      "category": "diagnostics",
+      "value_type": "array<string>",
+      "canonical_unit": null,
+      "priority": "merged",
+      "freshness_ttl_seconds": 86400,
+      "mvp_required": true,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/diagnostics/dtcs",
+        "permission": "read_diagnostics"
+      },
+      "obd": {
+        "mode": "03",
+        "pid": null,
+        "notes": "MVP source is OBD"
+      }
+    },
+    {
+      "signal_key": "engine.rpm",
+      "category": "telemetry",
+      "value_type": "number",
+      "canonical_unit": "rpm",
+      "priority": "obd_only",
+      "freshness_ttl_seconds": 5,
+      "mvp_required": false,
+      "smartcar": {
+        "endpoint": null,
+        "permission": null
+      },
+      "obd": {
+        "mode": "01",
+        "pid": null,
+        "notes": "Useful for PHEV edge cases and diagnostics"
+      }
+    },
+    {
+      "signal_key": "fuel.level_pct",
+      "category": "telemetry",
+      "value_type": "number",
+      "canonical_unit": "%",
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "mvp_required": false,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/fuel",
+        "permission": "read_fuel"
+      },
+      "obd": {
+        "mode": "01",
+        "pid": null,
+        "notes": "Not part of primary EV MVP KPIs"
+      }
+    },
+    {
+      "signal_key": "tires.pressure",
+      "category": "telemetry",
+      "value_type": "json",
+      "canonical_unit": "kPa",
+      "priority": "smartcar_over_obd",
+      "freshness_ttl_seconds": 86400,
+      "mvp_required": false,
+      "smartcar": {
+        "endpoint": "GET /vehicles/{id}/tires/pressure",
+        "permission": "read_tires"
+      },
+      "obd": {
+        "mode": null,
+        "pid": null,
+        "notes": "Adapter/manufacturer-dependent"
+      }
+    }
+  ]
+}

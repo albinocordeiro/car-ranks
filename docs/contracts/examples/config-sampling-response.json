@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-02-17T11:00:00Z",
+  "platform": "ios",
+  "source": "obd",
+  "read_only": true,
+  "batch_upload": {
+    "default_interval_seconds": 60,
+    "min_interval_seconds": 60,
+    "max_interval_seconds": 86400,
+    "next_upload_after_seconds": 60
+  },
+  "sampling_profiles": [
+    {
+      "mode": "driving",
+      "sample_interval_seconds": 5
+    },
+    {
+      "mode": "charging",
+      "sample_interval_seconds": 10
+    },
+    {
+      "mode": "parked",
+      "sample_interval_seconds": 60
+    }
+  ],
+  "kpi_refresh": {
+    "active_vehicle_interval_seconds": 300,
+    "daily_rebuild_interval_seconds": 86400
+  },
+  "feature_flags": {
+    "smartcar_enabled": false,
+    "remote_commands_enabled": false
+  }
+}

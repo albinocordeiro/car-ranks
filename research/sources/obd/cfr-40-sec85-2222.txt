@@ -1,0 +1,357 @@
+794 
+40 CFR Ch. I (7–1–05 Edition) § 85.2221 
+180 seconds (mt=180), the measured val-
+ues are less than or equal to the appli-
+cable short test standards as deter-
+mined by the procedure described in 
+paragraph (a)(2) of this section. 
+(D) The vehicle fails the high-speed 
+mode and the test is terminated if none 
+of the provisions of paragraphs 
+(d)(2)(iii) (A), (B), and (C) of this sec-
+tion is satisfied by an elapsed time of 
+180 seconds (mt=180). 
+(iv) In the case where the second- 
+chance high-speed mode is followed by 
+the second-chance idle mode, the pass/ 
+fail analysis begins after an elapsed 
+time of ten seconds (mt=10). A pass or 
+fail determination is made for the vehi-
+cle and the mode is terminated in ac-
+cordance with paragraphs (d)(2)(iv)(A) 
+and (B) of this section. 
+(A) The vehicle passes the high-speed 
+mode and the mode is terminated at 
+the end of an elapsed time of 180 sec-
+onds (mt=180) if any measured values 
+are less than or equal to the applicable 
+short test standards as determined by 
+the procedure described in paragraph 
+(a)(2) of this section. 
+(B) The vehicle fails the high-speed 
+mode and the mode is terminated if 
+paragraph (d)(2)(iv)(A) of this section is 
+not satisfied by an elapsed time of 180 
+seconds (mt=180). 
+(3) Second-chance preconditioning 
+mode. The mode timer starts (mt=0) 
+when engine speed is between 2200 and 
+2800 rpm. The mode continues for an 
+elapsed time of 180 seconds (mt=180). If 
+the engine speed falls below 2200 rpm or 
+exceeds 2800 rpm for more than five 
+seconds in any one excursion, or 15 sec-
+onds over all excursions, the mode 
+timer resets to zero and resumes tim-
+ing. 
+(4) Second-chance idle mode— (i) Ford 
+Motor Company and Honda vehicles. The 
+engines of 1981–1987 model year Ford 
+Motor Company vehicles and 1984–1985 
+model year Honda Preludes must be 
+shut off for not more than ten seconds 
+and then restarted. The probe may be 
+removed from the tailpipe or the sam-
+ple pump turned off if necessary to re-
+duce analyzer fouling during the re-
+start procedure. This procedure may 
+also be used for 1988–1989 model year 
+Ford Motor Company vehicles but may 
+not be used for other vehicles. 
+(ii) The mode timer starts (mt=0) 
+when the vehicle engine speed is be-
+tween 350 and 1100 rpm. If the engine 
+speed exceeds 1100 rpm or falls below 
+350 rpm the mode timer resets to zero 
+and resumes timing. The minimum sec-
+ond-chance idle mode length is deter-
+mined as described in paragraph 
+(d)(4)(iii) of this section. The maximum 
+second-chance idle mode length is 90 
+seconds elapsed time (mt=90). 
+(iii) The pass/fail analysis begins 
+after an elapsed time of ten seconds 
+(mt=10). A pass or fail determination is 
+made for the vehicle and the mode is 
+terminated in accordance with para-
+graphs (d)(4)(iii) (A) through (D) of this 
+section. 
+(A) The vehicle passes the second- 
+chance idle mode and the test is imme-
+diately terminated if, prior to an 
+elapsed time of 30 seconds (mt=30), 
+measured values are less than or equal 
+to 100 ppm HC and 0.5 percent CO. 
+(B) The vehicle passes the second- 
+chance idle mode and the test is termi-
+nated at the end of an elapsed time of 
+30 seconds (mt=30) if, prior to that 
+time, the criteria of paragraph 
+(d)(4)(iii)(A) of this section are not sat-
+isfied, and the measured values are less 
+than or equal to the applicable short 
+test standards as determined by the 
+procedure described in paragraph (a)(2) 
+of this section. 
+(C) The vehicle passes the second- 
+chance idle mode and the test is imme-
+diately terminated if, at any point be-
+tween an elapsed time of 30 seconds 
+(mt=30) and 90 seconds (mt=90), meas-
+ured values are less than or equal to 
+the applicable short test standards de-
+scribed in paragraph (a)(2) of this sec-
+tion. 
+(D) The vehicle fails the second- 
+chance idle mode and the test is termi-
+nated if none of the provisions of para-
+graphs (d)(4)(iii) (A), (B), and (C) of this 
+section is satisfied by an elapsed time 
+of 90 seconds (mt=90). 
+[58 FR 58411, Nov. 1, 1993, as amended at 61 
+FR 40947, Aug. 6, 1996] 
+§ 85.2221 [Reserved] 
+§ 85.2222 On-board diagnostic test pro-
+cedures. 
+The test sequence for the inspection 
+of on-board diagnostic systems on 1996 
+VerDate Aug<04>2004 10:59 Aug 30, 2005 Jkt 205157 PO 00000 Frm 00804 Fmt 8010 Sfmt 8002 Y:\SGML\205157.XXX 205157
+
+795 
+Environmental Protection Agency § 85.2222 
+and newer light-duty vehicles and 
+light-duty trucks shall consist of the 
+following steps: 
+(a) The on-board diagnostic inspec-
+tion shall be conducted with the key- 
+on/engine running (KOER), with the ex-
+ception of inspecting for MIL illumina-
+tion as required in paragraph (d)(4) of 
+this section, during which the inspec-
+tion shall be conducted with the key- 
+on/engine off (KOEO). 
+(b) The inspector shall locate the ve-
+hicle connector and plug the test sys-
+tem into the connector. 
+(c) The test system shall send a Mode 
+$01, PID $01 request in accordance with 
+SAE J1979 to determine the evaluation 
+status of the vehicle’s on-board diag-
+nostic system. The test system shall 
+determine what monitors are supported 
+by the on-board diagnostic system, and 
+the readiness evaluation for applicable 
+monitors in accordance with SAE 
+J1979. The procedure shall be done in 
+accordance with SAE J1979 ‘‘E/E Diag-
+nostic Test Modes,’’ (DEC91). This in-
+corporation by reference was approved 
+by the Director of the Federal Register 
+in accordance with 5 U.S.C. 552(a) and 1 
+CFR part 51. Copies of SAE J1979 may 
+be obtained from the Society of Auto-
+motive Engineers, Inc., 400 Common-
+wealth Drive, Warrendale, PA 15096– 
+0001. Copies may be inspected at the 
+EPA Docket No. A–94–21 at EPA’s Air 
+Docket (LE–131), Room 1500 M, 1st 
+Floor, Waterside Mall, 401 M Street 
+SW., Washington, DC, or at the Na-
+tional Archives and Records Adminis-
+tration (NARA). For information on 
+the availability of this material at 
+NARA, call 202–741–6030, or go to: http:// 
+www.archives.gov/federallregister/ 
+codeloflfederallregulations/ 
+ibrllocations.html. 
+(1) Coincident with the beginning of 
+mandatory testing, repair, and re-
+testing based upon the OBD-I/M check, 
+if the readiness evaluation indicates 
+that any on-board tests are not com-
+plete the customer shall be instructed 
+to return after the vehicle has been run 
+under conditions that allow completion 
+of all applicable on-board tests. If the 
+readiness evaluation again indicates 
+that any on-board test is not complete 
+the vehicle shall be failed. 
+(2) An exception to paragraph (c)(1) of 
+this section is allowed for MY 1996 to 
+MY 2000 vehicles, inclusive, with two or 
+fewer unset readiness monitors, and for 
+MY 2001 and newer vehicles with no 
+more than one unset readiness mon-
+itor. Vehicles from those model years 
+which would otherwise pass the OBD 
+inspection, but for the unset readiness 
+code(s) in question may be issued a 
+passing certificate without being re-
+quired to operate the vehicle in such a 
+way as to activate those particular 
+monitors. Vehicles from those model 
+years with unset readiness codes which 
+also have diagnostic trouble codes 
+(DTCs) stored resulting in a lit mal-
+function indicator light (MIL) must be 
+failed, though setting the unset readi-
+ness flags in question shall not be a 
+prerequisite for passing the retest. 
+(d) The test system shall evaluate 
+the malfunction indicator light status 
+bit and record status information in 
+the vehicle test record. 
+(1) If the malfunction indicator sta-
+tus bit indicates that the malfunction 
+indicator light (MIL) has been com-
+manded to be illuminated the test sys-
+tem shall send a Mode $03 request to 
+determine the stored diagnostic trou-
+ble codes (DTCs). The system shall re-
+peat this cycle until the number of 
+codes reported equals the number ex-
+pected based on the Mode 1 response. 
+All DTCs resulting in MIL illumination 
+shall be recorded in the vehicle test 
+record and the vehicle shall fail the on- 
+board diagnostic inspection. 
+(2) If the malfunction indicator light 
+bit is not commanded to be illuminated 
+the vehicle shall pass the on-board di-
+agnostic inspection, even if DTCs are 
+present. 
+(3) If the malfunction indicator light 
+bit is commanded to be illuminated, 
+the inspector shall visually inspect the 
+malfunction indicator light to deter-
+mine if it is illuminated. If the mal-
+function indicator light is commanded 
+to be illuminated but is not, the vehi-
+cle shall fail the on-board diagnostic 
+inspection. 
+(4) If the malfunction indicator light 
+(MIL) does not illuminate at all when 
+the vehicle is in the key-on/engine-off 
+(KOEO) condition, the vehicle shall fail 
+the on-board diagnostic inspection, 
+VerDate Aug<04>2004 10:59 Aug 30, 2005 Jkt 205157 PO 00000 Frm 00805 Fmt 8010 Sfmt 8002 Y:\SGML\205157.XXX 205157
+
+796 
+40 CFR Ch. I (7–1–05 Edition) § 85.2223 
+even if no DTCs are present and the 
+MIL has not been commanded on. 
+[61 FR 40947, Aug. 6, 1996, as amended at 63 
+FR 24433, May 4, 1998; 66 FR 18178, Apr. 5, 
+2001] 
+§ 85.2223 On-board diagnostic test re-
+port. 
+(a) Motorists whose vehicles fail the 
+on-board diagnostic test described in 
+§ 85.2222 shall be provided with the on- 
+board diagnostic test results, including 
+the codes retrieved, the name of the 
+component or system associated with 
+each fault code, the status of the MIL 
+illumination command, and the cus-
+tomer alert statement as stated in 
+paragraph (c) of this section. 
+(b) [Reserved] 
+(c) In addition to any codes which 
+were retrieved, the test report shall in-
+clude the following language: 
+Your vehicle’s computerized self-diag-
+nostic system (OBD) registered the fault(s) 
+listed below. This fault(s) is probably an in-
+dication of a malfunction of an emission 
+component. However, multiple and/or seem-
+ingly unrelated faults may be an indication 
+of an emission-related problem that occurred 
+previously but upon further evaluation by 
+the OBD system was determined to be only 
+temporary. Therefore, proper diagnosis by a 
+qualified technician is required to positively 
+identify the source of any emission-related 
+problem. 
+[61 FR 40948, Aug. 6, 1996, as amended at 66 
+FR 18179, Apr. 5, 2001] 
+§ 85.2224 Exhaust analysis system— 
+EPA 81. 
+(a) Applicability. The requirements 
+of this subsection apply to short tests 
+conducted under Emissions Perform-
+ance Warranty through December 31, 
+1993. The requirements of § 85.2225 apply 
+concurrently until December 31, 1993, 
+after which the requirements of 
+§ 85.2225 are solely in effect. The fol-
+lowing exceptions apply: In a state 
+where the Administrator has approved 
+a SIP revision providing for implemen-
+tation of a basic centralized program 
+meeting the requirements of part 51, 
+subpart S of this chapter, according to 
+the schedule specified in § 51.373 of this 
+chapter, the requirements of this sec-
+tion are concurrently in effect until 
+June 30, 1994 for 1995 and earlier model 
+year vehicles or engines; in a state 
+where the Administrator has approved 
+a SIP revision providing for implemen-
+tation of an enhanced program meeting 
+the requirements of part 51, subpart S 
+of this chapter, according to the sched-
+ule specified in § 51.373 of this chapter, 
+the requirements of this section are 
+concurrently in effect until December 
+31, 1995 for 1995 and earlier model year 
+vehicles or engines. 
+(b) Sampling system— (1) General re-
+quirements. The exhaust sampling sys-
+tem shall consist of a sample probe, 
+moisture separator and analyzers for 
+HC and CO. 
+(2) Dual sample probe requirements. If 
+used, a dual sample probe must provide 
+equal flow in each leg. The equal flow 
+criterion is considered to be met if the 
+flow rate in each leg of the probe (or an 
+identical model) has been measured 
+under two sample flow rates (the nor-
+mal rate and a rate equal to the onset 
+of low flow), and if the flow rates in 
+each of the legs are found to be equal 
+to each other (±15%). 
+(c) Analyzers—(1) Accuracy. The HC 
+analyzer shall have an accuracy of ±15 
+ppm at 200 to 220 ppm concentration 
+HC (as hexane). The CO analyzer shall 
+have an accuracy of ±0.1% CO from 
+1.0% to 1.2% concentration. 
+(2) Response time. Response time of 
+the analyzers shall be 15 seconds to 95% 
+of the final reading. 
+(3) Drift. Analyzer drift (up-scale and 
+down-scale zero and span wander) shall 
+not exceed ±0.1% CO and ±15 ppm HC 
+(as hexane) on the lowest range capable 
+of reading 1.0% or 200 ppm HC (as 
+hexane) during a one-hour period. 
+[49 FR 24323, June 12, 1984. Redesignated and 
+amended at 58 FR 58403, 58412, Nov. 1, 1993] 
+§ 85.2225 Steady state test exhaust 
+analysis system—EPA 91. 
+(a) Special calendar and model year ap-
+plicability. The requirements of § 85.2224 
+apply concurrently for tests conducted 
+under Emission Performance Warranty 
+on 1995 and earlier model year vehicles 
+or engines until December 31, 1993, 
+after which the requirements of this 
+section are solely in effect. The fol-
+lowing exceptions apply: in a state 
+where the Administrator has approved 
+a SIP revision providing for implemen-
+tation of a basic centralized program 
+meeting the requirements of part 51, 
+subpart S of this chapter, according to 
+VerDate Aug<04>2004 10:59 Aug 30, 2005 Jkt 205157 PO 00000 Frm 00806 Fmt 8010 Sfmt 8002 Y:\SGML\205157.XXX 205157
