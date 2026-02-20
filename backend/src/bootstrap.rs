@@ -1,10 +1,7 @@
 use std::net::SocketAddr;
-use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use sqlx::postgres::PgPoolOptions;
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use tracing::info;
 
 /// Execute full backend bootstrap: initialize tracing, wire state/router, and serve HTTP.
@@ -43,48 +40,7 @@ async fn build_app_state() -> Result<crate::AppState> {
         crate::kpi_specs::locked_kpi_catalog_len()
     );
 
-    let database_url =
-        std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://car_ranks.db".to_string());
-    let backend =
-        if database_url.starts_with("postgres://") || database_url.starts_with("postgresql://") {
-            crate::DatabaseBackend::Postgres
-        } else {
-            crate::DatabaseBackend::Sqlite
-        };
-
-    let (sqlite_pool, pg_pool) = match backend {
-        crate::DatabaseBackend::Sqlite => {
-            let connect_options = SqliteConnectOptions::from_str(&database_url)
-                .context("invalid sqlite DATABASE_URL")?
-                .create_if_missing(true)
-                .foreign_keys(true);
-
-            let sqlite_pool = SqlitePoolOptions::new()
-                .max_connections(10)
-                .connect_with(connect_options)
-                .await
-                .context("failed to connect sqlite")?;
-            crate::apply_schema(&sqlite_pool).await?;
-            (sqlite_pool, None)
-        }
-        crate::DatabaseBackend::Postgres => {
-            let pg_pool = PgPoolOptions::new()
-                .max_connections(10)
-                .connect(&database_url)
-                .await
-                .context("failed to connect postgres")?;
-            crate::apply_postgres_schema(&pg_pool).await?;
-
-            // Keep sqlite-only code paths available while postgres rollout is incremental.
-            let sqlite_pool = SqlitePoolOptions::new()
-                .max_connections(1)
-                .connect("sqlite::memory:")
-                .await
-                .context("failed to create sqlite fallback pool")?;
-            crate::apply_schema(&sqlite_pool).await?;
-            (sqlite_pool, Some(pg_pool))
-        }
-    };
+    let (backend, sqlite_pool, pg_pool) = crate::db_bootstrap::initialize_database().await?;
 
     Ok(crate::AppState {
         sqlite_pool,

@@ -2,6 +2,7 @@ use anyhow::Result;
 
 mod bootstrap;
 mod config;
+mod db_bootstrap;
 mod errors;
 mod handlers;
 mod ingest;
