@@ -20,13 +20,6 @@ struct VehicleRankingSeed {
     confidence_level: String,
 }
 
-/// Rebuilds every ranking family used by the KPI job.
-pub(crate) async fn rebuild_all_rankings(pool: &SqlitePool) -> Result<usize> {
-    let temp_rows = rebuild_temperature_rankings(pool).await?;
-    let non_temp_rows = rebuild_non_temperature_rankings(pool).await?;
-    Ok(temp_rows + non_temp_rows)
-}
-
 /// Rebuild temperature-impact rankings from the gated KPI snapshots.
 pub(crate) async fn rebuild_temperature_rankings(pool: &SqlitePool) -> Result<usize> {
     let mut upserted_rows = 0usize;
