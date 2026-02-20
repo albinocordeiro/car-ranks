@@ -151,7 +151,9 @@ async fn fetch_latest_score_metric(
 ) -> Result<Option<(f64, i64)>> {
     let row = sqlx::query(
         r#"
-        SELECT kpi_value, sample_count
+        SELECT
+          kpi_value::double precision AS kpi_value,
+          sample_count
         FROM vehicle_kpi_snapshot
         WHERE vehicle_uid = $1
           AND ranking_type = $2
@@ -182,9 +184,9 @@ async fn fetch_latest_score_metric(
     let value: f64 = row
         .try_get("kpi_value")
         .with_context(|| format!("failed to parse {} value", kpi_key))?;
-    let sample_count: i64 = row
-        .try_get("sample_count")
-        .with_context(|| format!("failed to parse {} sample_count", kpi_key))?;
+    let sample_count: i64 =
+        row.try_get::<i32, _>("sample_count")
+            .with_context(|| format!("failed to parse {} sample_count", kpi_key))? as i64;
 
     Ok(Some((value, sample_count)))
 }

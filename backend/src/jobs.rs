@@ -11,7 +11,11 @@ pub(crate) async fn run_kpi_job_by_backend(state: &AppState) -> Result<JobRespon
 
     let native_summary = postgres_native::run_native_postgres_job(&state.pg_pool)
         .await
-        .context("failed to run native postgres recompute pipeline")?;
+        .map_err(|error| {
+            ApiError::internal(format!(
+                "failed to run native postgres recompute pipeline: {error:#}"
+            ))
+        })?;
     let recomputed_vehicles = postgres_native::count_postgres_vehicles(&state.pg_pool)
         .await
         .context("failed to count postgres vehicles after recompute")?;

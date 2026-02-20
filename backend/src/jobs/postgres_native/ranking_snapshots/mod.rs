@@ -272,9 +272,9 @@ async fn fetch_temperature_ranking_seeds_postgres(
           COALESCE(v.model, 'unknown') AS model,
           COALESCE(v.trim, 'unknown') AS trim,
           v.model_year,
-          MAX(CASE WHEN k.kpi_key = 'cold_weather_range_retention' THEN k.kpi_value END) AS range_retention,
-          MAX(CASE WHEN k.kpi_key = 'range_temperature_sensitivity_index' THEN k.kpi_value END) AS sensitivity,
-          MAX(CASE WHEN k.kpi_key = 'cold_weather_charge_speed_retention' THEN k.kpi_value END) AS charge_retention
+          MAX(CASE WHEN k.kpi_key = 'cold_weather_range_retention' THEN k.kpi_value::double precision END) AS range_retention,
+          MAX(CASE WHEN k.kpi_key = 'range_temperature_sensitivity_index' THEN k.kpi_value::double precision END) AS sensitivity,
+          MAX(CASE WHEN k.kpi_key = 'cold_weather_charge_speed_retention' THEN k.kpi_value::double precision END) AS charge_retention
         FROM vehicle v
         LEFT JOIN vehicle_kpi_snapshot k
           ON k.vehicle_uid = v.vehicle_uid

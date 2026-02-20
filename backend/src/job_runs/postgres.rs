@@ -155,17 +155,21 @@ pub(super) async fn fetch_latest(
             .try_get("response_job_id")
             .context("failed to parse postgres response_job_id")?,
         charging_sessions_upserted: row
-            .try_get("charging_sessions_upserted")
-            .context("failed to parse postgres charging_sessions_upserted")?,
+            .try_get::<Option<i32>, _>("charging_sessions_upserted")
+            .context("failed to parse postgres charging_sessions_upserted")?
+            .map(i64::from),
         kpi_rows_upserted: row
-            .try_get("kpi_rows_upserted")
-            .context("failed to parse postgres kpi_rows_upserted")?,
+            .try_get::<Option<i32>, _>("kpi_rows_upserted")
+            .context("failed to parse postgres kpi_rows_upserted")?
+            .map(i64::from),
         ranking_rows_upserted: row
-            .try_get("ranking_rows_upserted")
-            .context("failed to parse postgres ranking_rows_upserted")?,
+            .try_get::<Option<i32>, _>("ranking_rows_upserted")
+            .context("failed to parse postgres ranking_rows_upserted")?
+            .map(i64::from),
         recomputed_vehicles: row
-            .try_get("recomputed_vehicles")
-            .context("failed to parse postgres recomputed_vehicles")?,
+            .try_get::<Option<i32>, _>("recomputed_vehicles")
+            .context("failed to parse postgres recomputed_vehicles")?
+            .map(i64::from),
         active_lock_owner_token: None,
         active_lock_expires_at: None,
     }))

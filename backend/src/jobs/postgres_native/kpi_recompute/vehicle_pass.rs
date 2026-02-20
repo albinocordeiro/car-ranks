@@ -16,7 +16,9 @@ pub(super) async fn recompute_vehicle_timeframe_charging_kpis_postgres(
 
     let charge_rows = sqlx::query(
         r#"
-        SELECT avg_charge_power_kw, temperature_bin
+        SELECT
+          avg_charge_power_kw::double precision AS avg_charge_power_kw,
+          temperature_bin
         FROM vehicle_charging_session
         WHERE vehicle_uid = $1
           AND started_at >= $2

@@ -23,7 +23,10 @@ pub(super) async fn compute_vehicle_metrics_postgres(
 
     let obs_rows_raw = sqlx::query(
         r#"
-        SELECT signal_key, value_number, observed_at
+        SELECT
+          signal_key,
+          value_number::double precision AS value_number,
+          observed_at
         FROM vehicle_signal_observation
         WHERE vehicle_uid = $1
           AND observed_at >= $2
@@ -43,7 +46,9 @@ pub(super) async fn compute_vehicle_metrics_postgres(
 
     let charge_rows_raw = sqlx::query(
         r#"
-        SELECT avg_charge_power_kw, temperature_bin
+        SELECT
+          avg_charge_power_kw::double precision AS avg_charge_power_kw,
+          temperature_bin
         FROM vehicle_charging_session
         WHERE vehicle_uid = $1
           AND started_at >= $2

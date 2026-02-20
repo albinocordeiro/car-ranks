@@ -14,21 +14,22 @@ pub(crate) async fn ensure_vehicle_access(
     let user_id_str = user_id.to_string();
     let vehicle_uid_str = vehicle_uid.to_string();
 
-    let has_access = sqlx::query_scalar::<_, i64>(
+    // Use `EXISTS` to keep decoding stable across SQL type differences.
+    let has_access = sqlx::query_scalar::<_, bool>(
         r#"
-        SELECT 1
-        FROM user_vehicle_access
-        WHERE user_id = $1
-          AND vehicle_uid = $2
-        LIMIT 1
+        SELECT EXISTS(
+            SELECT 1
+            FROM user_vehicle_access
+            WHERE user_id = $1
+              AND vehicle_uid = $2
+        )
         "#,
     )
     .bind(&user_id_str)
     .bind(&vehicle_uid_str)
-    .fetch_optional(&state.pg_pool)
+    .fetch_one(&state.pg_pool)
     .await
-    .context("failed to verify postgres vehicle access")?
-    .is_some();
+    .context("failed to verify postgres vehicle access")?;
 
     if !has_access {
         return Err(ApiError::forbidden("vehicle access denied for this user"));

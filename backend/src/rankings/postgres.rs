@@ -120,7 +120,7 @@ async fn fetch_ranking_snapshot_rows_postgres(
         SELECT
           r.rank_position,
           r.vehicle_uid,
-          r.score,
+          r.score::double precision AS score,
           r.confidence_level,
           r.cohort_key,
           r.cohort_size,
@@ -235,18 +235,18 @@ async fn materialize_ranking_rows_postgres(
                 .try_get("cohort_key")
                 .context("failed to parse postgres cohort_key")?,
             cohort_size: row
-                .try_get::<i64, _>("cohort_size")
-                .context("failed to parse postgres cohort_size")?,
+                .try_get::<i32, _>("cohort_size")
+                .context("failed to parse postgres cohort_size")? as i64,
             sample_gate_passed: row
-                .try_get::<i64, _>("sample_gate_passed")
+                .try_get::<i32, _>("sample_gate_passed")
                 .context("failed to parse postgres sample_gate_passed")?
                 == 1,
         };
 
         ranking_rows.push(RankingRow {
             rank: row
-                .try_get::<i64, _>("rank_position")
-                .context("failed to parse postgres rank_position")?,
+                .try_get::<i32, _>("rank_position")
+                .context("failed to parse postgres rank_position")? as i64,
             vehicle_uid,
             score: row
                 .try_get::<f64, _>("score")
@@ -270,7 +270,7 @@ async fn fetch_latest_kpi_map_postgres(
 ) -> Result<BTreeMap<String, f64>, ApiError> {
     let kpi_rows = sqlx::query(
         r#"
-        SELECT kpi_key, kpi_value
+        SELECT kpi_key, kpi_value::double precision AS kpi_value
         FROM vehicle_kpi_snapshot ks
         WHERE vehicle_uid = $1
           AND ranking_type = $2

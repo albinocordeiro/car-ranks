@@ -31,10 +31,12 @@ pub(super) async fn fetch_charging_observations_for_window_postgres(
     .context("failed to fetch postgres observations for charging session")?
     .into_iter()
     .map(|observation_row| {
+        // `value_number` is stored as REAL in Postgres migrations (float4).
+        let value_number: Option<f32> = observation_row.try_get("value_number")?;
         Ok(ChargingObservation {
             signal_key: observation_row.try_get("signal_key")?,
             observed_at: observation_row.try_get("observed_at")?,
-            value_number: observation_row.try_get("value_number")?,
+            value_number: value_number.map(f64::from),
             value_string: observation_row.try_get("value_string")?,
         })
     })

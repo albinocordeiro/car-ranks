@@ -549,7 +549,7 @@ async fn postgres_ingest_enforces_idempotency_and_vehicle_ownership_when_env_set
             vehicle_uid,
             batch_id,
             now - Duration::minutes(2),
-            now - Duration::minutes(1),
+            now - Duration::minutes(1) + Duration::seconds(10),
             vec![number_record(
                 now - Duration::minutes(1) + Duration::seconds(5),
                 "speed.vehicle",
@@ -575,7 +575,7 @@ async fn postgres_ingest_enforces_idempotency_and_vehicle_ownership_when_env_set
             vehicle_uid,
             batch_id,
             now - Duration::minutes(2),
-            now - Duration::minutes(1),
+            now - Duration::minutes(1) + Duration::seconds(10),
             vec![number_record(
                 now - Duration::minutes(1) + Duration::seconds(5),
                 "speed.vehicle",
@@ -861,7 +861,9 @@ async fn postgres_internal_job_handler_runs_native_pipeline_when_env_set() -> Re
 
         let charge_start = Utc::now() - Duration::minutes(45);
         let charge_stop = Utc::now() - Duration::minutes(15);
-        let capture_start = charge_start - Duration::minutes(1);
+        let drive_start = charge_start - Duration::minutes(20);
+        let drive_end = charge_start - Duration::minutes(10);
+        let capture_start = charge_start - Duration::minutes(30);
         let capture_end = charge_stop + Duration::minutes(1);
 
         let payload = ingest_payload(
@@ -870,6 +872,13 @@ async fn postgres_internal_job_handler_runs_native_pipeline_when_env_set() -> Re
             capture_start,
             capture_end,
             vec![
+                // Pre-charge driving samples seed range-efficiency deltas.
+                number_record(drive_start, "distance.odometer", 12000.0, Some("km"), None),
+                number_record(drive_start, "ev.soc_pct", 62.0, Some("%"), None),
+                number_record(drive_start, "speed.vehicle", 58.0, Some("km/h"), None),
+                number_record(drive_end, "distance.odometer", 12010.0, Some("km"), None),
+                number_record(drive_end, "ev.soc_pct", 56.0, Some("%"), None),
+                number_record(drive_end, "speed.vehicle", 64.0, Some("km/h"), None),
                 number_record(
                     charge_start + Duration::seconds(5),
                     "ev.soc_pct",

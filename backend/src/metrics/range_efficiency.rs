@@ -18,7 +18,10 @@ pub(super) async fn compute_range_efficiency_metrics_postgres(
 ) -> Result<Vec<MetricCalc>> {
     let rows = sqlx::query(
         r#"
-        SELECT signal_key, value_number, observed_at
+        SELECT
+          signal_key,
+          value_number::double precision AS value_number,
+          observed_at
         FROM vehicle_signal_observation
         WHERE vehicle_uid = $1
           AND observed_at >= $2
