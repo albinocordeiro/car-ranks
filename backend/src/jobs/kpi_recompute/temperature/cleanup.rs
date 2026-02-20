@@ -1,16 +1,19 @@
 use anyhow::{Context, Result};
 use sqlx::SqlitePool;
 
+use super::super::{KPI_TIMEFRAMES, TEMPERATURE_RANKING_TYPE};
+
 /// Clears existing temperature-impact snapshots before recomputation.
 pub(super) async fn clear_temperature_snapshots(pool: &SqlitePool) -> Result<()> {
-    for timeframe in super::KPI_TIMEFRAMES {
+    for timeframe in KPI_TIMEFRAMES {
         sqlx::query(
             r#"
             DELETE FROM vehicle_kpi_snapshot
-            WHERE ranking_type = 'ev_temperature_impact'
+            WHERE ranking_type = ?
               AND timeframe = ?
             "#,
         )
+        .bind(TEMPERATURE_RANKING_TYPE)
         .bind(timeframe)
         .execute(pool)
         .await

@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use sqlx::SqlitePool;
 
-use super::{KPI_TIMEFRAMES, NON_TEMPERATURE_RANKING_TYPES};
+use super::super::{KPI_TIMEFRAMES, NON_TEMPERATURE_RANKING_TYPES};
 
 /// Clears existing non-temperature snapshots before a full recompute pass.
 pub(super) async fn clear_non_temperature_snapshots(pool: &SqlitePool) -> Result<()> {

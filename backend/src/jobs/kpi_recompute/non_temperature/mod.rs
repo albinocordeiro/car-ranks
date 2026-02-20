@@ -3,19 +3,10 @@ use sqlx::{Row, SqlitePool};
 
 use self::cleanup::clear_non_temperature_snapshots;
 use self::vehicle_pass::recompute_vehicle_timeframe_non_temperature;
+use super::KPI_TIMEFRAMES;
 
 mod cleanup;
 mod vehicle_pass;
-
-/// Timeframes materialized in each non-temperature KPI recompute pass.
-pub(super) const KPI_TIMEFRAMES: [&str; 3] = ["30d", "90d", "180d"];
-
-/// Ranking families recomputed by the non-temperature KPI job.
-pub(super) const NON_TEMPERATURE_RANKING_TYPES: [&str; 3] = [
-    "ev_range_efficiency",
-    "ev_charging_performance",
-    "ev_composite",
-];
 
 /// Rebuilds range, charging, and composite KPI families for each vehicle/timeframe.
 pub(super) async fn recompute_non_temperature_kpis(pool: &SqlitePool) -> Result<(usize, usize)> {

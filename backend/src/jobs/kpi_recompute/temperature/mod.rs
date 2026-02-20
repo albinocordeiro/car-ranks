@@ -3,12 +3,10 @@ use sqlx::{Row, SqlitePool};
 
 use self::cleanup::clear_temperature_snapshots;
 use self::vehicle_pass::recompute_vehicle_timeframe_temperature;
+use super::KPI_TIMEFRAMES;
 
 mod cleanup;
 mod vehicle_pass;
-
-/// Timeframes materialized in each temperature KPI recompute pass.
-const KPI_TIMEFRAMES: [&str; 3] = ["30d", "90d", "180d"];
 
 /// Rebuilds the temperature-impact KPI family for each supported timeframe.
 pub(super) async fn recompute_temperature_kpis(pool: &SqlitePool) -> Result<(usize, usize)> {
