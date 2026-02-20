@@ -33,6 +33,10 @@ pub(crate) fn build_router(app_state: crate::AppState) -> Router {
             "/internal/jobs/build-ranking-snapshots",
             post(crate::handlers::post_build_rankings),
         )
+        .route(
+            "/internal/jobs/latest",
+            get(crate::handlers::get_latest_job_status),
+        )
         .layer(TraceLayer::new_for_http())
         .with_state(app_state)
 }

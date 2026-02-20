@@ -42,6 +42,16 @@ fn ownership_migrations_define_expected_tables() {
     }
 }
 
+#[test]
+fn internal_job_run_migrations_define_expected_table() {
+    for migration in [
+        crate::migrations::SQLITE_MIGRATION_0003,
+        crate::migrations::POSTGRES_MIGRATION_0003,
+    ] {
+        assert!(migration.contains("CREATE TABLE IF NOT EXISTS internal_job_run"));
+    }
+}
+
 #[tokio::test]
 async fn apply_schema_records_migrations_once() -> Result<()> {
     let pool = SqlitePoolOptions::new()
@@ -80,5 +90,19 @@ async fn apply_schema_records_migrations_once() -> Result<()> {
     .context("failed to count ownership migration")?;
 
     assert_eq!(ownership_count, 1);
+
+    let job_run_count: i64 = sqlx::query_scalar(
+        r#"
+        SELECT COUNT(*)
+        FROM schema_migration
+        WHERE migration_id = '0003_internal_job_runs'
+          AND backend = 'sqlite'
+        "#,
+    )
+    .fetch_one(&pool)
+    .await
+    .context("failed to count internal job run migration")?;
+
+    assert_eq!(job_run_count, 1);
     Ok(())
 }

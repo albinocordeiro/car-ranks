@@ -1,6 +1,7 @@
 use super::*;
 
 mod ingest_paths;
+mod job_status_paths;
 mod kpi_job;
 mod migration_core;
 mod postgres_paths;

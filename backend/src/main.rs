@@ -8,6 +8,7 @@ mod db_bootstrap;
 mod errors;
 mod handlers;
 mod ingest;
+mod job_runs;
 mod jobs;
 mod kpi_specs;
 mod kpis;

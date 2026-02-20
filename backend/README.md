@@ -11,6 +11,7 @@ Current API surface:
 - `GET /v1/rankings`
 - `POST /internal/jobs/recompute-kpis`
 - `POST /internal/jobs/build-ranking-snapshots`
+- `GET /internal/jobs/latest`
 
 Auth scope (MVP):
 - Public vehicle-bound APIs require `x-user-id: <uuid>` request header.
@@ -70,6 +71,7 @@ curl -X POST http://127.0.0.1:8080/v1/telemetry/batches \
 
 ```bash
 curl -X POST http://127.0.0.1:8080/internal/jobs/recompute-kpis
+curl "http://127.0.0.1:8080/internal/jobs/latest?job_kind=recompute_kpis"
 ```
 
 3. Query KPI families:
@@ -128,6 +130,7 @@ curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type
 - Applied migration ids are tracked in `schema_migration` to prevent duplicate execution.
 - Postgres-ready bootstrap schema lives in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/0001_init.sql`.
 - Ownership/auth additive migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/*/0002_auth_ownership.sql`.
+- Internal job-run metadata migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/*/0003_internal_job_runs.sql`.
 - `/Users/albinocordeiro/Code/car_ranks/backend/schema.sql` remains as a legacy SQLite schema snapshot and is kept in sync with SQLite `0001_init.sql`.
 - Current Postgres runtime endpoints:
   - `/health`
@@ -158,6 +161,7 @@ cargo test postgres_kpi_fetch_and_charging_handler_work_when_env_set
 cargo test postgres_ingest_enforces_idempotency_and_vehicle_ownership_when_env_set
 cargo test postgres_rankings_and_temperature_impact_handlers_work_when_env_set
 cargo test postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set
+cargo test postgres_readiness_handler_returns_family_statuses_when_env_set
 ```
 
 ## References

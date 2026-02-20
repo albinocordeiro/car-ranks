@@ -1,7 +1,7 @@
 mod internal_jobs;
 mod public_api;
 
-pub(crate) use internal_jobs::{post_build_rankings, post_recompute_kpis};
+pub(crate) use internal_jobs::{get_latest_job_status, post_build_rankings, post_recompute_kpis};
 #[cfg(test)]
 pub(crate) use public_api::fetch_latest_vehicle_kpis_postgres;
 pub(crate) use public_api::{

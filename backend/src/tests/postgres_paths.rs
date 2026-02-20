@@ -965,7 +965,7 @@ async fn postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set()
         .map_err(|err| anyhow::anyhow!("postgres job-seed ingest failed: {}", err.message))?;
         assert!(ingest_response.accepted);
 
-        let Json(job_response) = crate::handlers::post_recompute_kpis(State(state))
+        let Json(job_response) = crate::handlers::post_recompute_kpis(State(state.clone()))
             .await
             .map_err(|err| {
                 anyhow::anyhow!("postgres internal job handler failed: {}", err.message)
@@ -973,6 +973,23 @@ async fn postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set()
 
         assert!(job_response.ok);
         assert!(job_response.charging_sessions_upserted >= 1);
+
+        let Json(status_response) = crate::handlers::get_latest_job_status(
+            State(state),
+            Query(JobStatusQuery {
+                job_kind: Some("recompute_kpis".to_string()),
+            }),
+        )
+        .await
+        .map_err(|err| {
+            anyhow::anyhow!("postgres latest-job-status handler failed: {}", err.message)
+        })?;
+        assert_eq!(status_response.backend, "postgres");
+        assert_eq!(status_response.status, "succeeded");
+        assert_eq!(
+            status_response.response_job_id.as_deref(),
+            Some(job_response.job_id.as_str())
+        );
 
         let charging_count: i64 = sqlx::query_scalar(
             r#"
