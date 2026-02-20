@@ -5,6 +5,8 @@ use sqlx::SqlitePool;
 use crate::MetricCalc;
 
 mod charging_performance;
+mod charging_performance_buckets;
+mod charging_performance_scoring;
 mod composite;
 mod composite_health;
 mod core;
