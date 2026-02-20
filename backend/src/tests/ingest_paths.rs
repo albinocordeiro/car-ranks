@@ -33,7 +33,7 @@ fn valid_ingest_payload(
 ) -> TelemetryBatchRequest {
     TelemetryBatchRequest {
         batch_id,
-        schema_version: INGEST_SCHEMA_VERSION.to_string(),
+        schema_version: crate::ingest::INGEST_SCHEMA_VERSION.to_string(),
         vehicle_uid,
         source: "OBD".to_string(),
         client: Some(ClientInfo {

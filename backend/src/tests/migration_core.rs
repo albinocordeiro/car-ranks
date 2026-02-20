@@ -5,12 +5,15 @@ use super::*;
 
 #[test]
 fn sqlite_migration_matches_legacy_schema_snapshot() {
-    assert_eq!(SQLITE_MIGRATION_0001, LEGACY_SQLITE_SCHEMA);
+    assert_eq!(
+        crate::migrations::SQLITE_MIGRATION_0001,
+        crate::migrations::LEGACY_SQLITE_SCHEMA
+    );
 }
 
 #[test]
 fn postgres_migration_has_expected_base_tables() {
-    assert!(!POSTGRES_MIGRATION_0001.contains("PRAGMA"));
+    assert!(!crate::migrations::POSTGRES_MIGRATION_0001.contains("PRAGMA"));
     for table_name in [
         "vehicle",
         "ingest_batch",
@@ -23,7 +26,7 @@ fn postgres_migration_has_expected_base_tables() {
     ] {
         let marker = format!("CREATE TABLE IF NOT EXISTS {}", table_name);
         assert!(
-            POSTGRES_MIGRATION_0001.contains(&marker),
+            crate::migrations::POSTGRES_MIGRATION_0001.contains(&marker),
             "missing table in postgres migration: {}",
             table_name
         );

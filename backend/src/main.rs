@@ -37,15 +37,6 @@ pub(crate) use utils::{
     timestamp_in_capture_window, year_band,
 };
 
-#[cfg(test)]
-const INGEST_SCHEMA_VERSION: &str = ingest::INGEST_SCHEMA_VERSION;
-#[cfg(test)]
-const SQLITE_MIGRATION_0001: &str = migrations::SQLITE_MIGRATION_0001;
-#[cfg(test)]
-const LEGACY_SQLITE_SCHEMA: &str = migrations::LEGACY_SQLITE_SCHEMA;
-#[cfg(test)]
-const POSTGRES_MIGRATION_0001: &str = migrations::POSTGRES_MIGRATION_0001;
-
 #[tokio::main]
 async fn main() -> Result<()> {
     bootstrap::run().await
