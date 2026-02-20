@@ -1,0 +1,28 @@
+use axum::Router;
+use axum::routing::{get, post};
+use tower_http::trace::TraceLayer;
+
+/// Build the complete HTTP router and attach shared middleware/state.
+pub(crate) fn build_router(app_state: crate::AppState) -> Router {
+    Router::new()
+        .route("/health", get(crate::health))
+        .route("/v1/config/sampling", get(crate::get_config_sampling))
+        .route("/v1/telemetry/batches", post(crate::post_telemetry_batches))
+        .route("/v1/kpis/me", get(crate::get_kpis_me))
+        .route("/v1/kpis/charging", get(crate::get_kpis_charging))
+        .route(
+            "/v1/kpis/temperature-impact",
+            get(crate::get_kpis_temperature_impact),
+        )
+        .route("/v1/rankings", get(crate::get_rankings))
+        .route(
+            "/internal/jobs/recompute-kpis",
+            post(crate::post_recompute_kpis),
+        )
+        .route(
+            "/internal/jobs/build-ranking-snapshots",
+            post(crate::post_build_rankings),
+        )
+        .layer(TraceLayer::new_for_http())
+        .with_state(app_state)
+}

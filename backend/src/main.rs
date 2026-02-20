@@ -12,6 +12,7 @@ mod metrics;
 mod migrations;
 mod models;
 mod rankings;
+mod routes;
 mod signals;
 mod state;
 mod utils;

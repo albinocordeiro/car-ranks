@@ -3,11 +3,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use axum::Router;
-use axum::routing::{get, post};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
-use tower_http::trace::TraceLayer;
 use tracing::info;
 
 /// Execute full backend bootstrap: initialize tracing, wire state/router, and serve HTTP.
@@ -15,7 +12,7 @@ pub(crate) async fn run() -> Result<()> {
     init_tracing();
 
     let app_state = build_app_state().await?;
-    let app = build_router(app_state);
+    let app = crate::routes::build_router(app_state);
     let addr = bind_addr_from_env()?;
 
     info!("backend listening on http://{}", addr);
@@ -95,31 +92,6 @@ async fn build_app_state() -> Result<crate::AppState> {
         backend,
         signal_keys,
     })
-}
-
-/// Construct the full HTTP router with all public/internal routes and middleware.
-fn build_router(app_state: crate::AppState) -> Router {
-    Router::new()
-        .route("/health", get(crate::health))
-        .route("/v1/config/sampling", get(crate::get_config_sampling))
-        .route("/v1/telemetry/batches", post(crate::post_telemetry_batches))
-        .route("/v1/kpis/me", get(crate::get_kpis_me))
-        .route("/v1/kpis/charging", get(crate::get_kpis_charging))
-        .route(
-            "/v1/kpis/temperature-impact",
-            get(crate::get_kpis_temperature_impact),
-        )
-        .route("/v1/rankings", get(crate::get_rankings))
-        .route(
-            "/internal/jobs/recompute-kpis",
-            post(crate::post_recompute_kpis),
-        )
-        .route(
-            "/internal/jobs/build-ranking-snapshots",
-            post(crate::post_build_rankings),
-        )
-        .layer(TraceLayer::new_for_http())
-        .with_state(app_state)
 }
 
 /// Parse the configured bind address from environment.
