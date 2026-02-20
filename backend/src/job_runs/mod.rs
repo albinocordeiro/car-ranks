@@ -1,3 +1,5 @@
+use chrono::{Duration, Utc};
+
 use crate::{ApiError, AppState, DatabaseBackend, JobResponse, JobRunStatusResponse, now_str};
 
 mod postgres;
@@ -5,6 +7,7 @@ mod sqlite;
 
 pub(crate) const JOB_KIND_RECOMPUTE_KPIS: &str = "recompute_kpis";
 pub(crate) const JOB_KIND_BUILD_RANKINGS: &str = "build_rankings";
+const STALE_RUN_RECOVERY_MINUTES: i64 = 10;
 
 /// Normalizes and validates user-provided internal job kinds.
 pub(crate) fn normalize_job_kind(job_kind: Option<String>) -> Result<String, ApiError> {
@@ -114,4 +117,53 @@ pub(crate) async fn fetch_latest_job_run_status(
             postgres::fetch_latest(pg_pool, job_kind).await
         }
     }
+}
+
+/// Marks stale `running` rows as failed before a new run starts.
+///
+/// A run is considered stale when:
+/// 1) the latest row is still `running`,
+/// 2) `started_at` is older than the recovery window, and
+/// 3) no active lock exists for the same `job_kind` (or the active lock is the
+///    lock currently held by the caller).
+pub(crate) async fn recover_stale_running_job(
+    state: &AppState,
+    job_kind: &str,
+    caller_lock_owner: Option<&str>,
+) -> Result<(), ApiError> {
+    let latest = fetch_latest_job_run_status(state, job_kind).await?;
+    let Some(latest) = latest else {
+        return Ok(());
+    };
+    if latest.status != "running" {
+        return Ok(());
+    }
+
+    let started_at = match chrono::DateTime::parse_from_rfc3339(&latest.started_at) {
+        Ok(value) => value.with_timezone(&Utc),
+        Err(_) => {
+            // Invalid timestamp should not block new work; stale recovery is best-effort.
+            return Ok(());
+        }
+    };
+    let stale_before = Utc::now() - Duration::minutes(STALE_RUN_RECOVERY_MINUTES);
+    if started_at >= stale_before {
+        return Ok(());
+    }
+
+    if let Some(active_lock) = crate::job_locks::fetch_active_job_lock(state, job_kind).await? {
+        let lock_is_owned_by_caller = caller_lock_owner
+            .map(|owner| owner == active_lock.owner_token.as_str())
+            .unwrap_or(false);
+        if !lock_is_owned_by_caller {
+            return Ok(());
+        }
+    }
+
+    record_job_run_failed(
+        state,
+        &latest.job_run_id,
+        "stale running job recovered automatically before new execution",
+    )
+    .await
 }

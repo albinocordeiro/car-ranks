@@ -8,7 +8,7 @@ Completed backend milestones:
 - Test coverage expanded to validate Postgres ingest idempotency/ownership, rankings, temperature-impact, and internal job bridge execution.
 - Priority 1 delivered: `GET /v1/kpis/readiness` now returns per-family readiness, confidence, and gate diagnostics.
 - Priority 2 partially delivered: internal job runs are now persisted in `internal_job_run`, and `GET /internal/jobs/latest` exposes latest run status.
-- Priority 4 partially delivered: internal job endpoints enforce per-job-kind lease locks to reject overlaps, and latest status now surfaces active lock owner/expiry metadata.
+- Priority 4 advanced: internal job endpoints enforce per-job-kind lease locks, latest status surfaces active lock owner/expiry metadata, and stale `running` rows are auto-recovered on next trigger.
 - Priority 3 advanced: Postgres charging-session/KPI/ranking recompute now runs natively before bridge sync, and composite KPI/ranking recompute now runs natively after bridge sync.
 
 Current runtime status:

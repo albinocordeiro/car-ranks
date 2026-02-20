@@ -40,7 +40,7 @@ async fn run_tracked_job(state: &AppState, job_kind: &str) -> Result<Json<JobRes
     let lock_owner = uuid::Uuid::new_v4().to_string();
     crate::job_locks::acquire_job_lock(state, job_kind, &lock_owner).await?;
 
-    let run_result = run_tracked_job_with_lock(state, job_kind).await;
+    let run_result = run_tracked_job_with_lock(state, job_kind, &lock_owner).await;
     if let Err(release_error) =
         crate::job_locks::release_job_lock(state, job_kind, &lock_owner).await
     {
@@ -59,7 +59,12 @@ async fn run_tracked_job(state: &AppState, job_kind: &str) -> Result<Json<JobRes
 async fn run_tracked_job_with_lock(
     state: &AppState,
     job_kind: &str,
+    lock_owner: &str,
 ) -> Result<Json<JobResponse>, ApiError> {
+    // If a previous process died mid-run, close out the stale row before writing
+    // a new `running` record. This keeps latest-status semantics operational.
+    crate::job_runs::recover_stale_running_job(state, job_kind, Some(lock_owner)).await?;
+
     let job_run_id = crate::job_runs::record_job_run_started(state, job_kind).await?;
     match crate::jobs::run_kpi_job_by_backend(state).await {
         Ok(response) => {

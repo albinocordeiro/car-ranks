@@ -120,6 +120,84 @@ async fn recompute_job_releases_lock_after_success() -> Result<()> {
 }
 
 #[tokio::test]
+async fn recompute_job_recovers_stale_running_row_before_new_run() -> Result<()> {
+    let state = job_status_test_state().await?;
+
+    let stale_run_id = uuid::Uuid::new_v4().to_string();
+    let stale_started_at = (chrono::Utc::now() - chrono::Duration::minutes(30)).to_rfc3339();
+    sqlx::query(
+        r#"
+        INSERT INTO internal_job_run (
+          job_run_id,
+          job_kind,
+          backend,
+          status,
+          started_at
+        ) VALUES (?, ?, ?, ?, ?)
+        "#,
+    )
+    .bind(&stale_run_id)
+    .bind("recompute_kpis")
+    .bind("sqlite")
+    .bind("running")
+    .bind(stale_started_at)
+    .execute(&state.sqlite_pool)
+    .await
+    .context("failed to seed stale running internal job row")?;
+
+    let Json(job_response) = crate::handlers::post_recompute_kpis(State(state.clone()))
+        .await
+        .map_err(|err| anyhow::anyhow!("recompute job failed: {}", err.message))?;
+    assert!(job_response.ok);
+
+    let stale_status: Option<String> = sqlx::query_scalar(
+        r#"
+        SELECT status
+        FROM internal_job_run
+        WHERE job_run_id = ?
+        "#,
+    )
+    .bind(&stale_run_id)
+    .fetch_one(&state.sqlite_pool)
+    .await
+    .context("failed to read stale row status")?;
+    assert_eq!(stale_status.as_deref(), Some("failed"));
+
+    let stale_finished_at: Option<String> = sqlx::query_scalar(
+        r#"
+        SELECT finished_at
+        FROM internal_job_run
+        WHERE job_run_id = ?
+        "#,
+    )
+    .bind(&stale_run_id)
+    .fetch_one(&state.sqlite_pool)
+    .await
+    .context("failed to read stale row finished_at")?;
+    assert!(stale_finished_at.is_some());
+
+    let stale_error: Option<String> = sqlx::query_scalar(
+        r#"
+        SELECT error_message
+        FROM internal_job_run
+        WHERE job_run_id = ?
+        "#,
+    )
+    .bind(&stale_run_id)
+    .fetch_one(&state.sqlite_pool)
+    .await
+    .context("failed to read stale row error message")?;
+    assert!(
+        stale_error
+            .as_deref()
+            .unwrap_or_default()
+            .contains("stale running job recovered automatically")
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn latest_job_status_reports_active_lock_metadata() -> Result<()> {
     let state = job_status_test_state().await?;
 
