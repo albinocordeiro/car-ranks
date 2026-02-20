@@ -3,6 +3,14 @@ use crate::MetricCalc;
 use super::charging_performance_buckets::ChargingPowerBuckets;
 use super::charging_performance_retention::cold_charge_retention_metric;
 
+mod acceptance_score;
+mod final_score;
+mod metric_builder;
+
+use acceptance_score::compute_acceptance_score;
+use final_score::compute_charging_performance_score;
+use metric_builder::build_metric;
+
 /// Scores charging-performance KPIs from normalized power buckets.
 ///
 /// This pure helper keeps median math and KPI composition independent from
@@ -23,13 +31,7 @@ pub(super) fn score_charging_power_buckets(
 
     let mut metrics = Vec::new();
     let sample_count = all_power.len() as i64;
-    let all_median = super::median(all_power.clone()).unwrap_or(0.0);
-    let mild_median = super::median(mild_power.clone()).unwrap_or(all_median.max(1e-6));
-    let acceptance_score = if mild_median > 0.0 {
-        (100.0 * all_median / mild_median).clamp(0.0, 120.0)
-    } else {
-        100.0
-    };
+    let acceptance_score = compute_acceptance_score(&all_power, &mild_power);
 
     metrics.push(build_metric(
         "temp_adjusted_charge_acceptance_score",
@@ -47,11 +49,7 @@ pub(super) fn score_charging_power_buckets(
         retention_score = Some(retention);
     }
 
-    let charging_score = if let Some(retention_score) = retention_score {
-        (0.6 * acceptance_score + 0.4 * retention_score).clamp(0.0, 100.0)
-    } else {
-        acceptance_score.clamp(0.0, 100.0)
-    };
+    let charging_score = compute_charging_performance_score(acceptance_score, retention_score);
 
     metrics.push(build_metric(
         "charging_performance_score",
@@ -62,22 +60,4 @@ pub(super) fn score_charging_power_buckets(
     ));
 
     metrics
-}
-
-/// Shared metric constructor for charging KPI rows.
-fn build_metric(
-    key: &'static str,
-    value: f64,
-    unit: &'static str,
-    direction: &'static str,
-    sample_count: i64,
-) -> MetricCalc {
-    MetricCalc {
-        key,
-        value,
-        unit,
-        direction,
-        sample_count,
-        confidence_level: super::confidence_from_samples(sample_count),
-    }
 }
