@@ -1,0 +1,2 @@
+{"ok":true,"job_id":"4023eed8-4502-4528-b7bf-f1029097df18","charging_sessions_upserted":6,"kpi_rows_upserted":126,"ranking_rows_upserted":45,"recomputed_vehicles":3}
+__STATUS__:200

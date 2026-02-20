@@ -4,10 +4,10 @@ This folder stores captured API smoke baselines for release verification.
 
 ## Latest Baseline
 
-- Run id: `postgres-local-20260220T231603Z`
+- Run id: `postgres-local-20260220T233027Z`
 - Environment: local backend + local staging Postgres
-- Snapshot root: `/Users/albinocordeiro/Code/car_ranks/docs/smoke/postgres-local-20260220T231603Z`
-- Summary: `/Users/albinocordeiro/Code/car_ranks/docs/smoke/postgres-local-20260220T231603Z/summary.md`
+- Snapshot root: `/Users/albinocordeiro/Code/car_ranks/docs/smoke/postgres-local-20260220T233027Z`
+- Summary: `/Users/albinocordeiro/Code/car_ranks/docs/smoke/postgres-local-20260220T233027Z/summary.md`
 
 ## Notes
 
