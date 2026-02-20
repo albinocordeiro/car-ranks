@@ -5,6 +5,16 @@ mod non_temperature;
 mod persistence;
 mod temperature;
 
+/// Common snapshot timeframes used by all ranking rebuild jobs.
+pub(super) const SNAPSHOT_TIMEFRAMES: [&str; 3] = ["30d", "90d", "180d"];
+
+/// Ranking families that are rebuilt through the non-temperature job path.
+pub(super) const NON_TEMPERATURE_RANKING_TYPES: [&str; 3] = [
+    "ev_range_efficiency",
+    "ev_charging_performance",
+    "ev_composite",
+];
+
 /// Public entrypoint for temperature-impact ranking rebuilds.
 ///
 /// The orchestration layer calls this wrapper so callers do not need to know

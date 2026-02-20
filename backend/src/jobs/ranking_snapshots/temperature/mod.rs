@@ -3,6 +3,7 @@ use sqlx::SqlitePool;
 
 use self::cohorts::persist_ranked_temperature_cohorts;
 use self::seeds::fetch_temperature_ranking_seeds;
+use super::SNAPSHOT_TIMEFRAMES;
 
 mod cohorts;
 mod seeds;
@@ -11,7 +12,7 @@ mod seeds;
 pub(super) async fn rebuild_temperature_rankings(pool: &SqlitePool) -> Result<usize> {
     let mut upserted_rows = 0usize;
 
-    for timeframe in ["30d", "90d", "180d"] {
+    for timeframe in SNAPSHOT_TIMEFRAMES {
         let ranking_snapshot_ts = crate::now_str();
         sqlx::query(
             r#"
