@@ -1,21 +1,9 @@
-use axum::Json;
 use axum::http::StatusCode;
-use serde::Serialize;
 
-#[derive(Debug, Serialize)]
-struct ErrorBody {
-    error: String,
-    message: String,
-}
-
-#[derive(Debug)]
-pub(crate) struct ApiError {
-    pub(crate) status: StatusCode,
-    pub(crate) error: String,
-    pub(crate) message: String,
-}
+use super::ApiError;
 
 impl ApiError {
+    /// Builds a 400 response for request payloads that violate API contracts.
     pub(crate) fn bad_request(message: impl Into<String>) -> Self {
         Self {
             status: StatusCode::BAD_REQUEST,
@@ -24,6 +12,7 @@ impl ApiError {
         }
     }
 
+    /// Builds a 404 response when requested entities are not available.
     pub(crate) fn not_found(message: impl Into<String>) -> Self {
         Self {
             status: StatusCode::NOT_FOUND,
@@ -32,6 +21,7 @@ impl ApiError {
         }
     }
 
+    /// Builds a 422 response for semantically invalid but well-formed requests.
     pub(crate) fn unprocessable(message: impl Into<String>) -> Self {
         Self {
             status: StatusCode::UNPROCESSABLE_ENTITY,
@@ -40,6 +30,7 @@ impl ApiError {
         }
     }
 
+    /// Builds a 409 response when the request collides with existing state.
     pub(crate) fn conflict(message: impl Into<String>) -> Self {
         Self {
             status: StatusCode::CONFLICT,
@@ -48,6 +39,7 @@ impl ApiError {
         }
     }
 
+    /// Builds a 501 response for non-shipped API paths.
     pub(crate) fn not_implemented(message: impl Into<String>) -> Self {
         Self {
             status: StatusCode::NOT_IMPLEMENTED,
@@ -56,27 +48,12 @@ impl ApiError {
         }
     }
 
+    /// Builds a 500 response for unexpected server-side failures.
     pub(crate) fn internal(message: impl Into<String>) -> Self {
         Self {
             status: StatusCode::INTERNAL_SERVER_ERROR,
             error: "internal_error".to_string(),
             message: message.into(),
         }
-    }
-}
-
-impl From<anyhow::Error> for ApiError {
-    fn from(value: anyhow::Error) -> Self {
-        Self::internal(format!("{value}"))
-    }
-}
-
-impl axum::response::IntoResponse for ApiError {
-    fn into_response(self) -> axum::response::Response {
-        let body = Json(ErrorBody {
-            error: self.error,
-            message: self.message,
-        });
-        (self.status, body).into_response()
     }
 }
