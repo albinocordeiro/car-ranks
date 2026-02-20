@@ -1170,6 +1170,53 @@ async fn postgres_latest_job_status_reports_active_lock_metadata_when_env_set() 
 }
 
 #[tokio::test]
+async fn postgres_recompute_job_conflict_includes_lock_diagnostics_when_env_set() -> Result<()> {
+    let Some(ctx) = PostgresTestContext::maybe_new().await? else {
+        return Ok(());
+    };
+
+    let result = async {
+        let state = ctx.app_state().await?;
+        let now = crate::now_str();
+        let expires_at = (Utc::now() + Duration::minutes(5)).to_rfc3339();
+        let owner_token = "pg-preexisting-owner";
+
+        sqlx::query(
+            r#"
+            INSERT INTO internal_job_lock (
+              job_kind,
+              owner_token,
+              acquired_at,
+              expires_at
+            ) VALUES ($1, $2, $3, $4)
+            "#,
+        )
+        .bind("recompute_kpis")
+        .bind(owner_token)
+        .bind(&now)
+        .bind(&expires_at)
+        .execute(&ctx.pool)
+        .await
+        .context("failed to seed postgres internal_job_lock row for conflict test")?;
+
+        let err = crate::handlers::post_recompute_kpis(State(state))
+            .await
+            .expect_err("expected postgres recompute job lock conflict");
+        assert_eq!(err.status, StatusCode::CONFLICT);
+        assert_eq!(err.error, "conflict");
+        assert!(err.message.contains("already running"));
+        assert!(err.message.contains("owner_token=pg-preexisting-owner"));
+        assert!(err.message.contains("expires_at="));
+
+        Ok(())
+    }
+    .await;
+
+    ctx.cleanup().await?;
+    result
+}
+
+#[tokio::test]
 async fn postgres_readiness_handler_returns_family_statuses_when_env_set() -> Result<()> {
     let Some(ctx) = PostgresTestContext::maybe_new().await? else {
         return Ok(());

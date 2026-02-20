@@ -54,6 +54,12 @@ pub(crate) async fn acquire_job_lock(
     if acquired {
         Ok(())
     } else {
+        if let Some(lock) = fetch_active_job_lock(state, job_kind).await? {
+            return Err(ApiError::conflict(format!(
+                "internal job already running for requested job_kind (owner_token={}, expires_at={})",
+                lock.owner_token, lock.expires_at
+            )));
+        }
         Err(ApiError::conflict(
             "internal job already running for requested job_kind",
         ))

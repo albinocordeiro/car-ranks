@@ -274,6 +274,8 @@ async fn recompute_job_rejects_when_active_lock_exists() -> Result<()> {
     assert_eq!(err.status, StatusCode::CONFLICT);
     assert_eq!(err.error, "conflict");
     assert!(err.message.contains("already running"));
+    assert!(err.message.contains("owner_token=preexisting-owner"));
+    assert!(err.message.contains("expires_at="));
 
     Ok(())
 }

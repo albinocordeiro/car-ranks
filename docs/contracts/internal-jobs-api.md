@@ -67,6 +67,6 @@ Notes:
 ## Error Responses
 
 - `404` no internal job run exists for requested `job_kind`.
-- `409` active lease lock already exists for requested `job_kind`.
+- `409` active lease lock already exists for requested `job_kind` (message includes lock owner token + expiry timestamp).
 - `422` unsupported `job_kind`.
 - `500` job execution or status lookup failed.

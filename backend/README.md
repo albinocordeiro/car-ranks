@@ -123,7 +123,7 @@ curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type
   - cold charging retention requires cold + mild charging sessions (defaults: `1` each)
 - Temperature-impact rankings include only vehicles that pass both gated retention metrics (`cold_weather_range_retention` and `cold_weather_charge_speed_retention`).
 - KPI persistence is restricted by a locked KPI catalog in `src/main.rs`; unknown KPI keys are rejected at write time.
-- Internal job endpoints enforce a per-`job_kind` lease lock (~10 minutes) and reject overlapping triggers with `409 conflict`.
+- Internal job endpoints enforce a per-`job_kind` lease lock (~10 minutes) and reject overlapping triggers with `409 conflict` including lock owner + expiry diagnostics.
 - `GET /internal/jobs/latest` includes active lock owner token + lease expiry when a matching job lock is currently held.
 - Triggering a new internal job automatically marks stale prior `running` rows as `failed` when their lease window has elapsed.
 - In Postgres mode, charging-session/KPI/ranking recompute runs natively before bridge sync; range ranking + composite KPI/ranking recompute run natively after bridge sync; range KPI and temperature KPI/ranking recompute still use the SQLite bridge path.
