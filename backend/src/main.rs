@@ -7,7 +7,6 @@ use axum::Router;
 use axum::routing::{get, post};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
-use sqlx::{PgPool, SqlitePool};
 use tower_http::trace::TraceLayer;
 use tracing::info;
 
@@ -34,6 +33,10 @@ pub(crate) use handlers::{
     get_config_sampling, get_kpis_charging, get_kpis_me, get_kpis_temperature_impact, get_rankings,
     health, post_build_rankings, post_recompute_kpis, post_telemetry_batches,
 };
+pub(crate) use jobs::run_kpi_job;
+#[cfg(test)]
+pub(crate) use jobs::{rebuild_temperature_rankings, recompute_temperature_kpis};
+pub(crate) use migrations::{apply_postgres_schema, apply_schema};
 pub(crate) use models::*;
 pub(crate) use signals::{load_signal_keys, map_session_event};
 pub(crate) use state::{AppState, DatabaseBackend};
@@ -148,31 +151,6 @@ async fn main() -> Result<()> {
     axum::serve(listener, app).await.context("server error")?;
 
     Ok(())
-}
-
-async fn run_kpi_job(pool: &SqlitePool) -> Result<JobResponse, ApiError> {
-    // Delegate job orchestration to jobs.rs to keep main focused on routing/startup wiring.
-    jobs::run_kpi_job(pool).await
-}
-
-#[cfg(test)]
-async fn recompute_temperature_kpis(pool: &SqlitePool) -> Result<(usize, usize)> {
-    jobs::recompute_temperature_kpis(pool).await
-}
-
-#[cfg(test)]
-async fn rebuild_temperature_rankings(pool: &SqlitePool) -> Result<usize> {
-    jobs::rebuild_temperature_rankings(pool).await
-}
-
-async fn apply_schema(pool: &SqlitePool) -> Result<()> {
-    // Keep schema orchestration in migrations.rs; main only coordinates startup flow.
-    migrations::apply_schema(pool).await
-}
-
-async fn apply_postgres_schema(pool: &PgPool) -> Result<()> {
-    // Postgres migration tracking mirrors sqlite migration semantics.
-    migrations::apply_postgres_schema(pool).await
 }
 
 #[cfg(test)]
