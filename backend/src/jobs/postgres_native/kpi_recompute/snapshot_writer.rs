@@ -4,18 +4,20 @@ use uuid::Uuid;
 
 use crate::MetricCalc;
 
-/// Persists one native Postgres charging KPI snapshot row.
-pub(super) async fn insert_native_charging_kpi_snapshot_postgres(
+/// Persists one native Postgres KPI snapshot row.
+pub(super) async fn insert_native_kpi_snapshot_postgres(
     pool: &PgPool,
+    ranking_type: &str,
     vehicle_uid: &str,
     timeframe: &str,
     metric: &MetricCalc,
     snapshot_ts: &str,
 ) -> Result<()> {
-    if crate::kpi_specs::locked_kpi_spec_details("ev_charging_performance", metric.key).is_none() {
+    if crate::kpi_specs::locked_kpi_spec_details(ranking_type, metric.key).is_none() {
         return Err(anyhow::anyhow!(
-            "kpi_key {} is not locked for ranking_type ev_charging_performance",
-            metric.key
+            "kpi_key {} is not locked for ranking_type {}",
+            metric.key,
+            ranking_type
         ));
     }
     if metric.sample_count < 0 {
@@ -52,7 +54,7 @@ pub(super) async fn insert_native_charging_kpi_snapshot_postgres(
     )
     .bind(Uuid::new_v4().to_string())
     .bind(vehicle_uid)
-    .bind("ev_charging_performance")
+    .bind(ranking_type)
     .bind(timeframe)
     .bind(metric.key)
     .bind(metric.value)
@@ -67,7 +69,12 @@ pub(super) async fn insert_native_charging_kpi_snapshot_postgres(
     .bind("internal_recompute")
     .execute(pool)
     .await
-    .context("failed to insert native postgres charging KPI snapshot")?;
+    .with_context(|| {
+        format!(
+            "failed to insert native postgres KPI snapshot for {}",
+            ranking_type
+        )
+    })?;
 
     Ok(())
 }

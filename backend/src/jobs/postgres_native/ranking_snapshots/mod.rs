@@ -3,11 +3,22 @@ use std::collections::{BTreeMap, HashMap};
 use anyhow::{Context, Result};
 use sqlx::{PgPool, Row};
 
-const RANKING_TYPE: &str = "ev_charging_performance";
 const SNAPSHOT_TIMEFRAMES: [&str; 3] = ["30d", "90d", "180d"];
 
 /// Rebuilds charging-performance rankings directly in Postgres.
 pub(super) async fn rebuild_charging_rankings_postgres(pool: &PgPool) -> Result<usize> {
+    rebuild_non_temperature_rankings_postgres(pool, "ev_charging_performance").await
+}
+
+/// Rebuilds composite rankings directly in Postgres.
+pub(super) async fn rebuild_composite_rankings_postgres(pool: &PgPool) -> Result<usize> {
+    rebuild_non_temperature_rankings_postgres(pool, "ev_composite").await
+}
+
+async fn rebuild_non_temperature_rankings_postgres(
+    pool: &PgPool,
+    ranking_type: &str,
+) -> Result<usize> {
     let mut upserted_rows = 0usize;
     let vehicles = fetch_vehicle_catalog_rows_postgres(pool).await?;
 
@@ -19,21 +30,22 @@ pub(super) async fn rebuild_charging_rankings_postgres(pool: &PgPool) -> Result<
               AND timeframe = $2
             "#,
         )
-        .bind(RANKING_TYPE)
+        .bind(ranking_type)
         .bind(timeframe)
         .execute(pool)
         .await
         .with_context(|| {
             format!(
                 "failed to clear native postgres ranking snapshots for {} {}",
-                RANKING_TYPE, timeframe
+                ranking_type, timeframe
             )
         })?;
 
         let ranking_snapshot_ts = crate::now_str();
-        let cohorts = build_charging_cohorts_postgres(pool, &vehicles, timeframe).await?;
-        upserted_rows += persist_ranked_charging_cohorts_postgres(
+        let cohorts = build_cohorts_postgres(pool, &vehicles, ranking_type, timeframe).await?;
+        upserted_rows += persist_ranked_cohorts_postgres(
             pool,
+            ranking_type,
             timeframe,
             &ranking_snapshot_ts,
             cohorts,
@@ -75,7 +87,7 @@ async fn fetch_vehicle_catalog_rows_postgres(pool: &PgPool) -> Result<Vec<Vehicl
     )
     .fetch_all(pool)
     .await
-    .context("failed to fetch postgres vehicles for native charging rankings")?;
+    .context("failed to fetch postgres vehicles for native rankings")?;
 
     let mut vehicles = Vec::with_capacity(rows.len());
     for row in rows {
@@ -91,9 +103,10 @@ async fn fetch_vehicle_catalog_rows_postgres(pool: &PgPool) -> Result<Vec<Vehicl
     Ok(vehicles)
 }
 
-async fn build_charging_cohorts_postgres(
+async fn build_cohorts_postgres(
     pool: &PgPool,
     vehicles: &[VehicleCatalogRow],
+    ranking_type: &str,
     timeframe: &str,
 ) -> Result<HashMap<String, Vec<CohortEntry>>> {
     let mut cohorts: HashMap<String, Vec<CohortEntry>> = HashMap::new();
@@ -102,7 +115,7 @@ async fn build_charging_cohorts_postgres(
         let kpis = crate::kpis::fetch_latest_vehicle_kpis_postgres(
             pool,
             &vehicle.vehicle_uid,
-            RANKING_TYPE,
+            ranking_type,
             timeframe,
             "all",
         )
@@ -115,7 +128,7 @@ async fn build_charging_cohorts_postgres(
             .iter()
             .map(|kpi| (kpi.kpi_key.clone(), kpi.value))
             .collect();
-        let score = crate::metrics::score_from_kpi_map(RANKING_TYPE, &kpi_map);
+        let score = crate::metrics::score_from_kpi_map(ranking_type, &kpi_map);
         let confidence_level = crate::metrics::confidence_from_kpi_metrics(&kpis).to_string();
         let cohort_key = format!(
             "bev|{}|{}|{}|{}",
@@ -135,8 +148,9 @@ async fn build_charging_cohorts_postgres(
     Ok(cohorts)
 }
 
-async fn persist_ranked_charging_cohorts_postgres(
+async fn persist_ranked_cohorts_postgres(
     pool: &PgPool,
+    ranking_type: &str,
     timeframe: &str,
     ranking_snapshot_ts: &str,
     cohorts: HashMap<String, Vec<CohortEntry>>,
@@ -170,7 +184,7 @@ async fn persist_ranked_charging_cohorts_postgres(
                 "#,
             )
             .bind(uuid::Uuid::new_v4().to_string())
-            .bind(RANKING_TYPE)
+            .bind(ranking_type)
             .bind(timeframe)
             .bind("all")
             .bind(&cohort_key)
@@ -185,8 +199,8 @@ async fn persist_ranked_charging_cohorts_postgres(
             .await
             .with_context(|| {
                 format!(
-                    "failed to insert native postgres charging ranking row for {}",
-                    timeframe
+                    "failed to insert native postgres ranking row for {} {}",
+                    ranking_type, timeframe
                 )
             })?;
 

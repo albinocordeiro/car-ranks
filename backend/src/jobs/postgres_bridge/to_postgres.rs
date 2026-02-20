@@ -8,6 +8,8 @@ pub(super) struct OutputSyncOptions {
     pub(super) sync_charging_sessions: bool,
     pub(super) sync_charging_kpi_snapshots: bool,
     pub(super) sync_charging_rankings: bool,
+    pub(super) sync_composite_kpi_snapshots: bool,
+    pub(super) sync_composite_rankings: bool,
 }
 
 macro_rules! get_col {
@@ -51,18 +53,30 @@ async fn clear_postgres_output_tables(
     options: &OutputSyncOptions,
 ) -> Result<(), ApiError> {
     let mut statements = Vec::new();
-    if options.sync_charging_rankings {
+    if options.sync_charging_rankings && options.sync_composite_rankings {
         statements.push("DELETE FROM cohort_ranking_snapshot");
-    } else {
+    } else if options.sync_charging_rankings {
+        statements.push("DELETE FROM cohort_ranking_snapshot WHERE ranking_type <> 'ev_composite'");
+    } else if options.sync_composite_rankings {
         statements.push(
             "DELETE FROM cohort_ranking_snapshot WHERE ranking_type <> 'ev_charging_performance'",
         );
-    }
-    if options.sync_charging_kpi_snapshots {
-        statements.push("DELETE FROM vehicle_kpi_snapshot");
     } else {
         statements.push(
+            "DELETE FROM cohort_ranking_snapshot WHERE ranking_type NOT IN ('ev_charging_performance', 'ev_composite')",
+        );
+    }
+    if options.sync_charging_kpi_snapshots && options.sync_composite_kpi_snapshots {
+        statements.push("DELETE FROM vehicle_kpi_snapshot");
+    } else if options.sync_charging_kpi_snapshots {
+        statements.push("DELETE FROM vehicle_kpi_snapshot WHERE ranking_type <> 'ev_composite'");
+    } else if options.sync_composite_kpi_snapshots {
+        statements.push(
             "DELETE FROM vehicle_kpi_snapshot WHERE ranking_type <> 'ev_charging_performance'",
+        );
+    } else {
+        statements.push(
+            "DELETE FROM vehicle_kpi_snapshot WHERE ranking_type NOT IN ('ev_charging_performance', 'ev_composite')",
         );
     }
     if options.sync_charging_sessions {
@@ -176,7 +190,7 @@ async fn export_kpi_snapshots(
     pg_tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     options: &OutputSyncOptions,
 ) -> Result<(), ApiError> {
-    let rows = if options.sync_charging_kpi_snapshots {
+    let rows = if options.sync_charging_kpi_snapshots && options.sync_composite_kpi_snapshots {
         sqlx::query(
             r#"
             SELECT
@@ -203,7 +217,35 @@ async fn export_kpi_snapshots(
         .fetch_all(sqlite_pool)
         .await
         .context("failed to fetch sqlite KPI snapshots for postgres sync")?
-    } else {
+    } else if options.sync_charging_kpi_snapshots {
+        sqlx::query(
+            r#"
+            SELECT
+              snapshot_id,
+              vehicle_uid,
+              ranking_type,
+              timeframe,
+              kpi_key,
+              kpi_value,
+              kpi_unit,
+              direction,
+              confidence_level,
+              sample_count,
+              temperature_bin,
+              baseline_temperature_bin,
+              compare_temperature_bin,
+              computed_at,
+              valid_from,
+              valid_to,
+              source_job_id
+            FROM vehicle_kpi_snapshot
+            WHERE ranking_type <> 'ev_composite'
+            "#,
+        )
+        .fetch_all(sqlite_pool)
+        .await
+        .context("failed to fetch sqlite non-composite KPI snapshots for postgres sync")?
+    } else if options.sync_composite_kpi_snapshots {
         sqlx::query(
             r#"
             SELECT
@@ -231,6 +273,36 @@ async fn export_kpi_snapshots(
         .fetch_all(sqlite_pool)
         .await
         .context("failed to fetch sqlite non-charging KPI snapshots for postgres sync")?
+    } else {
+        sqlx::query(
+            r#"
+            SELECT
+              snapshot_id,
+              vehicle_uid,
+              ranking_type,
+              timeframe,
+              kpi_key,
+              kpi_value,
+              kpi_unit,
+              direction,
+              confidence_level,
+              sample_count,
+              temperature_bin,
+              baseline_temperature_bin,
+              compare_temperature_bin,
+              computed_at,
+              valid_from,
+              valid_to,
+              source_job_id
+            FROM vehicle_kpi_snapshot
+            WHERE ranking_type NOT IN ('ev_charging_performance', 'ev_composite')
+            "#,
+        )
+        .fetch_all(sqlite_pool)
+        .await
+        .context(
+            "failed to fetch sqlite non-charging/non-composite KPI snapshots for postgres sync",
+        )?
     };
 
     for row in rows {
@@ -290,7 +362,7 @@ async fn export_ranking_snapshots(
     pg_tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     options: &OutputSyncOptions,
 ) -> Result<(), ApiError> {
-    let rows = if options.sync_charging_rankings {
+    let rows = if options.sync_charging_rankings && options.sync_composite_rankings {
         sqlx::query(
             r#"
             SELECT
@@ -312,7 +384,30 @@ async fn export_ranking_snapshots(
         .fetch_all(sqlite_pool)
         .await
         .context("failed to fetch sqlite ranking snapshots for postgres sync")?
-    } else {
+    } else if options.sync_charging_rankings {
+        sqlx::query(
+            r#"
+            SELECT
+              ranking_snapshot_id,
+              ranking_type,
+              timeframe,
+              temperature_bin,
+              cohort_key,
+              cohort_size,
+              sample_gate_passed,
+              vehicle_uid,
+              rank_position,
+              score,
+              confidence_level,
+              computed_at
+            FROM cohort_ranking_snapshot
+            WHERE ranking_type <> 'ev_composite'
+            "#,
+        )
+        .fetch_all(sqlite_pool)
+        .await
+        .context("failed to fetch sqlite non-composite ranking snapshots for postgres sync")?
+    } else if options.sync_composite_rankings {
         sqlx::query(
             r#"
             SELECT
@@ -335,6 +430,31 @@ async fn export_ranking_snapshots(
         .fetch_all(sqlite_pool)
         .await
         .context("failed to fetch sqlite non-charging ranking snapshots for postgres sync")?
+    } else {
+        sqlx::query(
+            r#"
+            SELECT
+              ranking_snapshot_id,
+              ranking_type,
+              timeframe,
+              temperature_bin,
+              cohort_key,
+              cohort_size,
+              sample_gate_passed,
+              vehicle_uid,
+              rank_position,
+              score,
+              confidence_level,
+              computed_at
+            FROM cohort_ranking_snapshot
+            WHERE ranking_type NOT IN ('ev_charging_performance', 'ev_composite')
+            "#,
+        )
+        .fetch_all(sqlite_pool)
+        .await
+        .context(
+            "failed to fetch sqlite non-charging/non-composite ranking snapshots for postgres sync",
+        )?
     };
 
     for row in rows {

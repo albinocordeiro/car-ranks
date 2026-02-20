@@ -3,7 +3,7 @@ use sqlx::{PgPool, Row};
 
 use crate::{MetricCalc, metrics};
 
-use super::snapshot_writer::insert_native_charging_kpi_snapshot_postgres;
+use super::snapshot_writer::insert_native_kpi_snapshot_postgres;
 
 /// Rebuilds charging KPI snapshots for one vehicle/timeframe pair in Postgres.
 pub(super) async fn recompute_vehicle_timeframe_charging_kpis_postgres(
@@ -117,8 +117,9 @@ pub(super) async fn recompute_vehicle_timeframe_charging_kpis_postgres(
 
     let snapshot_ts = crate::now_str();
     for metric in &snapshot_metrics {
-        insert_native_charging_kpi_snapshot_postgres(
+        insert_native_kpi_snapshot_postgres(
             pool,
+            "ev_charging_performance",
             vehicle_uid,
             timeframe,
             metric,

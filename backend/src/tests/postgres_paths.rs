@@ -1036,6 +1036,35 @@ async fn postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set()
         .context("failed to count postgres charging ranking outputs")?;
         assert!(charging_ranking_count >= 1);
 
+        let composite_kpi_count: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*)
+            FROM vehicle_kpi_snapshot
+            WHERE vehicle_uid = $1
+              AND ranking_type = 'ev_composite'
+              AND kpi_key = 'ev_composite_score'
+            "#,
+        )
+        .bind(vehicle_uid.to_string())
+        .fetch_one(&ctx.pool)
+        .await
+        .context("failed to count postgres composite KPI outputs")?;
+        assert!(composite_kpi_count >= 1);
+
+        let composite_ranking_count: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*)
+            FROM cohort_ranking_snapshot
+            WHERE vehicle_uid = $1
+              AND ranking_type = 'ev_composite'
+            "#,
+        )
+        .bind(vehicle_uid.to_string())
+        .fetch_one(&ctx.pool)
+        .await
+        .context("failed to count postgres composite ranking outputs")?;
+        assert!(composite_ranking_count >= 1);
+
         Ok(())
     }
     .await;

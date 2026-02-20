@@ -1,6 +1,8 @@
 use anyhow::{Context, Result};
 use sqlx::{PgPool, Row};
 
+use crate::MetricCalc;
+
 use self::cleanup::clear_native_charging_kpi_snapshots_postgres;
 use self::vehicle_pass::recompute_vehicle_timeframe_charging_kpis_postgres;
 
@@ -39,4 +41,27 @@ pub(super) async fn recompute_charging_performance_kpis_postgres(pool: &PgPool) 
     }
 
     Ok(rows_inserted)
+}
+
+/// Persists one native KPI snapshot row for any native ranking family.
+///
+/// This wrapper keeps write logic encapsulated in `snapshot_writer` while exposing
+/// a narrow API to sibling Postgres-native stages (for example, composite).
+pub(in crate::jobs::postgres_native) async fn insert_native_kpi_snapshot_postgres(
+    pool: &PgPool,
+    ranking_type: &str,
+    vehicle_uid: &str,
+    timeframe: &str,
+    metric: &MetricCalc,
+    snapshot_ts: &str,
+) -> Result<()> {
+    snapshot_writer::insert_native_kpi_snapshot_postgres(
+        pool,
+        ranking_type,
+        vehicle_uid,
+        timeframe,
+        metric,
+        snapshot_ts,
+    )
+    .await
 }

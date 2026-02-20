@@ -14,14 +14,15 @@ pub(super) async fn run_kpi_job_postgres(
     sqlite_pool: &SqlitePool,
     pg_pool: &PgPool,
 ) -> Result<JobResponse, ApiError> {
-    // Stage 1 runs natively in Postgres so charging sessions do not depend on
-    // bridge round-trips. KPI/ranking stages still reuse SQLite materialization.
-    let native_summary = super::postgres_native::run_native_postgres_stages(pg_pool).await?;
+    // Stage 1 runs natively in Postgres so charging sessions/KPIs/rankings do not
+    // depend on bridge round-trips.
+    let pre_bridge_summary =
+        super::postgres_native::run_native_postgres_pre_bridge_stages(pg_pool).await?;
     tracing::debug!(
-        charging_sessions_upserted = native_summary.charging_sessions_upserted,
-        charging_kpi_rows_upserted = native_summary.charging_kpi_rows_upserted,
-        charging_ranking_rows_upserted = native_summary.charging_ranking_rows_upserted,
-        "native postgres job stages completed"
+        charging_sessions_upserted = pre_bridge_summary.charging_sessions_upserted,
+        charging_kpi_rows_upserted = pre_bridge_summary.charging_kpi_rows_upserted,
+        charging_ranking_rows_upserted = pre_bridge_summary.charging_ranking_rows_upserted,
+        "native postgres pre-bridge job stages completed"
     );
 
     sync_job_inputs_from_postgres(pg_pool, sqlite_pool).await?;
@@ -33,11 +34,23 @@ pub(super) async fn run_kpi_job_postgres(
             sync_charging_sessions: false,
             sync_charging_kpi_snapshots: false,
             sync_charging_rankings: false,
+            sync_composite_kpi_snapshots: false,
+            sync_composite_rankings: false,
         },
     )
     .await?;
 
+    // Stage 2 runs natively in Postgres after bridge sync so composite can read
+    // bridge-synced range and native charging KPI families from one backend.
+    let post_bridge_summary =
+        super::postgres_native::run_native_postgres_post_bridge_stages(pg_pool).await?;
+    tracing::debug!(
+        composite_kpi_rows_upserted = post_bridge_summary.composite_kpi_rows_upserted,
+        composite_ranking_rows_upserted = post_bridge_summary.composite_ranking_rows_upserted,
+        "native postgres post-bridge job stages completed"
+    );
+
     // Keep public job response aligned with the native Postgres charging stage.
-    response.charging_sessions_upserted = native_summary.charging_sessions_upserted;
+    response.charging_sessions_upserted = pre_bridge_summary.charging_sessions_upserted;
     Ok(response)
 }

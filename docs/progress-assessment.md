@@ -9,17 +9,17 @@ Completed backend milestones:
 - Priority 1 delivered: `GET /v1/kpis/readiness` now returns per-family readiness, confidence, and gate diagnostics.
 - Priority 2 partially delivered: internal job runs are now persisted in `internal_job_run`, and `GET /internal/jobs/latest` exposes latest run status.
 - Priority 4 partially delivered: internal job endpoints now enforce per-job-kind lease locks to reject overlapping runs.
-- Priority 3 started: Postgres charging-session rebuild, charging KPI recompute, and charging ranking recompute now run natively before bridge-based remaining KPI/ranking stages.
+- Priority 3 advanced: Postgres charging-session/KPI/ranking recompute now runs natively before bridge sync, and composite KPI/ranking recompute now runs natively after bridge sync.
 
 Current runtime status:
 - SQLite mode: full MVP API surface available.
 - Postgres mode: full MVP API surface now available.
-- Internal KPI/ranking recompute in Postgres mode currently uses a SQLite bridge (input sync -> SQLite compute -> output sync).
+- Internal KPI/ranking recompute in Postgres mode now uses a hybrid path (native charging pre-bridge -> SQLite bridge for range/temperature -> native composite post-bridge).
 
 ## Risks and Gaps
 
-- Postgres KPI/ranking jobs are bridge-based and perform full-table syncs, which is acceptable for MVP but not scalable.
-- Postgres runtime still computes KPI/ranking snapshot stages through a SQLite bridge rather than native Postgres stages.
+- Postgres KPI/ranking jobs still perform bridge table syncs for range + temperature families, which is acceptable for MVP but not scalable.
+- Postgres runtime still depends on SQLite bridge stages for range + temperature KPI/ranking recompute.
 
 ## Next Product Development Plan
 
@@ -37,6 +37,6 @@ Priority 5: Product contract hardening
 
 ## Suggested Execution Order
 
-1. Migrate job computation to Postgres-native stages and deprecate bridge sync path.
+1. Complete migration of remaining range + temperature job stages to Postgres-native paths and deprecate bridge sync.
 2. Extend lock handling with stale-run recovery and richer lock diagnostics.
 3. Expand docs/contracts around freshness and operational status payloads.
