@@ -271,13 +271,12 @@ Phase 3 candidates:
 - Consider read replicas/materialized view strategy for ranking at larger scale.
 
 ## 12. Open Questions (Need Your Input)
-1. Final temperature-bin definitions and cold-climate thresholds for comparisons.
+1. Resolved on **2026-02-20**: temperature-bin derivation and minimum sample gates for cold-climate insights are enforced in backend KPI computation.
 2. Resolved on **2026-02-20**: EV-first KPI formulas and required signal mapping are locked in backend KPI catalog and contract docs.
 3. Ambient-temperature fallback policy when OBD temperature signals are missing.
 4. Priority order for remaining tradeoffs (speed-to-market vs cost vs KPI accuracy vs maintainability).
 
 ## 13. Immediate Next Steps
-1. Lock temperature-bin derivation logic and minimum sample gates for cold-climate insights.
-2. Lock ingestion payload schema and idempotency strategy for 1-minute cadence.
-3. Implement the Postgres schema + signal registry from `research/schema/`.
-4. Build thin end-to-end slice on single EC2: iOS capture -> batch upload -> KPI calc -> ranking API.
+1. Lock ingestion payload schema and idempotency strategy for 1-minute cadence.
+2. Implement the Postgres schema + signal registry from `research/schema/`.
+3. Build thin end-to-end slice on single EC2: iOS capture -> batch upload -> KPI calc -> ranking API.

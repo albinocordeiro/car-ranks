@@ -1,6 +1,6 @@
 # `GET /v1/rankings`
 
-Status: Draft v3 (locked KPI mapping aligned)  
+Status: Draft v4 (locked KPI mapping + temperature gates)  
 Date: 2026-02-20  
 Purpose: Return EV ranking snapshots with cohort filters and temperature slicing.
 
@@ -97,6 +97,9 @@ Purpose: Return EV ranking snapshots with cohort filters and temperature slicing
 
 ## Confidence and Sample Gates
 - Low sample sizes return data with `confidence_level=preview`.
+- For `ev_temperature_impact`, a vehicle is ranked only when both gated retention metrics are present:
+  - `cold_weather_range_retention`
+  - `cold_weather_charge_speed_retention`
 - If minimum cohort sample gates fail:
   - endpoint can return `sample_gate_passed=false`
   - rows may be empty

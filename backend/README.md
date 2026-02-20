@@ -28,6 +28,11 @@ Defaults:
 - `DATABASE_URL=sqlite://car_ranks.db`
 - `RUST_LOG=info,sqlx=warn,tower_http=info`
 - `DEFAULT_USABLE_BATTERY_KWH=75`
+- `CAR_RANKS_TEMP_GATE_MIN_COLD_DISTANCE_KM=20`
+- `CAR_RANKS_TEMP_GATE_MIN_MILD_DISTANCE_KM=20`
+- `CAR_RANKS_TEMP_GATE_MIN_COLD_CHARGE_SESSIONS=1`
+- `CAR_RANKS_TEMP_GATE_MIN_MILD_CHARGE_SESSIONS=1`
+- `CAR_RANKS_TEMP_GATE_MIN_SENSITIVITY_POINTS=6`
 
 Optional overrides:
 
@@ -36,6 +41,11 @@ export BIND_ADDR=127.0.0.1:8080
 export DATABASE_URL=sqlite:///tmp/car_ranks.db
 export RUST_LOG=info,sqlx=warn,tower_http=info
 export DEFAULT_USABLE_BATTERY_KWH=75
+export CAR_RANKS_TEMP_GATE_MIN_COLD_DISTANCE_KM=20
+export CAR_RANKS_TEMP_GATE_MIN_MILD_DISTANCE_KM=20
+export CAR_RANKS_TEMP_GATE_MIN_COLD_CHARGE_SESSIONS=1
+export CAR_RANKS_TEMP_GATE_MIN_MILD_CHARGE_SESSIONS=1
+export CAR_RANKS_TEMP_GATE_MIN_SENSITIVITY_POINTS=6
 ```
 
 ## Smoke flow
@@ -79,6 +89,10 @@ curl "http://127.0.0.1:8080/v1/rankings?ranking_type=ev_temperature_impact&timef
 - Timeframes currently materialized by jobs: `30d`, `90d`, `180d`.
 - `temperature_bin` filters on rankings are supported only for `ev_temperature_impact`.
 - Temperature impact KPI reads the `cold` slice to avoid duplicate metrics across temperature variants.
+- Temperature KPI gates are enforced before persistence:
+  - range/sensitivity require cold + mild distance coverage (defaults: `20 km` each)
+  - cold charging retention requires cold + mild charging sessions (defaults: `1` each)
+- Temperature-impact rankings include only vehicles that pass both gated retention metrics (`cold_weather_range_retention` and `cold_weather_charge_speed_retention`).
 - KPI persistence is restricted by a locked KPI catalog in `src/main.rs`; unknown KPI keys are rejected at write time.
 
 ## Dev checks

@@ -345,6 +345,27 @@ struct LockedKpiSpec {
     optional_signals: &'static [&'static str],
 }
 
+#[derive(Debug, Clone, Copy)]
+struct TemperatureSampleGates {
+    min_cold_distance_km: f64,
+    min_mild_distance_km: f64,
+    min_cold_charge_sessions: usize,
+    min_mild_charge_sessions: usize,
+    min_sensitivity_points: usize,
+}
+
+impl TemperatureSampleGates {
+    fn range_gate_passed(self, cold_distance_km: f64, mild_distance_km: f64) -> bool {
+        cold_distance_km >= self.min_cold_distance_km
+            && mild_distance_km >= self.min_mild_distance_km
+    }
+
+    fn charge_gate_passed(self, cold_sessions: usize, mild_sessions: usize) -> bool {
+        cold_sessions >= self.min_cold_charge_sessions
+            && mild_sessions >= self.min_mild_charge_sessions
+    }
+}
+
 const LOCKED_KPI_SPECS: &[LockedKpiSpec] = &[
     LockedKpiSpec {
         ranking_type: "ev_range_efficiency",
@@ -2036,18 +2057,15 @@ async fn rebuild_temperature_rankings(pool: &SqlitePool) -> Result<usize> {
             let sensitivity: Option<f64> = row.try_get("sensitivity")?;
             let charge_retention: Option<f64> = row.try_get("charge_retention")?;
 
-            if range_retention.is_none() && sensitivity.is_none() && charge_retention.is_none() {
+            // Temperature impact rankings require both gated retention metrics.
+            if range_retention.is_none() || charge_retention.is_none() {
                 continue;
             }
 
-            let confidence_level = match (
-                range_retention.is_some(),
-                sensitivity.is_some(),
-                charge_retention.is_some(),
-            ) {
-                (true, true, true) => "stable",
-                (true, true, false) | (true, false, true) | (false, true, true) => "medium",
-                _ => "preview",
+            let confidence_level = if sensitivity.is_some() {
+                "stable"
+            } else {
+                "medium"
             }
             .to_string();
 
@@ -2511,6 +2529,8 @@ async fn compute_charging_performance_metrics(
     vehicle_uid: &str,
     cutoff: DateTime<Utc>,
 ) -> Result<Vec<MetricCalc>> {
+    let gates = temperature_sample_gates();
+
     let charge_rows = sqlx::query(
         r#"
         SELECT avg_charge_power_kw, temperature_bin
@@ -2569,19 +2589,22 @@ async fn compute_charging_performance_metrics(
         confidence_level: confidence_from_samples(sample_count),
     });
 
-    if let (Some(cold_median), Some(mild_median)) = (median(cold_power.clone()), median(mild_power))
-    {
-        if mild_median > 0.0 {
-            let retention = (100.0 * cold_median / mild_median).clamp(0.0, 200.0);
-            let retention_samples = cold_power.len() as i64;
-            metrics.push(MetricCalc {
-                key: "cold_weather_charge_speed_retention",
-                value: retention,
-                unit: "%",
-                direction: "higher_is_better",
-                sample_count: retention_samples,
-                confidence_level: confidence_from_samples(retention_samples),
-            });
+    if gates.charge_gate_passed(cold_power.len(), mild_power.len()) {
+        if let (Some(cold_median), Some(mild_median)) =
+            (median(cold_power.clone()), median(mild_power.clone()))
+        {
+            if mild_median > 0.0 {
+                let retention = (100.0 * cold_median / mild_median).clamp(0.0, 200.0);
+                let retention_samples = cold_power.len().min(mild_power.len()) as i64;
+                metrics.push(MetricCalc {
+                    key: "cold_weather_charge_speed_retention",
+                    value: retention,
+                    unit: "%",
+                    direction: "higher_is_better",
+                    sample_count: retention_samples,
+                    confidence_level: confidence_from_samples(retention_samples),
+                });
+            }
         }
     }
 
@@ -2738,6 +2761,8 @@ async fn compute_vehicle_metrics(
     vehicle_uid: &str,
     cutoff: DateTime<Utc>,
 ) -> Result<Vec<MetricCalc>> {
+    let gates = temperature_sample_gates();
+
     let obs_rows = sqlx::query(
         r#"
         SELECT signal_key, value_number, observed_at
@@ -2784,6 +2809,10 @@ async fn compute_vehicle_metrics(
     let mut current_temp: Option<f64> = None;
     let mut prev_filled: Option<(f64, f64, f64)> = None;
     let mut points = Vec::new();
+    let mut cold_values = Vec::new();
+    let mut mild_values = Vec::new();
+    let mut cold_distance_km = 0.0;
+    let mut mild_distance_km = 0.0;
 
     for snapshot in by_ts.values() {
         if snapshot.odo.is_some() {
@@ -2807,6 +2836,14 @@ async fn compute_vehicle_metrics(
                             temperature_c: temp,
                             km_per_soc,
                         });
+                        if temp <= 5.0 {
+                            cold_values.push(km_per_soc);
+                            cold_distance_km += delta_km;
+                        }
+                        if temp > 15.0 && temp <= 25.0 {
+                            mild_values.push(km_per_soc);
+                            mild_distance_km += delta_km;
+                        }
                     }
                 }
             }
@@ -2814,53 +2851,42 @@ async fn compute_vehicle_metrics(
         }
     }
 
-    let mut cold_values = Vec::new();
-    let mut mild_values = Vec::new();
-
-    for point in &points {
-        if point.temperature_c <= 5.0 {
-            cold_values.push(point.km_per_soc);
-        }
-        if point.temperature_c > 15.0 && point.temperature_c <= 25.0 {
-            mild_values.push(point.km_per_soc);
-        }
-    }
-
-    let cold_median = median(cold_values.clone());
-    let mild_median = median(mild_values.clone());
-
     let mut metrics = Vec::new();
 
-    if let (Some(cold), Some(mild)) = (cold_median, mild_median) {
-        if mild > 0.0 {
-            let retention = (100.0 * cold / mild).clamp(0.0, 200.0);
-            let sample_count = (cold_values.len().min(mild_values.len())) as i64;
-            metrics.push(MetricCalc {
-                key: "cold_weather_range_retention",
-                value: retention,
-                unit: "%",
-                direction: "higher_is_better",
-                sample_count,
-                confidence_level: confidence_from_samples(sample_count),
-            });
+    if gates.range_gate_passed(cold_distance_km, mild_distance_km) {
+        let cold_median = median(cold_values.clone());
+        let mild_median = median(mild_values.clone());
+        if let (Some(cold), Some(mild)) = (cold_median, mild_median) {
+            if mild > 0.0 {
+                let retention = (100.0 * cold / mild).clamp(0.0, 200.0);
+                let sample_count = cold_values.len().min(mild_values.len()) as i64;
+                metrics.push(MetricCalc {
+                    key: "cold_weather_range_retention",
+                    value: retention,
+                    unit: "%",
+                    direction: "higher_is_better",
+                    sample_count,
+                    confidence_level: confidence_from_samples(sample_count),
+                });
 
-            if points.len() >= 6 {
-                if let Some(slope) = linear_regression_slope(&points) {
-                    let loss_pct_per_10c_drop = if slope < 0.0 {
-                        ((-slope * 10.0) / mild) * 100.0
-                    } else {
-                        0.0
+                if points.len() >= gates.min_sensitivity_points {
+                    if let Some(slope) = linear_regression_slope(&points) {
+                        let loss_pct_per_10c_drop = if slope < 0.0 {
+                            ((-slope * 10.0) / mild) * 100.0
+                        } else {
+                            0.0
+                        }
+                        .clamp(0.0, 100.0);
+
+                        metrics.push(MetricCalc {
+                            key: "range_temperature_sensitivity_index",
+                            value: loss_pct_per_10c_drop,
+                            unit: "%_loss_per_10C_drop",
+                            direction: "lower_is_better",
+                            sample_count: points.len() as i64,
+                            confidence_level: confidence_from_samples(points.len() as i64),
+                        });
                     }
-                    .clamp(0.0, 100.0);
-
-                    metrics.push(MetricCalc {
-                        key: "range_temperature_sensitivity_index",
-                        value: loss_pct_per_10c_drop,
-                        unit: "%_loss_per_10C_drop",
-                        direction: "lower_is_better",
-                        sample_count: points.len() as i64,
-                        confidence_level: confidence_from_samples(points.len() as i64),
-                    });
                 }
             }
         }
@@ -2901,18 +2927,21 @@ async fn compute_vehicle_metrics(
         }
     }
 
-    if let (Some(cold), Some(mild)) = (median(cold_charge.clone()), median(mild_charge.clone())) {
-        if mild > 0.0 {
-            let retention = (100.0 * cold / mild).clamp(0.0, 200.0);
-            let sample_count = cold_charge.len().min(mild_charge.len()) as i64;
-            metrics.push(MetricCalc {
-                key: "cold_weather_charge_speed_retention",
-                value: retention,
-                unit: "%",
-                direction: "higher_is_better",
-                sample_count,
-                confidence_level: confidence_from_samples(sample_count),
-            });
+    if gates.charge_gate_passed(cold_charge.len(), mild_charge.len()) {
+        if let (Some(cold), Some(mild)) = (median(cold_charge.clone()), median(mild_charge.clone()))
+        {
+            if mild > 0.0 {
+                let retention = (100.0 * cold / mild).clamp(0.0, 200.0);
+                let sample_count = cold_charge.len().min(mild_charge.len()) as i64;
+                metrics.push(MetricCalc {
+                    key: "cold_weather_charge_speed_retention",
+                    value: retention,
+                    unit: "%",
+                    direction: "higher_is_better",
+                    sample_count,
+                    confidence_level: confidence_from_samples(sample_count),
+                });
+            }
         }
     }
 
@@ -3083,6 +3112,28 @@ fn read_positive_env_f64(name: &str, default: f64) -> f64 {
         .and_then(|v| v.parse::<f64>().ok())
         .filter(|v| *v > 0.0)
         .unwrap_or(default)
+}
+
+fn temperature_sample_gates() -> TemperatureSampleGates {
+    let min_cold_charge_sessions =
+        read_positive_env("CAR_RANKS_TEMP_GATE_MIN_COLD_CHARGE_SESSIONS", 1);
+    let min_mild_charge_sessions =
+        read_positive_env("CAR_RANKS_TEMP_GATE_MIN_MILD_CHARGE_SESSIONS", 1);
+    let min_sensitivity_points = read_positive_env("CAR_RANKS_TEMP_GATE_MIN_SENSITIVITY_POINTS", 6);
+
+    TemperatureSampleGates {
+        min_cold_distance_km: read_positive_env_f64(
+            "CAR_RANKS_TEMP_GATE_MIN_COLD_DISTANCE_KM",
+            20.0,
+        ),
+        min_mild_distance_km: read_positive_env_f64(
+            "CAR_RANKS_TEMP_GATE_MIN_MILD_DISTANCE_KM",
+            20.0,
+        ),
+        min_cold_charge_sessions: min_cold_charge_sessions as usize,
+        min_mild_charge_sessions: min_mild_charge_sessions as usize,
+        min_sensitivity_points: min_sensitivity_points as usize,
+    }
 }
 
 fn wh_per_km_from_soc_delta(
@@ -3265,6 +3316,184 @@ mod tests {
         assert!(score <= 100.0);
     }
 
+    #[test]
+    fn temperature_sample_gate_checks() {
+        let gates = TemperatureSampleGates {
+            min_cold_distance_km: 20.0,
+            min_mild_distance_km: 20.0,
+            min_cold_charge_sessions: 1,
+            min_mild_charge_sessions: 1,
+            min_sensitivity_points: 6,
+        };
+
+        assert!(gates.range_gate_passed(20.0, 25.0));
+        assert!(!gates.range_gate_passed(19.9, 25.0));
+        assert!(!gates.range_gate_passed(20.0, 19.9));
+
+        assert!(gates.charge_gate_passed(1, 1));
+        assert!(!gates.charge_gate_passed(0, 1));
+        assert!(!gates.charge_gate_passed(1, 0));
+    }
+
+    #[tokio::test]
+    async fn temperature_rankings_skip_vehicle_when_range_gate_fails() -> Result<()> {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .context("failed to connect in-memory sqlite")?;
+        apply_schema(&pool).await?;
+
+        let vehicle_uid = Uuid::new_v4().to_string();
+        let now = Utc::now();
+
+        sqlx::query(
+            r#"
+            INSERT INTO vehicle (
+              vehicle_uid,
+              source_account_id,
+              powertrain_class,
+              created_at,
+              updated_at
+            ) VALUES (?, ?, ?, ?, ?)
+            "#,
+        )
+        .bind(&vehicle_uid)
+        .bind("test-account")
+        .bind("bev")
+        .bind(now.to_rfc3339())
+        .bind(now.to_rfc3339())
+        .execute(&pool)
+        .await
+        .context("failed to insert vehicle")?;
+
+        for i in 0..6 {
+            let ts = now - Duration::hours(4) + Duration::minutes(i * 5);
+            let odo_km = 1000.0 + i as f64;
+            let soc_pct = 90.0 - (i as f64 * 0.5);
+            let temp_c = if i < 3 { 20.0 } else { 0.0 };
+
+            for (signal_key, value, temp_bin) in [
+                ("distance.odometer", odo_km, None),
+                ("ev.soc_pct", soc_pct, None),
+                (
+                    "environment.ambient_temp_c",
+                    temp_c,
+                    Some(derive_temperature_bin(temp_c).to_string()),
+                ),
+            ] {
+                sqlx::query(
+                    r#"
+                    INSERT INTO vehicle_signal_observation (
+                      observation_id,
+                      vehicle_uid,
+                      signal_key,
+                      value_number,
+                      observed_at,
+                      ingested_at,
+                      source,
+                      status,
+                      temperature_bin,
+                      is_temperature_estimated
+                    ) VALUES (?, ?, ?, ?, ?, ?, 'OBD', 'ok', ?, 0)
+                    "#,
+                )
+                .bind(Uuid::new_v4().to_string())
+                .bind(&vehicle_uid)
+                .bind(signal_key)
+                .bind(value)
+                .bind(ts.to_rfc3339())
+                .bind(now.to_rfc3339())
+                .bind(temp_bin)
+                .execute(&pool)
+                .await
+                .with_context(|| format!("failed to insert observation {}", signal_key))?;
+            }
+        }
+
+        for (session_id, avg_power_kw, temp_bin) in [
+            (Uuid::new_v4().to_string(), 62.0, "mild"),
+            (Uuid::new_v4().to_string(), 34.0, "cold"),
+        ] {
+            sqlx::query(
+                r#"
+                INSERT INTO vehicle_charging_session (
+                  charging_session_id,
+                  vehicle_uid,
+                  session_id,
+                  started_at,
+                  ended_at,
+                  status,
+                  charger_type,
+                  avg_charge_power_kw,
+                  temperature_bin,
+                  temperature_is_estimated,
+                  sample_count,
+                  created_at,
+                  updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                "#,
+            )
+            .bind(Uuid::new_v4().to_string())
+            .bind(&vehicle_uid)
+            .bind(session_id)
+            .bind((now - Duration::hours(2)).to_rfc3339())
+            .bind((now - Duration::hours(1)).to_rfc3339())
+            .bind("complete")
+            .bind("dc")
+            .bind(avg_power_kw)
+            .bind(temp_bin)
+            .bind(0_i64)
+            .bind(2_i64)
+            .bind(now.to_rfc3339())
+            .bind(now.to_rfc3339())
+            .execute(&pool)
+            .await
+            .context("failed to insert charging session")?;
+        }
+
+        let _ = recompute_temperature_kpis(&pool).await?;
+        let _ = rebuild_temperature_rankings(&pool).await?;
+
+        let temp_keys: HashSet<String> = sqlx::query(
+            r#"
+            SELECT DISTINCT kpi_key
+            FROM vehicle_kpi_snapshot
+            WHERE vehicle_uid = ?
+              AND ranking_type = 'ev_temperature_impact'
+              AND timeframe = '30d'
+              AND temperature_bin = 'cold'
+            "#,
+        )
+        .bind(&vehicle_uid)
+        .fetch_all(&pool)
+        .await
+        .context("failed to fetch temperature KPI keys")?
+        .into_iter()
+        .map(|row| row.try_get::<String, _>("kpi_key"))
+        .collect::<std::result::Result<HashSet<_>, _>>()
+        .context("failed to parse temperature KPI keys")?;
+
+        assert!(!temp_keys.contains("cold_weather_range_retention"));
+        assert!(!temp_keys.contains("range_temperature_sensitivity_index"));
+        assert!(temp_keys.contains("cold_weather_charge_speed_retention"));
+
+        let ranking_count: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*)
+            FROM cohort_ranking_snapshot
+            WHERE ranking_type = 'ev_temperature_impact'
+              AND timeframe = '30d'
+            "#,
+        )
+        .fetch_one(&pool)
+        .await
+        .context("failed to count temperature rankings")?;
+
+        assert_eq!(ranking_count, 0);
+        Ok(())
+    }
+
     #[tokio::test]
     async fn end_to_end_kpi_job_materializes_locked_kpi_sets() -> Result<()> {
         let pool = SqlitePoolOptions::new()
@@ -3344,11 +3573,11 @@ mod tests {
         };
 
         let mut records = Vec::new();
-        for i in 0..9 {
+        for i in 0..21 {
             let ts = drive_start + Duration::minutes(i * 5);
             let odo_km = 1000.0 + (i as f64 * 2.5);
-            let soc_pct = 90.0 - (i as f64 * 0.8);
-            let ambient_temp_c = if i < 4 { 20.0 } else { 0.0 };
+            let soc_pct = 90.0 - (i as f64 * 0.35);
+            let ambient_temp_c = if i < 11 { 20.0 } else { 0.0 };
             let speed_kmh = if i % 2 == 0 { 35.0 } else { 95.0 };
             let regen_kw = 4.0 + (i % 2) as f64;
             let traction_kw = 18.0 + (i % 3) as f64;

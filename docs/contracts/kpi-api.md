@@ -1,6 +1,6 @@
 # KPI APIs
 
-Status: Draft v3 (locked EV-first formulas)  
+Status: Draft v4 (locked EV-first formulas + temperature gates)  
 Date: 2026-02-20  
 Scope: Read-only EV KPI endpoints for MVP Rust backend.
 
@@ -142,6 +142,9 @@ Returns charging KPI snapshot (`ranking_type=ev_charging_performance`).
 }
 ```
 
+Notes:
+- `cold_weather_charge_speed_retention` is withheld unless both cold and mild charging-session gate thresholds are met.
+
 ## `GET /v1/kpis/temperature-impact`
 
 Returns cold-climate delta metrics (`ranking_type=ev_temperature_impact`).
@@ -199,6 +202,26 @@ Returns cold-climate delta metrics (`ranking_type=ev_temperature_impact`).
   }
 }
 ```
+
+Notes:
+- `cold_weather_range_retention` and `range_temperature_sensitivity_index` are withheld unless both cold and mild distance gates are met.
+- `cold_weather_charge_speed_retention` is withheld unless both cold and mild charging-session gates are met.
+
+## Temperature Sample Gates
+
+The backend enforces gates before persisting temperature-sensitive KPIs.
+
+Default thresholds:
+- `CAR_RANKS_TEMP_GATE_MIN_COLD_DISTANCE_KM=20`
+- `CAR_RANKS_TEMP_GATE_MIN_MILD_DISTANCE_KM=20`
+- `CAR_RANKS_TEMP_GATE_MIN_COLD_CHARGE_SESSIONS=1`
+- `CAR_RANKS_TEMP_GATE_MIN_MILD_CHARGE_SESSIONS=1`
+- `CAR_RANKS_TEMP_GATE_MIN_SENSITIVITY_POINTS=6`
+
+Behavior:
+- If distance gates fail, temperature range metrics are omitted.
+- If charging-session gates fail, cold charging retention is omitted.
+- Omitted metrics are not backfilled with synthetic defaults.
 
 ## Locked KPI Formula and Signal Contract
 
