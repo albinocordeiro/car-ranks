@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashSet};
 use std::net::SocketAddr;
 use std::str::FromStr;
@@ -10,7 +9,9 @@ use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
+#[cfg(test)]
+use chrono::Duration;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sqlx::postgres::PgPoolOptions;
@@ -28,8 +29,14 @@ mod kpis;
 mod metrics;
 mod migrations;
 mod rankings;
+mod utils;
 
 use errors::{ApiError, postgres_rollout_not_enabled};
+pub(crate) use utils::{
+    cmp_f64_desc, derive_temperature_bin, normalize_charger_type, now_str, parse_ts,
+    percentile_rank, read_positive_env, read_positive_env_f64, timeframe_cutoff,
+    timestamp_in_capture_window, year_band,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum DatabaseBackend {
@@ -587,102 +594,6 @@ fn map_session_event(event_type: &str) -> Option<(&'static str, &'static str)> {
         "charging_session_stop" => Some(("charging", "stop")),
         _ => None,
     }
-}
-
-pub(crate) fn derive_temperature_bin(temp_c: f64) -> &'static str {
-    if temp_c <= -5.0 {
-        "very_cold"
-    } else if temp_c <= 5.0 {
-        "cold"
-    } else if temp_c <= 15.0 {
-        "cool"
-    } else if temp_c <= 25.0 {
-        "mild"
-    } else {
-        "hot"
-    }
-}
-
-pub(crate) fn normalize_charger_type(value: &str) -> &'static str {
-    let lower = value.to_ascii_lowercase();
-    if lower.contains("dc") || lower.contains("fast") {
-        "dc"
-    } else if lower.contains("ac") || lower.contains("level") {
-        "ac"
-    } else {
-        "unknown"
-    }
-}
-
-pub(crate) fn parse_ts(value: &str) -> Option<DateTime<Utc>> {
-    DateTime::parse_from_rfc3339(value)
-        .ok()
-        .map(|dt| dt.with_timezone(&Utc))
-}
-
-fn timestamp_in_capture_window(
-    observed_at: &DateTime<Utc>,
-    started_at: &DateTime<Utc>,
-    ended_at: &DateTime<Utc>,
-) -> bool {
-    observed_at >= started_at && observed_at <= ended_at
-}
-
-pub(crate) fn now_str() -> String {
-    Utc::now().to_rfc3339()
-}
-
-fn read_positive_env(name: &str, default: i64) -> i64 {
-    std::env::var(name)
-        .ok()
-        .and_then(|v| v.parse::<i64>().ok())
-        .filter(|v| *v > 0)
-        .unwrap_or(default)
-}
-
-pub(crate) fn read_positive_env_f64(name: &str, default: f64) -> f64 {
-    std::env::var(name)
-        .ok()
-        .and_then(|v| v.parse::<f64>().ok())
-        .filter(|v| *v > 0.0)
-        .unwrap_or(default)
-}
-
-pub(crate) fn timeframe_cutoff(timeframe: &str) -> Result<DateTime<Utc>> {
-    let now = Utc::now();
-    let cutoff = match timeframe {
-        "30d" => now - Duration::days(30),
-        "90d" => now - Duration::days(90),
-        "180d" => now - Duration::days(180),
-        "7d" => now - Duration::days(7),
-        _ => return Err(anyhow::anyhow!("unsupported timeframe: {}", timeframe)),
-    };
-    Ok(cutoff)
-}
-
-pub(crate) fn year_band(model_year: Option<i64>) -> String {
-    match model_year {
-        Some(y) => format!("{}-{}", y, y + 2),
-        None => "unknown".to_string(),
-    }
-}
-
-fn percentile_rank(values: &[f64], vehicle_value: f64, higher_is_better: bool) -> i64 {
-    if values.is_empty() {
-        return 0;
-    }
-
-    let better_or_equal = if higher_is_better {
-        values.iter().filter(|v| **v <= vehicle_value).count()
-    } else {
-        values.iter().filter(|v| **v >= vehicle_value).count()
-    };
-
-    ((better_or_equal as f64 / values.len() as f64) * 100.0).round() as i64
-}
-
-pub(crate) fn cmp_f64_desc(a: f64, b: f64) -> Ordering {
-    b.partial_cmp(&a).unwrap_or(Ordering::Equal)
 }
 
 #[cfg(test)]
