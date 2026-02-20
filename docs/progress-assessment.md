@@ -12,8 +12,8 @@ Completed backend milestones:
 - Priority 3 advanced: Postgres charging-session/KPI/ranking recompute now runs natively before bridge sync, and range ranking + composite KPI/ranking recompute now run natively after bridge sync.
 
 Current runtime status:
-- SQLite mode: full MVP API surface available.
-- Postgres mode: full MVP API surface now available.
+- Postgres mode: full MVP API surface available and is the MVP runtime target.
+- SQLite mode remains available for dev/test and bridge-internal support only during the release window.
 - Internal KPI/ranking recompute in Postgres mode now uses a hybrid path (native charging pre-bridge -> SQLite bridge for range KPI + temperature -> native range/composite post-bridge stages).
 
 ## Risks and Gaps
@@ -26,6 +26,7 @@ Current runtime status:
 Priority 1: MVP ship readiness
 - Freeze scope to must-have product behavior and defer non-blocking architecture work.
 - Focus engineering time on release blockers: correctness, crash risk, ownership/auth safety, and UX-critical API stability.
+- Product runtime focus is Postgres-only for MVP; SQLite work is limited to keeping dev/test and bridge support healthy.
 
 Priority 2: Reviewer-friendly implementation gate
 - Every change must be reviewer-friendly by default:
@@ -40,11 +41,11 @@ Priority 3: Job execution safety
 
 Priority 4: Product contract hardening
 - Expand API contract examples for freshness/readiness telemetry and status fields.
-- Add API tests for new freshness paths in both SQLite and Postgres modes.
+- Add API tests for new freshness paths in Postgres runtime, with lightweight SQLite regression coverage only where bridge internals rely on it.
 
 ## Suggested Execution Order
 
 1. Lock MVP scope and release checklist; defer further native Postgres migration work unless a blocker demands it (`docs/mvp-release-checklist.md`).
-2. Finish remaining release-blocker fixes using the reviewer-friendly coding gate.
+2. Finish remaining Postgres-runtime release-blocker fixes using the reviewer-friendly coding gate.
 3. Expand docs/contracts and targeted tests for freshness/readiness operational paths.
 4. Prepare release operations (metadata/privacy/support artifacts) for App Store submission.
