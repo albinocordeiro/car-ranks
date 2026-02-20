@@ -1,15 +1,6 @@
-use std::net::SocketAddr;
-use std::str::FromStr;
-use std::sync::Arc;
+use anyhow::Result;
 
-use anyhow::{Context, Result};
-use axum::Router;
-use axum::routing::{get, post};
-use sqlx::postgres::PgPoolOptions;
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
-use tower_http::trace::TraceLayer;
-use tracing::info;
-
+mod bootstrap;
 mod config;
 mod errors;
 mod handlers;
@@ -57,100 +48,7 @@ const POSTGRES_MIGRATION_0001: &str = migrations::POSTGRES_MIGRATION_0001;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            std::env::var("RUST_LOG")
-                .unwrap_or_else(|_| "info,sqlx=warn,tower_http=info".to_string()),
-        )
-        .init();
-
-    let signal_keys = Arc::new(load_signal_keys().context("failed to load signal registry v0.2")?);
-    info!(
-        "locked KPI catalog loaded with {} metric definitions",
-        kpi_specs::locked_kpi_catalog_len()
-    );
-
-    let database_url =
-        std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://car_ranks.db".to_string());
-    let backend =
-        if database_url.starts_with("postgres://") || database_url.starts_with("postgresql://") {
-            DatabaseBackend::Postgres
-        } else {
-            DatabaseBackend::Sqlite
-        };
-
-    let (sqlite_pool, pg_pool) = match backend {
-        DatabaseBackend::Sqlite => {
-            let connect_options = SqliteConnectOptions::from_str(&database_url)
-                .context("invalid sqlite DATABASE_URL")?
-                .create_if_missing(true)
-                .foreign_keys(true);
-
-            let sqlite_pool = SqlitePoolOptions::new()
-                .max_connections(10)
-                .connect_with(connect_options)
-                .await
-                .context("failed to connect sqlite")?;
-            apply_schema(&sqlite_pool).await?;
-            (sqlite_pool, None)
-        }
-        DatabaseBackend::Postgres => {
-            let pg_pool = PgPoolOptions::new()
-                .max_connections(10)
-                .connect(&database_url)
-                .await
-                .context("failed to connect postgres")?;
-            apply_postgres_schema(&pg_pool).await?;
-
-            // Keep sqlite-only code paths available while postgres rollout is incremental.
-            let sqlite_pool = SqlitePoolOptions::new()
-                .max_connections(1)
-                .connect("sqlite::memory:")
-                .await
-                .context("failed to create sqlite fallback pool")?;
-            apply_schema(&sqlite_pool).await?;
-            (sqlite_pool, Some(pg_pool))
-        }
-    };
-
-    let app_state = AppState {
-        sqlite_pool,
-        pg_pool,
-        backend,
-        signal_keys,
-    };
-
-    let app = Router::new()
-        .route("/health", get(health))
-        .route("/v1/config/sampling", get(get_config_sampling))
-        .route("/v1/telemetry/batches", post(post_telemetry_batches))
-        .route("/v1/kpis/me", get(get_kpis_me))
-        .route("/v1/kpis/charging", get(get_kpis_charging))
-        .route(
-            "/v1/kpis/temperature-impact",
-            get(get_kpis_temperature_impact),
-        )
-        .route("/v1/rankings", get(get_rankings))
-        .route("/internal/jobs/recompute-kpis", post(post_recompute_kpis))
-        .route(
-            "/internal/jobs/build-ranking-snapshots",
-            post(post_build_rankings),
-        )
-        .layer(TraceLayer::new_for_http())
-        .with_state(app_state);
-
-    let bind_addr = std::env::var("BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:8080".to_string());
-    let addr: SocketAddr = bind_addr.parse().context("invalid BIND_ADDR")?;
-
-    info!("backend listening on http://{}", addr);
-
-    let listener = tokio::net::TcpListener::bind(addr)
-        .await
-        .context("failed to bind listener")?;
-
-    axum::serve(listener, app).await.context("server error")?;
-
-    Ok(())
+    bootstrap::run().await
 }
 
 #[cfg(test)]
