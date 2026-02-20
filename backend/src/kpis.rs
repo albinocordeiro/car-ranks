@@ -8,7 +8,6 @@ use sqlx::{PgPool, Row, SqlitePool};
 use crate::{
     ApiError, AppState, CohortBenchmark, DatabaseBackend, GenericKpiResponse, KpiMetric, KpiQuery,
     KpiTempQuery, TemperatureImpactResponse, now_str, percentile_rank,
-    postgres_rollout_not_enabled,
 };
 
 pub(crate) async fn get_kpis_me(
@@ -133,7 +132,9 @@ pub(crate) async fn get_kpis_temperature_impact(
     Query(params): Query<KpiTempQuery>,
 ) -> Result<Json<TemperatureImpactResponse>, ApiError> {
     if state.backend != DatabaseBackend::Sqlite {
-        return Err(postgres_rollout_not_enabled("/v1/kpis/temperature-impact"));
+        return Err(crate::errors::postgres_rollout_not_enabled(
+            "/v1/kpis/temperature-impact",
+        ));
     }
 
     let timeframe = params.timeframe.unwrap_or_else(|| "90d".to_string());

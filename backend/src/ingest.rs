@@ -7,8 +7,8 @@ use uuid::Uuid;
 
 use crate::{
     ApiError, AppState, DatabaseBackend, IngestRecordError, IngestResponse, TelemetryBatchRequest,
-    derive_temperature_bin, map_session_event, now_str, postgres_rollout_not_enabled,
-    read_positive_env, timestamp_in_capture_window,
+    derive_temperature_bin, map_session_event, now_str, read_positive_env,
+    timestamp_in_capture_window,
 };
 
 pub(crate) const INGEST_SCHEMA_VERSION: &str = "0.2";
@@ -18,7 +18,9 @@ pub(crate) async fn post_telemetry_batches(
     Json(payload): Json<TelemetryBatchRequest>,
 ) -> Result<Json<IngestResponse>, ApiError> {
     if state.backend != DatabaseBackend::Sqlite {
-        return Err(postgres_rollout_not_enabled("/v1/telemetry/batches"));
+        return Err(crate::errors::postgres_rollout_not_enabled(
+            "/v1/telemetry/batches",
+        ));
     }
 
     let source_upper = payload.source.to_uppercase();

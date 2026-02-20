@@ -36,7 +36,7 @@ async fn postgres_bootstrap_migration_applies_when_env_set() -> Result<()> {
         .await
         .context("failed to set postgres search_path")?;
 
-    apply_postgres_schema(&pool).await?;
+    crate::migrations::apply_postgres_schema(&pool).await?;
 
     let table_exists: Option<String> = sqlx::query_scalar(
         r#"
@@ -92,7 +92,7 @@ async fn postgres_kpi_fetch_and_charging_handler_work_when_env_set() -> Result<(
         .execute(&pool)
         .await
         .context("failed to set postgres search_path")?;
-    apply_postgres_schema(&pool).await?;
+    crate::migrations::apply_postgres_schema(&pool).await?;
 
     let vehicle_uid = Uuid::new_v4().to_string();
     let now = Utc::now();
@@ -218,7 +218,7 @@ async fn postgres_kpi_fetch_and_charging_handler_work_when_env_set() -> Result<(
     .await
     .context("failed to insert postgres charging KPI")?;
 
-    let fetched = fetch_latest_vehicle_kpis_postgres(
+    let fetched = crate::handlers::fetch_latest_vehicle_kpis_postgres(
         &pool,
         &vehicle_uid,
         "ev_range_efficiency",
@@ -237,7 +237,7 @@ async fn postgres_kpi_fetch_and_charging_handler_work_when_env_set() -> Result<(
         .connect("sqlite::memory:")
         .await
         .context("failed to create sqlite state pool")?;
-    apply_schema(&sqlite_pool).await?;
+    crate::migrations::apply_schema(&sqlite_pool).await?;
     let state = AppState {
         sqlite_pool,
         pg_pool: Some(pool.clone()),
@@ -250,7 +250,7 @@ async fn postgres_kpi_fetch_and_charging_handler_work_when_env_set() -> Result<(
         temperature_bin: Some("all".to_string()),
         charger_type: Some("all".to_string()),
     };
-    let Json(response) = get_kpis_charging(State(state), Query(query))
+    let Json(response) = crate::handlers::get_kpis_charging(State(state), Query(query))
         .await
         .map_err(|err| anyhow::anyhow!("postgres charging KPI handler failed: {}", err.message))?;
     assert_eq!(response.ranking_type, "ev_charging_performance");

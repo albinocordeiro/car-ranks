@@ -44,7 +44,7 @@ async fn initialize_pools(
                 .connect_with(connect_options)
                 .await
                 .context("failed to connect sqlite")?;
-            crate::apply_schema(&sqlite_pool).await?;
+            crate::migrations::apply_schema(&sqlite_pool).await?;
             Ok((sqlite_pool, None))
         }
         crate::DatabaseBackend::Postgres => {
@@ -53,7 +53,7 @@ async fn initialize_pools(
                 .connect(database_url)
                 .await
                 .context("failed to connect postgres")?;
-            crate::apply_postgres_schema(&pg_pool).await?;
+            crate::migrations::apply_postgres_schema(&pg_pool).await?;
 
             // Keep sqlite-only code paths available while postgres rollout is incremental.
             let sqlite_pool = SqlitePoolOptions::new()
@@ -61,7 +61,7 @@ async fn initialize_pools(
                 .connect("sqlite::memory:")
                 .await
                 .context("failed to create sqlite fallback pool")?;
-            crate::apply_schema(&sqlite_pool).await?;
+            crate::migrations::apply_schema(&sqlite_pool).await?;
             Ok((sqlite_pool, Some(pg_pool)))
         }
     }

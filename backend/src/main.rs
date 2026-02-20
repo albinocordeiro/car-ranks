@@ -18,18 +18,7 @@ mod signals;
 mod state;
 mod utils;
 
-use errors::ApiError;
-pub(crate) use errors::postgres_rollout_not_enabled;
-#[cfg(test)]
-pub(crate) use handlers::fetch_latest_vehicle_kpis_postgres;
-pub(crate) use handlers::{
-    get_config_sampling, get_kpis_charging, get_kpis_me, get_kpis_temperature_impact, get_rankings,
-    health, post_build_rankings, post_recompute_kpis, post_telemetry_batches,
-};
-pub(crate) use jobs::run_kpi_job;
-#[cfg(test)]
-pub(crate) use jobs::{rebuild_temperature_rankings, recompute_temperature_kpis};
-pub(crate) use migrations::{apply_postgres_schema, apply_schema};
+pub(crate) use errors::ApiError;
 pub(crate) use models::*;
 pub(crate) use signals::{load_signal_keys, map_session_event};
 pub(crate) use state::{AppState, DatabaseBackend};

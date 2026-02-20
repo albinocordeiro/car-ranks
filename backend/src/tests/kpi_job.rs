@@ -18,7 +18,7 @@ async fn temperature_rankings_skip_vehicle_when_range_gate_fails() -> Result<()>
         .connect("sqlite::memory:")
         .await
         .context("failed to connect in-memory sqlite")?;
-    apply_schema(&pool).await?;
+    crate::migrations::apply_schema(&pool).await?;
 
     let vehicle_uid = Uuid::new_v4().to_string();
     let now = Utc::now();
@@ -128,8 +128,8 @@ async fn temperature_rankings_skip_vehicle_when_range_gate_fails() -> Result<()>
         .context("failed to insert charging session")?;
     }
 
-    let _ = recompute_temperature_kpis(&pool).await?;
-    let _ = rebuild_temperature_rankings(&pool).await?;
+    let _ = crate::jobs::recompute_temperature_kpis(&pool).await?;
+    let _ = crate::jobs::rebuild_temperature_rankings(&pool).await?;
 
     let temp_keys: HashSet<String> = sqlx::query(
         r#"
@@ -177,7 +177,7 @@ async fn end_to_end_kpi_job_materializes_locked_kpi_sets() -> Result<()> {
         .connect("sqlite::memory:")
         .await
         .context("failed to connect in-memory sqlite")?;
-    apply_schema(&pool).await?;
+    crate::migrations::apply_schema(&pool).await?;
 
     let state = AppState {
         sqlite_pool: pool.clone(),
@@ -433,14 +433,15 @@ async fn end_to_end_kpi_job_materializes_locked_kpi_sets() -> Result<()> {
         }],
     };
 
-    let Json(ingest_response) = post_telemetry_batches(State(state.clone()), Json(payload))
-        .await
-        .map_err(|err| anyhow::anyhow!("ingest failed: {} {}", err.error, err.message))?;
+    let Json(ingest_response) =
+        crate::handlers::post_telemetry_batches(State(state.clone()), Json(payload))
+            .await
+            .map_err(|err| anyhow::anyhow!("ingest failed: {} {}", err.error, err.message))?;
     assert!(ingest_response.accepted);
     assert!(!ingest_response.duplicate);
     assert_eq!(ingest_response.records_rejected, 0);
 
-    let job = run_kpi_job(&pool)
+    let job = crate::jobs::run_kpi_job(&pool)
         .await
         .map_err(|err| anyhow::anyhow!("kpi job failed: {} {}", err.error, err.message))?;
     assert!(job.ok);

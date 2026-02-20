@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::{
     ApiError, AppState, DatabaseBackend, RankingCohort, RankingPage, RankingRow, RankingsQuery,
-    RankingsResponse, now_str, postgres_rollout_not_enabled,
+    RankingsResponse, now_str,
 };
 
 pub(crate) async fn get_rankings(
@@ -16,7 +16,7 @@ pub(crate) async fn get_rankings(
     Query(params): Query<RankingsQuery>,
 ) -> Result<Json<RankingsResponse>, ApiError> {
     if state.backend != DatabaseBackend::Sqlite {
-        return Err(postgres_rollout_not_enabled("/v1/rankings"));
+        return Err(crate::errors::postgres_rollout_not_enabled("/v1/rankings"));
     }
 
     let supported_ranking_type = matches!(

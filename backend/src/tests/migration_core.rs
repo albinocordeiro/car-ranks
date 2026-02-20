@@ -1,8 +1,6 @@
 use anyhow::{Context, Result};
 use sqlx::sqlite::SqlitePoolOptions;
 
-use super::*;
-
 #[test]
 fn sqlite_migration_matches_legacy_schema_snapshot() {
     assert_eq!(
@@ -41,8 +39,8 @@ async fn apply_schema_records_migrations_once() -> Result<()> {
         .await
         .context("failed to connect in-memory sqlite")?;
 
-    apply_schema(&pool).await?;
-    apply_schema(&pool).await?;
+    crate::migrations::apply_schema(&pool).await?;
+    crate::migrations::apply_schema(&pool).await?;
 
     let count: i64 = sqlx::query_scalar(
         r#"

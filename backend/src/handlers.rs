@@ -40,7 +40,7 @@ pub(crate) async fn post_recompute_kpis(
             "/internal/jobs/recompute-kpis",
         ));
     }
-    crate::run_kpi_job(&state.sqlite_pool).await.map(Json)
+    crate::jobs::run_kpi_job(&state.sqlite_pool).await.map(Json)
 }
 
 pub(crate) async fn post_build_rankings(
@@ -51,7 +51,7 @@ pub(crate) async fn post_build_rankings(
             "/internal/jobs/build-ranking-snapshots",
         ));
     }
-    crate::run_kpi_job(&state.sqlite_pool).await.map(Json)
+    crate::jobs::run_kpi_job(&state.sqlite_pool).await.map(Json)
 }
 
 pub(crate) async fn get_kpis_me(

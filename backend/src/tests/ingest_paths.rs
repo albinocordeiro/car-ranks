@@ -16,7 +16,7 @@ async fn test_app_state() -> Result<AppState> {
         .connect("sqlite::memory:")
         .await
         .context("failed to connect in-memory sqlite")?;
-    apply_schema(&pool).await?;
+    crate::migrations::apply_schema(&pool).await?;
     Ok(AppState {
         sqlite_pool: pool,
         pg_pool: None,
@@ -81,9 +81,10 @@ async fn ingest_duplicate_same_envelope_returns_duplicate_true() -> Result<()> {
         now - Duration::minutes(1),
     );
 
-    let Json(first_response) = post_telemetry_batches(State(state.clone()), Json(payload))
-        .await
-        .map_err(|err| anyhow::anyhow!("first ingest failed: {} {}", err.error, err.message))?;
+    let Json(first_response) =
+        crate::handlers::post_telemetry_batches(State(state.clone()), Json(payload))
+            .await
+            .map_err(|err| anyhow::anyhow!("first ingest failed: {} {}", err.error, err.message))?;
     assert!(first_response.accepted);
     assert!(!first_response.duplicate);
 
@@ -94,7 +95,7 @@ async fn ingest_duplicate_same_envelope_returns_duplicate_true() -> Result<()> {
         now - Duration::minutes(1),
     );
     let Json(duplicate_response) =
-        post_telemetry_batches(State(state.clone()), Json(duplicate_payload))
+        crate::handlers::post_telemetry_batches(State(state.clone()), Json(duplicate_payload))
             .await
             .map_err(|err| {
                 anyhow::anyhow!("duplicate ingest failed: {} {}", err.error, err.message)
@@ -117,7 +118,7 @@ async fn ingest_duplicate_with_different_envelope_returns_conflict() -> Result<(
         now - Duration::minutes(2),
         now - Duration::minutes(1),
     );
-    let _ = post_telemetry_batches(State(state.clone()), Json(payload))
+    let _ = crate::handlers::post_telemetry_batches(State(state.clone()), Json(payload))
         .await
         .map_err(|err| anyhow::anyhow!("first ingest failed: {} {}", err.error, err.message))?;
 
@@ -127,7 +128,7 @@ async fn ingest_duplicate_with_different_envelope_returns_conflict() -> Result<(
         now - Duration::minutes(2),
         now - Duration::seconds(10),
     );
-    let err = post_telemetry_batches(State(state.clone()), Json(conflict_payload))
+    let err = crate::handlers::post_telemetry_batches(State(state.clone()), Json(conflict_payload))
         .await
         .expect_err("expected idempotency conflict");
 
@@ -150,7 +151,7 @@ async fn ingest_rejects_unsupported_schema_version() -> Result<()> {
     );
     payload.schema_version = "1.0".to_string();
 
-    let err = post_telemetry_batches(State(state.clone()), Json(payload))
+    let err = crate::handlers::post_telemetry_batches(State(state.clone()), Json(payload))
         .await
         .expect_err("expected schema_version rejection");
     assert_eq!(err.status, StatusCode::BAD_REQUEST);
@@ -172,7 +173,7 @@ async fn ingest_rejects_record_outside_capture_window() -> Result<()> {
     );
     payload.records[0].observed_at = now;
 
-    let err = post_telemetry_batches(State(state.clone()), Json(payload))
+    let err = crate::handlers::post_telemetry_batches(State(state.clone()), Json(payload))
         .await
         .expect_err("expected out-of-window rejection");
     assert_eq!(err.status, StatusCode::BAD_REQUEST);
@@ -198,7 +199,7 @@ async fn ingest_rejects_unknown_session_event_type() -> Result<()> {
         session_id: Uuid::new_v4(),
     });
 
-    let err = post_telemetry_batches(State(state.clone()), Json(payload))
+    let err = crate::handlers::post_telemetry_batches(State(state.clone()), Json(payload))
         .await
         .expect_err("expected session event type rejection");
     assert_eq!(err.status, StatusCode::BAD_REQUEST);
