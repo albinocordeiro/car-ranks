@@ -8,8 +8,9 @@ use sqlx::PgPool;
 #[cfg(test)]
 use crate::KpiMetric;
 use crate::{
-    ApiError, AppState, GenericKpiResponse, IngestResponse, JobResponse, KpiQuery, KpiTempQuery,
-    RankingsQuery, RankingsResponse, TelemetryBatchRequest, TemperatureImpactResponse, now_str,
+    ApiError, AppState, GenericKpiResponse, IngestResponse, KpiQuery, KpiTempQuery, RankingsQuery,
+    RankingsResponse, SamplingConfigResponse, TelemetryBatchRequest, TemperatureImpactResponse,
+    now_str,
 };
 
 pub(crate) async fn health() -> Json<Value> {
@@ -20,7 +21,7 @@ pub(crate) async fn health() -> Json<Value> {
     }))
 }
 
-pub(crate) async fn get_config_sampling() -> Json<crate::SamplingConfigResponse> {
+pub(crate) async fn get_config_sampling() -> Json<SamplingConfigResponse> {
     crate::config::get_config_sampling().await
 }
 
@@ -30,28 +31,6 @@ pub(crate) async fn post_telemetry_batches(
 ) -> Result<Json<IngestResponse>, ApiError> {
     // Keep router-facing handlers thin; ingestion rules and persistence live in ingest.rs.
     crate::ingest::post_telemetry_batches(State(state), Json(payload)).await
-}
-
-pub(crate) async fn post_recompute_kpis(
-    State(state): State<AppState>,
-) -> Result<Json<JobResponse>, ApiError> {
-    if state.backend != crate::DatabaseBackend::Sqlite {
-        return Err(crate::errors::postgres_rollout_not_enabled(
-            "/internal/jobs/recompute-kpis",
-        ));
-    }
-    crate::jobs::run_kpi_job(&state.sqlite_pool).await.map(Json)
-}
-
-pub(crate) async fn post_build_rankings(
-    State(state): State<AppState>,
-) -> Result<Json<JobResponse>, ApiError> {
-    if state.backend != crate::DatabaseBackend::Sqlite {
-        return Err(crate::errors::postgres_rollout_not_enabled(
-            "/internal/jobs/build-ranking-snapshots",
-        ));
-    }
-    crate::jobs::run_kpi_job(&state.sqlite_pool).await.map(Json)
 }
 
 pub(crate) async fn get_kpis_me(
