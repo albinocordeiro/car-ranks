@@ -1,3 +1,7 @@
+use self::series::collect_session_series;
+
+mod series;
+
 /// Minimal projection of an observation row used while deriving charging
 /// session aggregates.
 pub(super) struct ChargingObservation {
@@ -29,57 +33,20 @@ pub(super) fn derive_session_metrics(
     started_at: &str,
     ended_at_opt: &Option<String>,
 ) -> SessionMetrics {
-    let mut soc_series: Vec<(String, f64)> = Vec::new();
-    let mut power_series: Vec<f64> = Vec::new();
-    let mut ambient_temps = Vec::new();
-    let mut battery_temps = Vec::new();
-    let mut charger_type = "unknown".to_string();
+    let mut series = collect_session_series(observations);
 
-    for observation in observations {
-        match observation.signal_key.as_str() {
-            "ev.soc_pct" => {
-                if let Some(value) = observation.value_number {
-                    soc_series.push((observation.observed_at, value));
-                }
-            }
-            "ev.charge_power_kw" | "power.battery_power_kw" => {
-                if let Some(value) = observation.value_number {
-                    if value.is_finite() {
-                        power_series.push(value.abs());
-                    }
-                }
-            }
-            "environment.ambient_temp_c" => {
-                if let Some(value) = observation.value_number {
-                    ambient_temps.push(value);
-                }
-            }
-            "ev.battery_temp_c" => {
-                if let Some(value) = observation.value_number {
-                    battery_temps.push(value);
-                }
-            }
-            "ev.charger_type" => {
-                if let Some(value) = observation.value_string {
-                    charger_type = crate::normalize_charger_type(&value).to_string();
-                }
-            }
-            _ => {}
-        }
-    }
-
-    soc_series.sort_by(|a, b| a.0.cmp(&b.0));
-    let soc_start = soc_series.first().map(|(_, value)| *value);
-    let soc_end = soc_series.last().map(|(_, value)| *value);
+    series.soc_series.sort_by(|a, b| a.0.cmp(&b.0));
+    let soc_start = series.soc_series.first().map(|(_, value)| *value);
+    let soc_end = series.soc_series.last().map(|(_, value)| *value);
     let soc_delta = match (soc_start, soc_end) {
         (Some(start), Some(end)) => Some(end - start),
         _ => None,
     };
 
-    let avg_power = crate::metrics::mean(&power_series);
-    let peak_power = crate::metrics::max_value(&power_series);
-    let ambient_avg = crate::metrics::mean(&ambient_temps);
-    let battery_avg = crate::metrics::mean(&battery_temps);
+    let avg_power = crate::metrics::mean(&series.power_series);
+    let peak_power = crate::metrics::max_value(&series.power_series);
+    let ambient_avg = crate::metrics::mean(&series.ambient_temps);
+    let battery_avg = crate::metrics::mean(&series.battery_temps);
 
     let temperature_source = ambient_avg.or(battery_avg);
     let temperature_bin = temperature_source
@@ -105,7 +72,7 @@ pub(super) fn derive_session_metrics(
         ambient_avg,
         battery_avg,
         temperature_bin,
-        charger_type,
-        sample_count: power_series.len() as i64,
+        charger_type: series.charger_type,
+        sample_count: series.power_series.len() as i64,
     }
 }
