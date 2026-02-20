@@ -5,17 +5,15 @@ use axum::extract::State;
 use crate::{ApiError, AppState, DatabaseBackend, IngestResponse, TelemetryBatchRequest, now_str};
 
 use self::idempotency::{IdempotencyOutcome, resolve_batch_idempotency};
+use self::persistence::persist_validated_batch;
 use self::request_validation::validate_batch_payload;
 use self::response::build_ingest_success_response;
 use self::source_context::build_source_context;
-use self::storage::{
-    ensure_vehicle_and_batch_rows, insert_diagnostic_events, insert_session_events,
-    insert_signal_observations,
-};
 
 mod idempotency;
 mod idempotency_envelope;
 mod idempotency_response;
+mod persistence;
 mod record_validation;
 mod request_validation;
 mod response;
@@ -54,29 +52,14 @@ pub(crate) async fn post_telemetry_batches(
         };
 
     let now = now_str();
-    let vehicle_uid_str = payload.vehicle_uid.to_string();
-
-    ensure_vehicle_and_batch_rows(
+    let (accepted, errors) = persist_validated_batch(
         &mut tx,
         &payload,
-        &vehicle_uid_str,
-        &source_context.source_account_id,
-        &source_context.source_upper,
-        &now,
-    )
-    .await?;
-
-    let (accepted, errors) = insert_signal_observations(
-        &mut tx,
-        &payload,
-        &vehicle_uid_str,
+        &source_context,
         &now,
         state.signal_keys.as_ref(),
     )
     .await?;
-
-    insert_session_events(&mut tx, &payload, &vehicle_uid_str, &now).await?;
-    insert_diagnostic_events(&mut tx, &payload, &vehicle_uid_str, &now).await?;
 
     tx.commit().await.context("failed to commit ingest tx")?;
 
