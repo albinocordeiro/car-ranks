@@ -14,6 +14,7 @@ mod range_efficiency;
 mod range_efficiency_regeneration;
 mod range_efficiency_scoring;
 mod range_efficiency_series;
+mod temperature_charge_retention;
 mod temperature_impact;
 mod temperature_impact_scoring;
 mod temperature_impact_series;
