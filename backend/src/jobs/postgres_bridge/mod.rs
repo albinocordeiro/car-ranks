@@ -36,6 +36,7 @@ pub(super) async fn run_kpi_job_postgres(
             sync_charging_rankings: false,
             sync_composite_kpi_snapshots: false,
             sync_composite_rankings: false,
+            sync_range_rankings: false,
         },
     )
     .await?;
@@ -45,6 +46,7 @@ pub(super) async fn run_kpi_job_postgres(
     let post_bridge_summary =
         super::postgres_native::run_native_postgres_post_bridge_stages(pg_pool).await?;
     tracing::debug!(
+        range_ranking_rows_upserted = post_bridge_summary.range_ranking_rows_upserted,
         composite_kpi_rows_upserted = post_bridge_summary.composite_kpi_rows_upserted,
         composite_ranking_rows_upserted = post_bridge_summary.composite_ranking_rows_upserted,
         "native postgres post-bridge job stages completed"

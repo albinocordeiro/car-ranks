@@ -10,6 +10,29 @@ pub(super) struct OutputSyncOptions {
     pub(super) sync_charging_rankings: bool,
     pub(super) sync_composite_kpi_snapshots: bool,
     pub(super) sync_composite_rankings: bool,
+    pub(super) sync_range_rankings: bool,
+}
+
+fn ranking_types_preserved_from_sync(options: &OutputSyncOptions) -> Vec<&'static str> {
+    let mut preserved = Vec::new();
+    if !options.sync_charging_rankings {
+        preserved.push("ev_charging_performance");
+    }
+    if !options.sync_composite_rankings {
+        preserved.push("ev_composite");
+    }
+    if !options.sync_range_rankings {
+        preserved.push("ev_range_efficiency");
+    }
+    preserved
+}
+
+fn quoted_not_in_clause(values: &[&str]) -> String {
+    values
+        .iter()
+        .map(|value| format!("'{}'", value))
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 macro_rules! get_col {
@@ -52,39 +75,39 @@ async fn clear_postgres_output_tables(
     pg_tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     options: &OutputSyncOptions,
 ) -> Result<(), ApiError> {
-    let mut statements = Vec::new();
-    if options.sync_charging_rankings && options.sync_composite_rankings {
-        statements.push("DELETE FROM cohort_ranking_snapshot");
-    } else if options.sync_charging_rankings {
-        statements.push("DELETE FROM cohort_ranking_snapshot WHERE ranking_type <> 'ev_composite'");
-    } else if options.sync_composite_rankings {
-        statements.push(
-            "DELETE FROM cohort_ranking_snapshot WHERE ranking_type <> 'ev_charging_performance'",
-        );
+    let mut statements: Vec<String> = Vec::new();
+    let preserved_rankings = ranking_types_preserved_from_sync(options);
+    if preserved_rankings.is_empty() {
+        statements.push("DELETE FROM cohort_ranking_snapshot".to_string());
     } else {
-        statements.push(
-            "DELETE FROM cohort_ranking_snapshot WHERE ranking_type NOT IN ('ev_charging_performance', 'ev_composite')",
-        );
+        statements.push(format!(
+            "DELETE FROM cohort_ranking_snapshot WHERE ranking_type NOT IN ({})",
+            quoted_not_in_clause(&preserved_rankings)
+        ));
     }
     if options.sync_charging_kpi_snapshots && options.sync_composite_kpi_snapshots {
-        statements.push("DELETE FROM vehicle_kpi_snapshot");
+        statements.push("DELETE FROM vehicle_kpi_snapshot".to_string());
     } else if options.sync_charging_kpi_snapshots {
-        statements.push("DELETE FROM vehicle_kpi_snapshot WHERE ranking_type <> 'ev_composite'");
+        statements.push(
+            "DELETE FROM vehicle_kpi_snapshot WHERE ranking_type <> 'ev_composite'".to_string(),
+        );
     } else if options.sync_composite_kpi_snapshots {
         statements.push(
-            "DELETE FROM vehicle_kpi_snapshot WHERE ranking_type <> 'ev_charging_performance'",
+            "DELETE FROM vehicle_kpi_snapshot WHERE ranking_type <> 'ev_charging_performance'"
+                .to_string(),
         );
     } else {
         statements.push(
-            "DELETE FROM vehicle_kpi_snapshot WHERE ranking_type NOT IN ('ev_charging_performance', 'ev_composite')",
+            "DELETE FROM vehicle_kpi_snapshot WHERE ranking_type NOT IN ('ev_charging_performance', 'ev_composite')"
+                .to_string(),
         );
     }
     if options.sync_charging_sessions {
-        statements.push("DELETE FROM vehicle_charging_session");
+        statements.push("DELETE FROM vehicle_charging_session".to_string());
     }
 
     for sql in statements {
-        sqlx::query(sql)
+        sqlx::query(&sql)
             .execute(&mut **pg_tx)
             .await
             .with_context(|| format!("failed to clear postgres table with statement: {}", sql))?;
@@ -362,100 +385,45 @@ async fn export_ranking_snapshots(
     pg_tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     options: &OutputSyncOptions,
 ) -> Result<(), ApiError> {
-    let rows = if options.sync_charging_rankings && options.sync_composite_rankings {
-        sqlx::query(
-            r#"
-            SELECT
-              ranking_snapshot_id,
-              ranking_type,
-              timeframe,
-              temperature_bin,
-              cohort_key,
-              cohort_size,
-              sample_gate_passed,
-              vehicle_uid,
-              rank_position,
-              score,
-              confidence_level,
-              computed_at
-            FROM cohort_ranking_snapshot
-            "#,
-        )
+    let preserved_rankings = ranking_types_preserved_from_sync(options);
+    let mut select_sql = String::from(
+        r#"
+        SELECT
+          ranking_snapshot_id,
+          ranking_type,
+          timeframe,
+          temperature_bin,
+          cohort_key,
+          cohort_size,
+          sample_gate_passed,
+          vehicle_uid,
+          rank_position,
+          score,
+          confidence_level,
+          computed_at
+        FROM cohort_ranking_snapshot
+        "#,
+    );
+    if !preserved_rankings.is_empty() {
+        select_sql.push_str(&format!(
+            " WHERE ranking_type NOT IN ({})",
+            quoted_not_in_clause(&preserved_rankings)
+        ));
+    }
+
+    let rows = sqlx::query(&select_sql)
         .fetch_all(sqlite_pool)
         .await
-        .context("failed to fetch sqlite ranking snapshots for postgres sync")?
-    } else if options.sync_charging_rankings {
-        sqlx::query(
-            r#"
-            SELECT
-              ranking_snapshot_id,
-              ranking_type,
-              timeframe,
-              temperature_bin,
-              cohort_key,
-              cohort_size,
-              sample_gate_passed,
-              vehicle_uid,
-              rank_position,
-              score,
-              confidence_level,
-              computed_at
-            FROM cohort_ranking_snapshot
-            WHERE ranking_type <> 'ev_composite'
-            "#,
-        )
-        .fetch_all(sqlite_pool)
-        .await
-        .context("failed to fetch sqlite non-composite ranking snapshots for postgres sync")?
-    } else if options.sync_composite_rankings {
-        sqlx::query(
-            r#"
-            SELECT
-              ranking_snapshot_id,
-              ranking_type,
-              timeframe,
-              temperature_bin,
-              cohort_key,
-              cohort_size,
-              sample_gate_passed,
-              vehicle_uid,
-              rank_position,
-              score,
-              confidence_level,
-              computed_at
-            FROM cohort_ranking_snapshot
-            WHERE ranking_type <> 'ev_charging_performance'
-            "#,
-        )
-        .fetch_all(sqlite_pool)
-        .await
-        .context("failed to fetch sqlite non-charging ranking snapshots for postgres sync")?
-    } else {
-        sqlx::query(
-            r#"
-            SELECT
-              ranking_snapshot_id,
-              ranking_type,
-              timeframe,
-              temperature_bin,
-              cohort_key,
-              cohort_size,
-              sample_gate_passed,
-              vehicle_uid,
-              rank_position,
-              score,
-              confidence_level,
-              computed_at
-            FROM cohort_ranking_snapshot
-            WHERE ranking_type NOT IN ('ev_charging_performance', 'ev_composite')
-            "#,
-        )
-        .fetch_all(sqlite_pool)
-        .await
-        .context(
-            "failed to fetch sqlite non-charging/non-composite ranking snapshots for postgres sync",
-        )?
-    };
+        .with_context(|| {
+            if preserved_rankings.is_empty() {
+                "failed to fetch sqlite ranking snapshots for postgres sync".to_string()
+            } else {
+                format!(
+                    "failed to fetch sqlite ranking snapshots excluding preserved families: {}",
+                    preserved_rankings.join(", ")
+                )
+            }
+        })?;
 
     for row in rows {
         sqlx::query(

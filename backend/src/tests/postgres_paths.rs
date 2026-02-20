@@ -1038,6 +1038,20 @@ async fn postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set()
         .context("failed to count postgres charging ranking outputs")?;
         assert!(charging_ranking_count >= 1);
 
+        let range_ranking_count: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*)
+            FROM cohort_ranking_snapshot
+            WHERE vehicle_uid = $1
+              AND ranking_type = 'ev_range_efficiency'
+            "#,
+        )
+        .bind(vehicle_uid.to_string())
+        .fetch_one(&ctx.pool)
+        .await
+        .context("failed to count postgres range ranking outputs")?;
+        assert!(range_ranking_count >= 1);
+
         let composite_kpi_count: i64 = sqlx::query_scalar(
             r#"
             SELECT COUNT(*)

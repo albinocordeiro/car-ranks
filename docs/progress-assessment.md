@@ -9,17 +9,17 @@ Completed backend milestones:
 - Priority 1 delivered: `GET /v1/kpis/readiness` now returns per-family readiness, confidence, and gate diagnostics.
 - Priority 2 partially delivered: internal job runs are now persisted in `internal_job_run`, and `GET /internal/jobs/latest` exposes latest run status.
 - Priority 4 advanced: internal job endpoints enforce per-job-kind lease locks, latest status surfaces active lock owner/expiry metadata, and stale `running` rows are auto-recovered on next trigger.
-- Priority 3 advanced: Postgres charging-session/KPI/ranking recompute now runs natively before bridge sync, and composite KPI/ranking recompute now runs natively after bridge sync.
+- Priority 3 advanced: Postgres charging-session/KPI/ranking recompute now runs natively before bridge sync, and range ranking + composite KPI/ranking recompute now run natively after bridge sync.
 
 Current runtime status:
 - SQLite mode: full MVP API surface available.
 - Postgres mode: full MVP API surface now available.
-- Internal KPI/ranking recompute in Postgres mode now uses a hybrid path (native charging pre-bridge -> SQLite bridge for range/temperature -> native composite post-bridge).
+- Internal KPI/ranking recompute in Postgres mode now uses a hybrid path (native charging pre-bridge -> SQLite bridge for range KPI + temperature -> native range/composite post-bridge stages).
 
 ## Risks and Gaps
 
-- Postgres KPI/ranking jobs still perform bridge table syncs for range + temperature families, which is acceptable for MVP but not scalable.
-- Postgres runtime still depends on SQLite bridge stages for range + temperature KPI/ranking recompute.
+- Postgres KPI/ranking jobs still perform bridge table syncs for range KPI and temperature families, which is acceptable for MVP but not scalable.
+- Postgres runtime still depends on SQLite bridge stages for range KPI and temperature KPI/ranking recompute.
 
 ## Next Product Development Plan
 
@@ -28,8 +28,7 @@ Priority 3: Postgres-native compute path
 - Keep module boundaries aligned with single responsibility (charging sessions, KPI recompute, ranking snapshots).
 
 Priority 4: Job execution safety
-- Add stale-run detection/recovery semantics for interrupted jobs.
-- Add lock ownership observability (for example, include lock owner + expiry in internal status payloads).
+- Add conflict-payload diagnostics for active locks (owner + expiry) on `409` responses.
 
 Priority 5: Product contract hardening
 - Expand API contract examples for freshness/readiness telemetry and status fields.

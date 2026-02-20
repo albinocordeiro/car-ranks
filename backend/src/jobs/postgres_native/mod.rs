@@ -30,8 +30,11 @@ pub(super) async fn run_native_postgres_pre_bridge_stages(
 pub(super) async fn run_native_postgres_post_bridge_stages(
     pg_pool: &PgPool,
 ) -> Result<NativePostBridgeSummary> {
+    let range_ranking_rows_upserted =
+        ranking_snapshots::rebuild_range_rankings_postgres(pg_pool).await?;
     let composite_summary = composite::recompute_composite_outputs_postgres(pg_pool).await?;
     Ok(NativePostBridgeSummary {
+        range_ranking_rows_upserted,
         composite_kpi_rows_upserted: composite_summary.composite_kpi_rows_upserted,
         composite_ranking_rows_upserted: composite_summary.composite_ranking_rows_upserted,
     })
@@ -46,6 +49,7 @@ pub(super) struct NativePreBridgeSummary {
 
 /// Output summary of post-bridge native Postgres stages.
 pub(super) struct NativePostBridgeSummary {
+    pub(super) range_ranking_rows_upserted: usize,
     pub(super) composite_kpi_rows_upserted: usize,
     pub(super) composite_ranking_rows_upserted: usize,
 }

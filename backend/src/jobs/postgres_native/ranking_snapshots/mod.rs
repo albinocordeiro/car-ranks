@@ -10,6 +10,11 @@ pub(super) async fn rebuild_charging_rankings_postgres(pool: &PgPool) -> Result<
     rebuild_non_temperature_rankings_postgres(pool, "ev_charging_performance").await
 }
 
+/// Rebuilds range-efficiency rankings directly in Postgres.
+pub(super) async fn rebuild_range_rankings_postgres(pool: &PgPool) -> Result<usize> {
+    rebuild_non_temperature_rankings_postgres(pool, "ev_range_efficiency").await
+}
+
 /// Rebuilds composite rankings directly in Postgres.
 pub(super) async fn rebuild_composite_rankings_postgres(pool: &PgPool) -> Result<usize> {
     rebuild_non_temperature_rankings_postgres(pool, "ev_composite").await
