@@ -4,6 +4,10 @@ Status: Draft v2 (locked schema + idempotency envelope checks)
 Date: 2026-02-20  
 Purpose: Ingest iOS OBD telemetry in idempotent batches (default 60-second cadence).
 
+## Required Header
+- `x-user-id`: UUID of the authenticated app user.
+- Requests without this header return `401 unauthorized`.
+
 ## Request JSON
 
 ```json
@@ -118,6 +122,8 @@ Duplicate replay example:
 
 ## Error Responses
 - `400` invalid payload
+- `401` missing/invalid `x-user-id`
+- `403` vehicle linked to a different user
 - `409` duplicate `batch_id` with mismatched payload envelope
 - `413` payload too large
 - `500` ingest failure

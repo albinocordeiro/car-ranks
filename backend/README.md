@@ -11,6 +11,10 @@ Current API surface:
 - `POST /internal/jobs/recompute-kpis`
 - `POST /internal/jobs/build-ranking-snapshots`
 
+Auth scope (MVP):
+- Public vehicle-bound APIs require `x-user-id: <uuid>` request header.
+- Vehicle data is user-scoped via `user_vehicle_access`.
+
 ## Stack
 - Rust
 - `axum` HTTP server
@@ -56,6 +60,7 @@ export CAR_RANKS_TEMP_GATE_MIN_SENSITIVITY_POINTS=6
 curl "http://127.0.0.1:8080/v1/config/sampling"
 
 curl -X POST http://127.0.0.1:8080/v1/telemetry/batches \
+  -H 'x-user-id: <user_uuid>' \
   -H 'content-type: application/json' \
   --data @/Users/albinocordeiro/Code/car_ranks/docs/contracts/examples/telemetry-batch-request.json
 ```
@@ -74,6 +79,14 @@ curl "http://127.0.0.1:8080/v1/kpis/charging?vehicle_uid=<vehicle_uuid>&timefram
 curl "http://127.0.0.1:8080/v1/kpis/temperature-impact?vehicle_uid=<vehicle_uuid>&timeframe=90d&baseline_temperature_bin=mild&compare_temperature_bin=cold"
 ```
 
+With auth header:
+
+```bash
+curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/kpis/me?vehicle_uid=<vehicle_uuid>&timeframe=90d"
+curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/kpis/charging?vehicle_uid=<vehicle_uuid>&timeframe=90d&temperature_bin=all"
+curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/kpis/temperature-impact?vehicle_uid=<vehicle_uuid>&timeframe=90d&baseline_temperature_bin=mild&compare_temperature_bin=cold"
+```
+
 4. Query rankings:
 
 ```bash
@@ -83,11 +96,20 @@ curl "http://127.0.0.1:8080/v1/rankings?ranking_type=ev_composite&timeframe=90d&
 curl "http://127.0.0.1:8080/v1/rankings?ranking_type=ev_temperature_impact&timeframe=90d&temperature_bin=cold&limit=10"
 ```
 
+With auth header:
+
+```bash
+curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type=ev_range_efficiency&timeframe=90d&limit=10"
+curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type=ev_charging_performance&timeframe=90d&limit=10"
+curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type=ev_composite&timeframe=90d&limit=10"
+curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type=ev_temperature_impact&timeframe=90d&temperature_bin=cold&limit=10"
+```
+
 ## Thin-slice constraints
 - OBD-only ingest (`source=OBD`).
 - Ingest payload schema is locked to `schema_version=0.2`.
 - Duplicate `batch_id` replays are accepted only when payload envelope matches; mismatched envelopes return `409 conflict`.
-- No auth/authorization yet (MVP backend slice only).
+- Public vehicle-bound APIs require `x-user-id` and enforce user-to-vehicle ownership scope.
 - Timeframes currently materialized by jobs: `30d`, `90d`, `180d`.
 - `temperature_bin` filters on rankings are supported only for `ev_temperature_impact`.
 - Temperature impact KPI reads the `cold` slice to avoid duplicate metrics across temperature variants.
@@ -102,6 +124,7 @@ curl "http://127.0.0.1:8080/v1/rankings?ranking_type=ev_temperature_impact&timef
 - Startup applies Postgres migrations from `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/` when `DATABASE_URL` is Postgres.
 - Applied migration ids are tracked in `schema_migration` to prevent duplicate execution.
 - Postgres-ready bootstrap schema lives in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/0001_init.sql`.
+- Ownership/auth additive migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/*/0002_auth_ownership.sql`.
 - `/Users/albinocordeiro/Code/car_ranks/backend/schema.sql` remains as a legacy SQLite schema snapshot and is kept in sync with SQLite `0001_init.sql`.
 - Current Postgres runtime endpoints: `/health`, `/v1/config/sampling`, `/v1/kpis/me`, `/v1/kpis/charging`.
 

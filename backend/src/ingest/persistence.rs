@@ -15,6 +15,7 @@ pub(super) async fn persist_validated_batch(
     tx: &mut Transaction<'_, Sqlite>,
     payload: &TelemetryBatchRequest,
     source_context: &SourceContext,
+    auth_user_id: &str,
     now: &str,
     signal_keys: &HashSet<String>,
 ) -> Result<(usize, Vec<IngestRecordError>), ApiError> {
@@ -23,6 +24,7 @@ pub(super) async fn persist_validated_batch(
     ensure_vehicle_and_batch_rows(
         tx,
         payload,
+        auth_user_id,
         &vehicle_uid,
         &source_context.source_account_id,
         &source_context.source_upper,

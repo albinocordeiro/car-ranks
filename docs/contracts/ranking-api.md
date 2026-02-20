@@ -4,6 +4,10 @@ Status: Draft v4 (locked KPI mapping + temperature gates)
 Date: 2026-02-20  
 Purpose: Return EV ranking snapshots with cohort filters and temperature slicing.
 
+## Required Header
+- `x-user-id`: UUID of the authenticated app user.
+- Ranking rows are scoped to vehicles linked to that user.
+
 ## Query Parameters
 
 ## Required
@@ -107,6 +111,7 @@ Purpose: Return EV ranking snapshots with cohort filters and temperature slicing
 
 ## Error Responses
 - `400` invalid parameters
+- `401` missing/invalid `x-user-id`
 - `404` no ranking snapshot available for this filter
 - `422` unsupported combination (example: `temperature_bin=cold` with `ev_range_efficiency`)
 - `500` ranking query failure

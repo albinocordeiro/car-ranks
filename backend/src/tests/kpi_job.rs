@@ -433,10 +433,13 @@ async fn end_to_end_kpi_job_materializes_locked_kpi_sets() -> Result<()> {
         }],
     };
 
-    let Json(ingest_response) =
-        crate::handlers::post_telemetry_batches(State(state.clone()), Json(payload))
-            .await
-            .map_err(|err| anyhow::anyhow!("ingest failed: {} {}", err.error, err.message))?;
+    let Json(ingest_response) = crate::handlers::post_telemetry_batches(
+        State(state.clone()),
+        crate::auth::AuthContext::from_user_id(Uuid::new_v4()),
+        Json(payload),
+    )
+    .await
+    .map_err(|err| anyhow::anyhow!("ingest failed: {} {}", err.error, err.message))?;
     assert!(ingest_response.accepted);
     assert!(!ingest_response.duplicate);
     assert_eq!(ingest_response.records_rejected, 0);

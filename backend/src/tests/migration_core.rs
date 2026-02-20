@@ -31,6 +31,17 @@ fn postgres_migration_has_expected_base_tables() {
     }
 }
 
+#[test]
+fn ownership_migrations_define_expected_tables() {
+    for migration in [
+        crate::migrations::SQLITE_MIGRATION_0002,
+        crate::migrations::POSTGRES_MIGRATION_0002,
+    ] {
+        assert!(migration.contains("CREATE TABLE IF NOT EXISTS app_user"));
+        assert!(migration.contains("CREATE TABLE IF NOT EXISTS user_vehicle_access"));
+    }
+}
+
 #[tokio::test]
 async fn apply_schema_records_migrations_once() -> Result<()> {
     let pool = SqlitePoolOptions::new()
@@ -55,5 +66,19 @@ async fn apply_schema_records_migrations_once() -> Result<()> {
     .context("failed to count applied migrations")?;
 
     assert_eq!(count, 1);
+
+    let ownership_count: i64 = sqlx::query_scalar(
+        r#"
+        SELECT COUNT(*)
+        FROM schema_migration
+        WHERE migration_id = '0002_auth_ownership'
+          AND backend = 'sqlite'
+        "#,
+    )
+    .fetch_one(&pool)
+    .await
+    .context("failed to count ownership migration")?;
+
+    assert_eq!(ownership_count, 1);
     Ok(())
 }

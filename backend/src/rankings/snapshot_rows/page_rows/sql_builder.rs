@@ -14,10 +14,12 @@ pub(super) fn build_rankings_page_sql(params: &RankingsQuery) -> String {
           r.sample_gate_passed
         FROM cohort_ranking_snapshot r
         JOIN vehicle v ON v.vehicle_uid = r.vehicle_uid
+        JOIN user_vehicle_access uva ON uva.vehicle_uid = r.vehicle_uid
         WHERE r.ranking_type = ?
           AND r.timeframe = ?
           AND r.temperature_bin = ?
           AND r.computed_at = ?
+          AND uva.user_id = ?
         "#,
     );
 

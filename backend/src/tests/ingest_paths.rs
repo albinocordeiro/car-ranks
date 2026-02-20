@@ -10,6 +10,10 @@ use uuid::Uuid;
 
 use super::*;
 
+fn auth_context(user_id: Uuid) -> crate::auth::AuthContext {
+    crate::auth::AuthContext::from_user_id(user_id)
+}
+
 async fn test_app_state() -> Result<AppState> {
     let pool = SqlitePoolOptions::new()
         .max_connections(1)
@@ -72,6 +76,7 @@ fn valid_ingest_payload(
 async fn ingest_duplicate_same_envelope_returns_duplicate_true() -> Result<()> {
     let state = test_app_state().await?;
     let now = Utc::now();
+    let auth = auth_context(Uuid::new_v4());
     let vehicle_uid = Uuid::new_v4();
     let batch_id = Uuid::new_v4();
     let payload = valid_ingest_payload(
@@ -82,7 +87,7 @@ async fn ingest_duplicate_same_envelope_returns_duplicate_true() -> Result<()> {
     );
 
     let Json(first_response) =
-        crate::handlers::post_telemetry_batches(State(state.clone()), Json(payload))
+        crate::handlers::post_telemetry_batches(State(state.clone()), auth, Json(payload))
             .await
             .map_err(|err| anyhow::anyhow!("first ingest failed: {} {}", err.error, err.message))?;
     assert!(first_response.accepted);
@@ -94,12 +99,13 @@ async fn ingest_duplicate_same_envelope_returns_duplicate_true() -> Result<()> {
         now - Duration::minutes(2),
         now - Duration::minutes(1),
     );
-    let Json(duplicate_response) =
-        crate::handlers::post_telemetry_batches(State(state.clone()), Json(duplicate_payload))
-            .await
-            .map_err(|err| {
-                anyhow::anyhow!("duplicate ingest failed: {} {}", err.error, err.message)
-            })?;
+    let Json(duplicate_response) = crate::handlers::post_telemetry_batches(
+        State(state.clone()),
+        auth,
+        Json(duplicate_payload),
+    )
+    .await
+    .map_err(|err| anyhow::anyhow!("duplicate ingest failed: {} {}", err.error, err.message))?;
     assert!(duplicate_response.accepted);
     assert!(duplicate_response.duplicate);
     assert_eq!(duplicate_response.records_accepted, 0);
@@ -110,6 +116,7 @@ async fn ingest_duplicate_same_envelope_returns_duplicate_true() -> Result<()> {
 async fn ingest_duplicate_with_different_envelope_returns_conflict() -> Result<()> {
     let state = test_app_state().await?;
     let now = Utc::now();
+    let auth = auth_context(Uuid::new_v4());
     let vehicle_uid = Uuid::new_v4();
     let batch_id = Uuid::new_v4();
     let payload = valid_ingest_payload(
@@ -118,7 +125,7 @@ async fn ingest_duplicate_with_different_envelope_returns_conflict() -> Result<(
         now - Duration::minutes(2),
         now - Duration::minutes(1),
     );
-    let _ = crate::handlers::post_telemetry_batches(State(state.clone()), Json(payload))
+    let _ = crate::handlers::post_telemetry_batches(State(state.clone()), auth, Json(payload))
         .await
         .map_err(|err| anyhow::anyhow!("first ingest failed: {} {}", err.error, err.message))?;
 
@@ -128,9 +135,10 @@ async fn ingest_duplicate_with_different_envelope_returns_conflict() -> Result<(
         now - Duration::minutes(2),
         now - Duration::seconds(10),
     );
-    let err = crate::handlers::post_telemetry_batches(State(state.clone()), Json(conflict_payload))
-        .await
-        .expect_err("expected idempotency conflict");
+    let err =
+        crate::handlers::post_telemetry_batches(State(state.clone()), auth, Json(conflict_payload))
+            .await
+            .expect_err("expected idempotency conflict");
 
     assert_eq!(err.status, StatusCode::CONFLICT);
     assert_eq!(err.error, "conflict");
@@ -141,6 +149,7 @@ async fn ingest_duplicate_with_different_envelope_returns_conflict() -> Result<(
 async fn ingest_rejects_unsupported_schema_version() -> Result<()> {
     let state = test_app_state().await?;
     let now = Utc::now();
+    let auth = auth_context(Uuid::new_v4());
     let vehicle_uid = Uuid::new_v4();
     let batch_id = Uuid::new_v4();
     let mut payload = valid_ingest_payload(
@@ -151,7 +160,7 @@ async fn ingest_rejects_unsupported_schema_version() -> Result<()> {
     );
     payload.schema_version = "1.0".to_string();
 
-    let err = crate::handlers::post_telemetry_batches(State(state.clone()), Json(payload))
+    let err = crate::handlers::post_telemetry_batches(State(state.clone()), auth, Json(payload))
         .await
         .expect_err("expected schema_version rejection");
     assert_eq!(err.status, StatusCode::BAD_REQUEST);
@@ -163,6 +172,7 @@ async fn ingest_rejects_unsupported_schema_version() -> Result<()> {
 async fn ingest_rejects_record_outside_capture_window() -> Result<()> {
     let state = test_app_state().await?;
     let now = Utc::now();
+    let auth = auth_context(Uuid::new_v4());
     let vehicle_uid = Uuid::new_v4();
     let batch_id = Uuid::new_v4();
     let mut payload = valid_ingest_payload(
@@ -173,7 +183,7 @@ async fn ingest_rejects_record_outside_capture_window() -> Result<()> {
     );
     payload.records[0].observed_at = now;
 
-    let err = crate::handlers::post_telemetry_batches(State(state.clone()), Json(payload))
+    let err = crate::handlers::post_telemetry_batches(State(state.clone()), auth, Json(payload))
         .await
         .expect_err("expected out-of-window rejection");
     assert_eq!(err.status, StatusCode::BAD_REQUEST);
@@ -185,6 +195,7 @@ async fn ingest_rejects_record_outside_capture_window() -> Result<()> {
 async fn ingest_rejects_unknown_session_event_type() -> Result<()> {
     let state = test_app_state().await?;
     let now = Utc::now();
+    let auth = auth_context(Uuid::new_v4());
     let vehicle_uid = Uuid::new_v4();
     let batch_id = Uuid::new_v4();
     let mut payload = valid_ingest_payload(
@@ -199,10 +210,52 @@ async fn ingest_rejects_unknown_session_event_type() -> Result<()> {
         session_id: Uuid::new_v4(),
     });
 
-    let err = crate::handlers::post_telemetry_batches(State(state.clone()), Json(payload))
+    let err = crate::handlers::post_telemetry_batches(State(state.clone()), auth, Json(payload))
         .await
         .expect_err("expected session event type rejection");
     assert_eq!(err.status, StatusCode::BAD_REQUEST);
     assert_eq!(err.error, "bad_request");
+    Ok(())
+}
+
+#[tokio::test]
+async fn ingest_rejects_vehicle_ingest_from_different_user() -> Result<()> {
+    let state = test_app_state().await?;
+    let now = Utc::now();
+    let owner_auth = auth_context(Uuid::new_v4());
+    let foreign_auth = auth_context(Uuid::new_v4());
+    let vehicle_uid = Uuid::new_v4();
+
+    let owner_batch = valid_ingest_payload(
+        vehicle_uid,
+        Uuid::new_v4(),
+        now - Duration::minutes(3),
+        now - Duration::minutes(2),
+    );
+    let Json(first_response) = crate::handlers::post_telemetry_batches(
+        State(state.clone()),
+        owner_auth,
+        Json(owner_batch),
+    )
+    .await
+    .map_err(|err| anyhow::anyhow!("owner ingest failed: {} {}", err.error, err.message))?;
+    assert!(first_response.accepted);
+
+    let foreign_batch = valid_ingest_payload(
+        vehicle_uid,
+        Uuid::new_v4(),
+        now - Duration::minutes(2),
+        now - Duration::minutes(1),
+    );
+    let err = crate::handlers::post_telemetry_batches(
+        State(state.clone()),
+        foreign_auth,
+        Json(foreign_batch),
+    )
+    .await
+    .expect_err("expected vehicle ownership rejection");
+
+    assert_eq!(err.status, StatusCode::FORBIDDEN);
+    assert_eq!(err.error, "forbidden");
     Ok(())
 }

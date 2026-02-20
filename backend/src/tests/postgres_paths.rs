@@ -95,6 +95,7 @@ async fn postgres_kpi_fetch_and_charging_handler_work_when_env_set() -> Result<(
     crate::migrations::apply_postgres_schema(&pool).await?;
 
     let vehicle_uid = Uuid::new_v4().to_string();
+    let auth_user_id = Uuid::new_v4();
     let now = Utc::now();
     sqlx::query(
         r#"
@@ -115,6 +116,40 @@ async fn postgres_kpi_fetch_and_charging_handler_work_when_env_set() -> Result<(
     .execute(&pool)
     .await
     .context("failed to insert postgres test vehicle")?;
+    sqlx::query(
+        r#"
+        INSERT INTO app_user (
+          user_id,
+          created_at,
+          updated_at
+        ) VALUES ($1, $2, $3)
+        "#,
+    )
+    .bind(auth_user_id.to_string())
+    .bind(now.to_rfc3339())
+    .bind(now.to_rfc3339())
+    .execute(&pool)
+    .await
+    .context("failed to insert postgres app user")?;
+    sqlx::query(
+        r#"
+        INSERT INTO user_vehicle_access (
+          user_id,
+          vehicle_uid,
+          access_role,
+          created_at,
+          updated_at
+        ) VALUES ($1, $2, $3, $4, $5)
+        "#,
+    )
+    .bind(auth_user_id.to_string())
+    .bind(&vehicle_uid)
+    .bind("owner")
+    .bind(now.to_rfc3339())
+    .bind(now.to_rfc3339())
+    .execute(&pool)
+    .await
+    .context("failed to insert postgres vehicle access")?;
 
     let older_ts = (now - Duration::minutes(5)).to_rfc3339();
     let newer_ts = now.to_rfc3339();
@@ -250,9 +285,13 @@ async fn postgres_kpi_fetch_and_charging_handler_work_when_env_set() -> Result<(
         temperature_bin: Some("all".to_string()),
         charger_type: Some("all".to_string()),
     };
-    let Json(response) = crate::handlers::get_kpis_charging(State(state), Query(query))
-        .await
-        .map_err(|err| anyhow::anyhow!("postgres charging KPI handler failed: {}", err.message))?;
+    let Json(response) = crate::handlers::get_kpis_charging(
+        State(state),
+        crate::auth::AuthContext::from_user_id(auth_user_id),
+        Query(query),
+    )
+    .await
+    .map_err(|err| anyhow::anyhow!("postgres charging KPI handler failed: {}", err.message))?;
     assert_eq!(response.ranking_type, "ev_charging_performance");
     assert_eq!(response.kpis.len(), 1);
     assert_eq!(response.kpis[0].kpi_key, "charging_performance_score");

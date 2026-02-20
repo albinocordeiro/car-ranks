@@ -30,6 +30,24 @@ impl ApiError {
         }
     }
 
+    /// Builds a 401 response when authentication context is missing or invalid.
+    pub(crate) fn unauthorized(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::UNAUTHORIZED,
+            error: "unauthorized".to_string(),
+            message: message.into(),
+        }
+    }
+
+    /// Builds a 403 response when caller identity is valid but access is denied.
+    pub(crate) fn forbidden(message: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::FORBIDDEN,
+            error: "forbidden".to_string(),
+            message: message.into(),
+        }
+    }
+
     /// Builds a 409 response when the request collides with existing state.
     pub(crate) fn conflict(message: impl Into<String>) -> Self {
         Self {

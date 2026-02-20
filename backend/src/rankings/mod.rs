@@ -1,6 +1,7 @@
 use axum::Json;
 use axum::extract::{Query, State};
 
+use crate::auth::AuthContext;
 use crate::{ApiError, AppState, RankingPage, RankingsQuery, RankingsResponse, now_str};
 
 use self::materialization::materialize_ranking_rows;
@@ -14,6 +15,7 @@ mod snapshot_rows;
 
 pub(crate) async fn get_rankings(
     State(state): State<AppState>,
+    auth: AuthContext,
     Query(params): Query<RankingsQuery>,
 ) -> Result<Json<RankingsResponse>, ApiError> {
     let window = normalize_rankings_window(&params);
@@ -33,6 +35,7 @@ pub(crate) async fn get_rankings(
         &window.timeframe,
         &window.temperature_bin,
         &computed_at,
+        &auth.user_id.to_string(),
         window.limit,
         window.offset,
     )

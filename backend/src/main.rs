@@ -1,6 +1,7 @@
 use anyhow::Result;
 
 mod app_state_builder;
+mod auth;
 mod bootstrap;
 mod config;
 mod db_bootstrap;

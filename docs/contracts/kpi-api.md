@@ -4,6 +4,10 @@ Status: Draft v4 (locked EV-first formulas + temperature gates)
 Date: 2026-02-20  
 Scope: Read-only EV KPI endpoints for MVP Rust backend.
 
+## Required Header
+- `x-user-id`: UUID of the authenticated app user.
+- KPI reads are scoped to vehicles linked to that user.
+
 ## `GET /v1/kpis/me`
 
 Returns range/efficiency KPI snapshot (`ranking_type=ev_range_efficiency`).
@@ -246,6 +250,8 @@ Backend persists only KPI keys listed in its locked catalog. Snapshot writes fai
 | `ev_composite` | `ev_composite_score` | `clamp(base_score - health_penalty, 0, 100)` | derived from KPI snapshots + diagnostics |
 
 ## Common Error Responses
+- `401` missing/invalid `x-user-id`
+- `403` caller lacks access to requested vehicle
 - `404` no KPI snapshot available for the requested vehicle/filter
 - `422` unsupported filter combination
 - `500` query failure

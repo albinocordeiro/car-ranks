@@ -29,3 +29,4 @@ This folder contains executable contract drafts for the EV-first MVP APIs.
 - `confidence_level` enum: `preview`, `medium`, `stable`.
 - `temperature_bin` enum: `all`, `very_cold`, `cold`, `cool`, `mild`, `hot`.
 - This folder documents the current thin-slice backend behavior with locked ingest schema/idempotency checks, locked KPI formulas, signal mappings, and temperature sample gates.
+- Public vehicle-bound APIs require `x-user-id` and enforce user-to-vehicle access scope.

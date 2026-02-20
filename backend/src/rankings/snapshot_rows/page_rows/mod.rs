@@ -15,6 +15,7 @@ pub(crate) async fn fetch_ranking_rows(
     timeframe: &str,
     temperature_bin: &str,
     computed_at: &str,
+    user_id: &str,
     limit: i64,
     offset: i64,
 ) -> Result<Vec<SqliteRow>, ApiError> {
@@ -24,7 +25,8 @@ pub(crate) async fn fetch_ranking_rows(
         .bind(&params.ranking_type)
         .bind(timeframe)
         .bind(temperature_bin)
-        .bind(computed_at);
+        .bind(computed_at)
+        .bind(user_id);
 
     // Bind values must match the order used by optional SQL filter fragments.
     if let Some(make) = &params.make {

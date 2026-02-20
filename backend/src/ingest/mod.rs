@@ -2,6 +2,7 @@ use anyhow::Context;
 use axum::Json;
 use axum::extract::State;
 
+use crate::auth::AuthContext;
 use crate::{ApiError, AppState, DatabaseBackend, IngestResponse, TelemetryBatchRequest, now_str};
 
 use self::idempotency::{IdempotencyOutcome, resolve_batch_idempotency};
@@ -24,6 +25,7 @@ pub(crate) const INGEST_SCHEMA_VERSION: &str = "0.2";
 
 pub(crate) async fn post_telemetry_batches(
     State(state): State<AppState>,
+    auth: AuthContext,
     Json(payload): Json<TelemetryBatchRequest>,
 ) -> Result<Json<IngestResponse>, ApiError> {
     if state.backend != DatabaseBackend::Sqlite {
@@ -52,10 +54,12 @@ pub(crate) async fn post_telemetry_batches(
         };
 
     let now = now_str();
+    let auth_user_id = auth.user_id.to_string();
     let (accepted, errors) = persist_validated_batch(
         &mut tx,
         &payload,
         &source_context,
+        &auth_user_id,
         &now,
         state.signal_keys.as_ref(),
     )
