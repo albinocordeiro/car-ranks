@@ -1,7 +1,6 @@
 use anyhow::Context;
 use axum::Json;
 use axum::extract::State;
-use sqlx::Row;
 use uuid::Uuid;
 
 use crate::{
@@ -9,9 +8,11 @@ use crate::{
     now_str,
 };
 
+use self::idempotency::{IdempotencyOutcome, resolve_batch_idempotency};
 use self::record_validation::validate_and_prepare_record;
 use self::request_validation::validate_batch_payload;
 
+mod idempotency;
 mod record_validation;
 mod request_validation;
 
@@ -44,63 +45,13 @@ pub(crate) async fn post_telemetry_batches(
         .context("failed to open transaction")?;
 
     // Resolve idempotency before writes so replayed batches can short-circuit safely.
-    let existing_batch = sqlx::query(
-        r#"
-        SELECT vehicle_uid, schema_version, source, capture_started_at, capture_ended_at
-        FROM ingest_batch
-        WHERE batch_id = ?
-        LIMIT 1
-        "#,
-    )
-    .bind(payload.batch_id.to_string())
-    .fetch_optional(&mut *tx)
-    .await
-    .context("failed to check idempotency")?;
-
-    let ingest_id = Uuid::new_v4();
-
-    if let Some(existing_batch) = existing_batch {
-        let existing_vehicle_uid: String = existing_batch
-            .try_get("vehicle_uid")
-            .context("failed to parse existing vehicle_uid for idempotency check")?;
-        let existing_schema_version: String = existing_batch
-            .try_get("schema_version")
-            .context("failed to parse existing schema_version for idempotency check")?;
-        let existing_source: String = existing_batch
-            .try_get("source")
-            .context("failed to parse existing source for idempotency check")?;
-        let existing_capture_started_at: String = existing_batch
-            .try_get("capture_started_at")
-            .context("failed to parse existing capture_started_at for idempotency check")?;
-        let existing_capture_ended_at: String = existing_batch
-            .try_get("capture_ended_at")
-            .context("failed to parse existing capture_ended_at for idempotency check")?;
-
-        let same_envelope = existing_vehicle_uid == payload.vehicle_uid.to_string()
-            && existing_schema_version == payload.schema_version
-            && existing_source.to_uppercase() == source_upper
-            && existing_capture_started_at == payload.capture_window.started_at.to_rfc3339()
-            && existing_capture_ended_at == payload.capture_window.ended_at.to_rfc3339();
-
-        if !same_envelope {
-            return Err(ApiError::conflict(
-                "batch_id already exists with a different payload envelope",
-            ));
+    let ingest_id = match resolve_batch_idempotency(&mut tx, &payload, &source_upper).await? {
+        IdempotencyOutcome::Fresh { ingest_id } => ingest_id,
+        IdempotencyOutcome::Duplicate { response } => {
+            tx.commit().await.context("failed to commit duplicate tx")?;
+            return Ok(Json(response));
         }
-
-        tx.commit().await.context("failed to commit duplicate tx")?;
-        return Ok(Json(IngestResponse {
-            accepted: true,
-            batch_id: payload.batch_id,
-            ingest_id,
-            duplicate: true,
-            records_received: payload.records.len(),
-            records_accepted: 0,
-            records_rejected: 0,
-            errors: Vec::new(),
-            next_upload_after_seconds: payload.capture_window.sample_interval_seconds.unwrap_or(60),
-        }));
-    }
+    };
 
     let now = now_str();
     let vehicle_uid_str = payload.vehicle_uid.to_string();
