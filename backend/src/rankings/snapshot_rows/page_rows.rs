@@ -1,40 +1,11 @@
 use anyhow::Context;
+use sqlx::SqlitePool;
 use sqlx::sqlite::SqliteRow;
-use sqlx::{Row, SqlitePool};
 
 use crate::{ApiError, RankingsQuery};
 
-/// Finds the most recent ranking snapshot timestamp for the requested filter.
-pub(super) async fn fetch_latest_computed_at(
-    pool: &SqlitePool,
-    ranking_type: &str,
-    timeframe: &str,
-    temperature_bin: &str,
-) -> Result<String, ApiError> {
-    let latest_computed = sqlx::query(
-        r#"
-        SELECT MAX(computed_at) AS computed_at
-        FROM cohort_ranking_snapshot
-        WHERE ranking_type = ?
-          AND timeframe = ?
-          AND temperature_bin = ?
-        "#,
-    )
-    .bind(ranking_type)
-    .bind(timeframe)
-    .bind(temperature_bin)
-    .fetch_one(pool)
-    .await
-    .context("failed to query ranking snapshot timestamp")?
-    .try_get::<Option<String>, _>("computed_at")
-    .context("failed to parse ranking computed_at")?;
-
-    latest_computed
-        .ok_or_else(|| ApiError::not_found("no ranking snapshot available for this filter"))
-}
-
 /// Fetches one page of ranking rows matching the filter set.
-pub(super) async fn fetch_ranking_rows(
+pub(crate) async fn fetch_ranking_rows(
     pool: &SqlitePool,
     params: &RankingsQuery,
     timeframe: &str,
@@ -62,19 +33,7 @@ pub(super) async fn fetch_ranking_rows(
         "#,
     );
 
-    if params.make.is_some() {
-        sql.push_str(" AND COALESCE(v.make, 'unknown') = ? ");
-    }
-    if params.model.is_some() {
-        sql.push_str(" AND COALESCE(v.model, 'unknown') = ? ");
-    }
-    if params.trim.is_some() {
-        sql.push_str(" AND COALESCE(v.trim, 'unknown') = ? ");
-    }
-    if params.powertrain_class.is_some() {
-        sql.push_str(" AND COALESCE(v.powertrain_class, 'unknown') = ? ");
-    }
-
+    append_optional_filters(&mut sql, params);
     sql.push_str(" ORDER BY r.rank_position ASC LIMIT ? OFFSET ? ");
 
     let mut query = sqlx::query(&sql)
@@ -103,4 +62,20 @@ pub(super) async fn fetch_ranking_rows(
         .await
         .context("failed to fetch rankings")
         .map_err(Into::into)
+}
+
+/// Appends optional ranking filters in the same bind order used by query binds.
+fn append_optional_filters(sql: &mut String, params: &RankingsQuery) {
+    if params.make.is_some() {
+        sql.push_str(" AND COALESCE(v.make, 'unknown') = ? ");
+    }
+    if params.model.is_some() {
+        sql.push_str(" AND COALESCE(v.model, 'unknown') = ? ");
+    }
+    if params.trim.is_some() {
+        sql.push_str(" AND COALESCE(v.trim, 'unknown') = ? ");
+    }
+    if params.powertrain_class.is_some() {
+        sql.push_str(" AND COALESCE(v.powertrain_class, 'unknown') = ? ");
+    }
 }
