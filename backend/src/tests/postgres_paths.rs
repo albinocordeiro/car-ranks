@@ -1008,6 +1008,20 @@ async fn postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set()
             charging_count
         );
 
+        let charging_kpi_count: i64 = sqlx::query_scalar(
+            r#"
+            SELECT COUNT(*)
+            FROM vehicle_kpi_snapshot
+            WHERE vehicle_uid = $1
+              AND ranking_type = 'ev_charging_performance'
+            "#,
+        )
+        .bind(vehicle_uid.to_string())
+        .fetch_one(&ctx.pool)
+        .await
+        .context("failed to count postgres charging KPI outputs")?;
+        assert!(charging_kpi_count >= 2);
+
         Ok(())
     }
     .await;

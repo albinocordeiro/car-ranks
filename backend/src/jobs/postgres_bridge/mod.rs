@@ -17,6 +17,11 @@ pub(super) async fn run_kpi_job_postgres(
     // Stage 1 runs natively in Postgres so charging sessions do not depend on
     // bridge round-trips. KPI/ranking stages still reuse SQLite materialization.
     let native_summary = super::postgres_native::run_native_postgres_stages(pg_pool).await?;
+    tracing::debug!(
+        charging_sessions_upserted = native_summary.charging_sessions_upserted,
+        charging_kpi_rows_upserted = native_summary.charging_kpi_rows_upserted,
+        "native postgres job stages completed"
+    );
 
     sync_job_inputs_from_postgres(pg_pool, sqlite_pool).await?;
     let mut response = super::run_kpi_job(sqlite_pool).await?;
@@ -25,6 +30,7 @@ pub(super) async fn run_kpi_job_postgres(
         pg_pool,
         &OutputSyncOptions {
             sync_charging_sessions: false,
+            sync_charging_kpi_snapshots: false,
         },
     )
     .await?;

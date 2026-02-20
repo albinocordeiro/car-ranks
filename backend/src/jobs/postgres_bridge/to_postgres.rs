@@ -6,6 +6,7 @@ use crate::ApiError;
 /// Controls which SQLite outputs should overwrite Postgres tables.
 pub(super) struct OutputSyncOptions {
     pub(super) sync_charging_sessions: bool,
+    pub(super) sync_charging_kpi_snapshots: bool,
 }
 
 macro_rules! get_col {
@@ -34,7 +35,7 @@ pub(super) async fn sync_job_outputs_to_postgres(
     if options.sync_charging_sessions {
         export_charging_sessions(sqlite_pool, &mut pg_tx).await?;
     }
-    export_kpi_snapshots(sqlite_pool, &mut pg_tx).await?;
+    export_kpi_snapshots(sqlite_pool, &mut pg_tx, options).await?;
     export_ranking_snapshots(sqlite_pool, &mut pg_tx).await?;
 
     pg_tx
@@ -48,10 +49,14 @@ async fn clear_postgres_output_tables(
     pg_tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     options: &OutputSyncOptions,
 ) -> Result<(), ApiError> {
-    let mut statements = vec![
-        "DELETE FROM cohort_ranking_snapshot",
-        "DELETE FROM vehicle_kpi_snapshot",
-    ];
+    let mut statements = vec!["DELETE FROM cohort_ranking_snapshot"];
+    if options.sync_charging_kpi_snapshots {
+        statements.push("DELETE FROM vehicle_kpi_snapshot");
+    } else {
+        statements.push(
+            "DELETE FROM vehicle_kpi_snapshot WHERE ranking_type <> 'ev_charging_performance'",
+        );
+    }
     if options.sync_charging_sessions {
         statements.push("DELETE FROM vehicle_charging_session");
     }
@@ -161,33 +166,64 @@ async fn export_charging_sessions(
 async fn export_kpi_snapshots(
     sqlite_pool: &SqlitePool,
     pg_tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    options: &OutputSyncOptions,
 ) -> Result<(), ApiError> {
-    let rows = sqlx::query(
-        r#"
-        SELECT
-          snapshot_id,
-          vehicle_uid,
-          ranking_type,
-          timeframe,
-          kpi_key,
-          kpi_value,
-          kpi_unit,
-          direction,
-          confidence_level,
-          sample_count,
-          temperature_bin,
-          baseline_temperature_bin,
-          compare_temperature_bin,
-          computed_at,
-          valid_from,
-          valid_to,
-          source_job_id
-        FROM vehicle_kpi_snapshot
-        "#,
-    )
-    .fetch_all(sqlite_pool)
-    .await
-    .context("failed to fetch sqlite KPI snapshots for postgres sync")?;
+    let rows = if options.sync_charging_kpi_snapshots {
+        sqlx::query(
+            r#"
+            SELECT
+              snapshot_id,
+              vehicle_uid,
+              ranking_type,
+              timeframe,
+              kpi_key,
+              kpi_value,
+              kpi_unit,
+              direction,
+              confidence_level,
+              sample_count,
+              temperature_bin,
+              baseline_temperature_bin,
+              compare_temperature_bin,
+              computed_at,
+              valid_from,
+              valid_to,
+              source_job_id
+            FROM vehicle_kpi_snapshot
+            "#,
+        )
+        .fetch_all(sqlite_pool)
+        .await
+        .context("failed to fetch sqlite KPI snapshots for postgres sync")?
+    } else {
+        sqlx::query(
+            r#"
+            SELECT
+              snapshot_id,
+              vehicle_uid,
+              ranking_type,
+              timeframe,
+              kpi_key,
+              kpi_value,
+              kpi_unit,
+              direction,
+              confidence_level,
+              sample_count,
+              temperature_bin,
+              baseline_temperature_bin,
+              compare_temperature_bin,
+              computed_at,
+              valid_from,
+              valid_to,
+              source_job_id
+            FROM vehicle_kpi_snapshot
+            WHERE ranking_type <> 'ev_charging_performance'
+            "#,
+        )
+        .fetch_all(sqlite_pool)
+        .await
+        .context("failed to fetch sqlite non-charging KPI snapshots for postgres sync")?
+    };
 
     for row in rows {
         sqlx::query(
