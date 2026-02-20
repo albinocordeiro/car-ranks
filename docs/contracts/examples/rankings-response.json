@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-02-17T11:05:00Z",
+  "generated_at": "2026-02-20T11:05:00Z",
   "ranking_type": "ev_temperature_impact",
   "timeframe": "90d",
   "temperature_bin": "cold",
@@ -23,8 +23,9 @@
       "score": 49.1,
       "confidence_level": "medium",
       "kpis": {
-        "cold_weather_charge_speed_retention": 63.3,
-        "cold_weather_range_retention": 60.0
+        "cold_weather_range_retention": 60.0,
+        "range_temperature_sensitivity_index": 12.5,
+        "cold_weather_charge_speed_retention": 63.3
       }
     }
   ],

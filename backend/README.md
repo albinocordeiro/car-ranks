@@ -27,6 +27,7 @@ Defaults:
 - `BIND_ADDR=127.0.0.1:8080`
 - `DATABASE_URL=sqlite://car_ranks.db`
 - `RUST_LOG=info,sqlx=warn,tower_http=info`
+- `DEFAULT_USABLE_BATTERY_KWH=75`
 
 Optional overrides:
 
@@ -34,6 +35,7 @@ Optional overrides:
 export BIND_ADDR=127.0.0.1:8080
 export DATABASE_URL=sqlite:///tmp/car_ranks.db
 export RUST_LOG=info,sqlx=warn,tower_http=info
+export DEFAULT_USABLE_BATTERY_KWH=75
 ```
 
 ## Smoke flow
@@ -77,6 +79,7 @@ curl "http://127.0.0.1:8080/v1/rankings?ranking_type=ev_temperature_impact&timef
 - Timeframes currently materialized by jobs: `30d`, `90d`, `180d`.
 - `temperature_bin` filters on rankings are supported only for `ev_temperature_impact`.
 - Temperature impact KPI reads the `cold` slice to avoid duplicate metrics across temperature variants.
+- KPI persistence is restricted by a locked KPI catalog in `src/main.rs`; unknown KPI keys are rejected at write time.
 
 ## Dev checks
 

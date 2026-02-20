@@ -337,6 +337,152 @@ struct MetricCalc {
 }
 
 #[derive(Debug)]
+struct LockedKpiSpec {
+    ranking_type: &'static str,
+    kpi_key: &'static str,
+    formula: &'static str,
+    required_signals: &'static [&'static str],
+    optional_signals: &'static [&'static str],
+}
+
+const LOCKED_KPI_SPECS: &[LockedKpiSpec] = &[
+    LockedKpiSpec {
+        ranking_type: "ev_range_efficiency",
+        kpi_key: "ev_net_energy_efficiency",
+        formula: "median(((delta_soc_pct/100) * DEFAULT_USABLE_BATTERY_KWH * 1000) / delta_km)",
+        required_signals: &["distance.odometer", "ev.soc_pct"],
+        optional_signals: &["power.battery_power_kw", "environment.ambient_temp_c"],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_range_efficiency",
+        kpi_key: "ev_estimated_practical_range",
+        formula: "latest_soc_pct * median(delta_km / delta_soc_pct)",
+        required_signals: &["distance.odometer", "ev.soc_pct"],
+        optional_signals: &["environment.ambient_temp_c"],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_range_efficiency",
+        kpi_key: "ev_urban_efficiency",
+        formula: "median(ev_net_energy_efficiency for segments where speed.vehicle < 45 km/h)",
+        required_signals: &["distance.odometer", "ev.soc_pct", "speed.vehicle"],
+        optional_signals: &[],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_range_efficiency",
+        kpi_key: "ev_highway_efficiency",
+        formula: "median(ev_net_energy_efficiency for segments where speed.vehicle >= 80 km/h)",
+        required_signals: &["distance.odometer", "ev.soc_pct", "speed.vehicle"],
+        optional_signals: &[],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_range_efficiency",
+        kpi_key: "regeneration_recovery_ratio",
+        formula: "100 * regen_energy_wh / (regen_energy_wh + traction_energy_wh) over integrated power windows",
+        required_signals: &["ev.regen_power_kw", "ev.traction_power_kw"],
+        optional_signals: &[],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_range_efficiency",
+        kpi_key: "soc_depletion_rate_per_100km",
+        formula: "100 / median(delta_km / delta_soc_pct)",
+        required_signals: &["distance.odometer", "ev.soc_pct"],
+        optional_signals: &[],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_range_efficiency",
+        kpi_key: "ev_range_efficiency_score",
+        formula: "0.65 * normalized_efficiency_component + 0.35 * normalized_estimated_range_component",
+        required_signals: &["distance.odometer", "ev.soc_pct"],
+        optional_signals: &["speed.vehicle", "environment.ambient_temp_c"],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_charging_performance",
+        kpi_key: "temp_adjusted_charge_acceptance_score",
+        formula: "clamp(100 * median(all_charge_kw) / median(mild_charge_kw), 0, 120)",
+        required_signals: &["ev.charging_state", "ev.charge_power_kw", "ev.soc_pct"],
+        optional_signals: &[
+            "ev.battery_temp_c",
+            "environment.ambient_temp_c",
+            "ev.charger_type",
+        ],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_charging_performance",
+        kpi_key: "cold_weather_charge_speed_retention",
+        formula: "100 * median(cold_charge_kw) / median(mild_charge_kw)",
+        required_signals: &["ev.charging_state", "ev.charge_power_kw", "ev.soc_pct"],
+        optional_signals: &[
+            "ev.battery_temp_c",
+            "environment.ambient_temp_c",
+            "ev.charger_type",
+        ],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_charging_performance",
+        kpi_key: "charging_performance_score",
+        formula: "0.6 * temp_adjusted_charge_acceptance_score + 0.4 * cold_weather_charge_speed_retention",
+        required_signals: &["ev.charging_state", "ev.charge_power_kw", "ev.soc_pct"],
+        optional_signals: &["ev.battery_temp_c", "environment.ambient_temp_c"],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_temperature_impact",
+        kpi_key: "cold_weather_range_retention",
+        formula: "100 * median(cold_km_per_soc) / median(mild_km_per_soc)",
+        required_signals: &[
+            "distance.odometer",
+            "ev.soc_pct",
+            "environment.ambient_temp_c",
+        ],
+        optional_signals: &["ev.battery_temp_c"],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_temperature_impact",
+        kpi_key: "range_temperature_sensitivity_index",
+        formula: "max(0, -slope(km_per_soc vs temp_c) * 10 / mild_km_per_soc * 100)",
+        required_signals: &[
+            "distance.odometer",
+            "ev.soc_pct",
+            "environment.ambient_temp_c",
+        ],
+        optional_signals: &["ev.battery_temp_c"],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_temperature_impact",
+        kpi_key: "cold_weather_charge_speed_retention",
+        formula: "100 * median(cold_charge_kw) / median(mild_charge_kw)",
+        required_signals: &["ev.charging_state", "ev.charge_power_kw", "ev.soc_pct"],
+        optional_signals: &["ev.battery_temp_c", "environment.ambient_temp_c"],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_composite",
+        kpi_key: "ev_composite_base_score",
+        formula: "0.6 * ev_range_efficiency_score + 0.4 * charging_performance_score",
+        required_signals: &[],
+        optional_signals: &[],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_composite",
+        kpi_key: "ev_health_modifier_penalty",
+        formula: "min(10, (MIL_ON ? 6 : 0) + min(4, 0.5 * distinct_active_dtc_count))",
+        required_signals: &["diag.mil_on", "diag.dtcs_active"],
+        optional_signals: &[],
+    },
+    LockedKpiSpec {
+        ranking_type: "ev_composite",
+        kpi_key: "ev_composite_score",
+        formula: "clamp(ev_composite_base_score - ev_health_modifier_penalty, 0, 100)",
+        required_signals: &[],
+        optional_signals: &[],
+    },
+];
+
+fn lookup_kpi_spec(ranking_type: &str, kpi_key: &str) -> Option<&'static LockedKpiSpec> {
+    LOCKED_KPI_SPECS
+        .iter()
+        .find(|spec| spec.ranking_type == ranking_type && spec.kpi_key == kpi_key)
+}
+
+#[derive(Debug)]
 struct VehicleRankingSeed {
     vehicle_uid: String,
     make: String,
@@ -359,6 +505,10 @@ async fn main() -> Result<()> {
         .init();
 
     let signal_keys = Arc::new(load_signal_keys().context("failed to load signal registry v0.2")?);
+    info!(
+        "locked KPI catalog loaded with {} metric definitions",
+        LOCKED_KPI_SPECS.len()
+    );
 
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://car_ranks.db".to_string());
@@ -1687,7 +1837,14 @@ async fn recompute_non_temperature_kpis(pool: &SqlitePool) -> Result<(usize, usi
                 compute_range_efficiency_metrics(pool, &vehicle_uid, cutoff).await?;
             let charging_metrics =
                 compute_charging_performance_metrics(pool, &vehicle_uid, cutoff).await?;
-            let composite_metrics = compute_composite_metrics(&range_metrics, &charging_metrics);
+            let composite_metrics = compute_composite_metrics(
+                pool,
+                &vehicle_uid,
+                cutoff,
+                &range_metrics,
+                &charging_metrics,
+            )
+            .await?;
 
             let snapshot_ts = now_str();
             for metric in &range_metrics {
@@ -1754,6 +1911,30 @@ async fn insert_kpi_snapshot(
     compare_temperature_bin: Option<&str>,
     snapshot_ts: &str,
 ) -> Result<()> {
+    let Some(spec) = lookup_kpi_spec(ranking_type, metric.key) else {
+        return Err(anyhow::anyhow!(
+            "kpi_key {} is not locked for ranking_type {}",
+            metric.key,
+            ranking_type
+        ));
+    };
+    if metric.sample_count < 0 {
+        return Err(anyhow::anyhow!(
+            "kpi_key {} has invalid negative sample_count {}",
+            metric.key,
+            metric.sample_count
+        ));
+    }
+
+    tracing::debug!(
+        ranking_type,
+        kpi_key = metric.key,
+        formula = spec.formula,
+        required_signals = ?spec.required_signals,
+        optional_signals = ?spec.optional_signals,
+        "persisting locked KPI snapshot"
+    );
+
     sqlx::query(
         r#"
         INSERT INTO vehicle_kpi_snapshot (
@@ -2092,7 +2273,13 @@ async fn compute_range_efficiency_metrics(
         FROM vehicle_signal_observation
         WHERE vehicle_uid = ?
           AND observed_at >= ?
-          AND signal_key IN ('distance.odometer', 'ev.soc_pct', 'environment.ambient_temp_c')
+          AND signal_key IN (
+            'distance.odometer',
+            'ev.soc_pct',
+            'speed.vehicle',
+            'ev.regen_power_kw',
+            'ev.traction_power_kw'
+          )
         ORDER BY observed_at ASC
         "#,
     )
@@ -2106,7 +2293,9 @@ async fn compute_range_efficiency_metrics(
     struct Snapshot {
         odo: Option<f64>,
         soc: Option<f64>,
-        temp: Option<f64>,
+        speed: Option<f64>,
+        regen_power_kw: Option<f64>,
+        traction_power_kw: Option<f64>,
     }
 
     let mut by_ts: BTreeMap<DateTime<Utc>, Snapshot> = BTreeMap::new();
@@ -2121,33 +2310,48 @@ async fn compute_range_efficiency_metrics(
         match (signal_key.as_str(), value) {
             ("distance.odometer", Some(v)) => entry.odo = Some(v),
             ("ev.soc_pct", Some(v)) => entry.soc = Some(v),
-            ("environment.ambient_temp_c", Some(v)) => entry.temp = Some(v),
+            ("speed.vehicle", Some(v)) => entry.speed = Some(v),
+            ("ev.regen_power_kw", Some(v)) => entry.regen_power_kw = Some(v),
+            ("ev.traction_power_kw", Some(v)) => entry.traction_power_kw = Some(v),
             _ => {}
         }
     }
 
+    let default_usable_battery_kwh = read_positive_env_f64("DEFAULT_USABLE_BATTERY_KWH", 75.0);
+
     let mut current_odo: Option<f64> = None;
     let mut current_soc: Option<f64> = None;
-    let mut current_temp: Option<f64> = None;
-    let mut prev_filled: Option<(f64, f64, f64)> = None;
+    let mut current_speed: Option<f64> = None;
+    let mut prev_filled: Option<(f64, f64, Option<f64>)> = None;
 
     let mut km_per_soc_points = Vec::new();
+    let mut wh_per_km_points = Vec::new();
+    let mut urban_wh_per_km_points = Vec::new();
+    let mut highway_wh_per_km_points = Vec::new();
+    let mut power_windows: Vec<(i64, Option<f64>, Option<f64>)> = Vec::new();
     let mut latest_soc: Option<f64> = None;
 
-    for snapshot in by_ts.values() {
+    for (ts, snapshot) in &by_ts {
         if snapshot.odo.is_some() {
             current_odo = snapshot.odo;
         }
         if snapshot.soc.is_some() {
             current_soc = snapshot.soc;
         }
-        if snapshot.temp.is_some() {
-            current_temp = snapshot.temp;
+        if snapshot.speed.is_some() {
+            current_speed = snapshot.speed;
+        }
+        if snapshot.regen_power_kw.is_some() || snapshot.traction_power_kw.is_some() {
+            power_windows.push((
+                ts.timestamp(),
+                snapshot.regen_power_kw,
+                snapshot.traction_power_kw,
+            ));
         }
         latest_soc = current_soc;
 
-        if let (Some(odo), Some(soc), Some(temp)) = (current_odo, current_soc, current_temp) {
-            if let Some((prev_odo, prev_soc, _prev_temp)) = prev_filled {
+        if let (Some(odo), Some(soc)) = (current_odo, current_soc) {
+            if let Some((prev_odo, prev_soc, prev_speed)) = prev_filled {
                 let delta_km = odo - prev_odo;
                 let delta_soc = prev_soc - soc;
                 if delta_km > 0.05 && delta_soc > 0.05 && delta_soc < 30.0 {
@@ -2155,9 +2359,23 @@ async fn compute_range_efficiency_metrics(
                     if km_per_soc.is_finite() && km_per_soc > 0.0 && km_per_soc < 50.0 {
                         km_per_soc_points.push(km_per_soc);
                     }
+
+                    if let Some(wh_per_km) =
+                        wh_per_km_from_soc_delta(delta_soc, delta_km, default_usable_battery_kwh)
+                    {
+                        wh_per_km_points.push(wh_per_km);
+                        if let Some(segment_speed) = current_speed.or(prev_speed) {
+                            if segment_speed < 45.0 {
+                                urban_wh_per_km_points.push(wh_per_km);
+                            }
+                            if segment_speed >= 80.0 {
+                                highway_wh_per_km_points.push(wh_per_km);
+                            }
+                        }
+                    }
                 }
             }
-            prev_filled = Some((odo, soc, temp));
+            prev_filled = Some((odo, soc, current_speed));
         }
     }
 
@@ -2174,7 +2392,22 @@ async fn compute_range_efficiency_metrics(
     };
     let latest_soc = latest_soc.unwrap_or(50.0).clamp(0.0, 100.0);
     let estimated_range = (latest_soc * median_km_per_soc).max(0.0);
-    let range_efficiency_score = (100.0 - (soc_depletion_per_100km * 1.2)).clamp(0.0, 100.0);
+
+    let net_energy_efficiency = median(wh_per_km_points.clone())
+        .unwrap_or((soc_depletion_per_100km * default_usable_battery_kwh / 10.0).max(0.0));
+    let efficiency_component = (100.0 - (net_energy_efficiency / 3.0)).clamp(0.0, 100.0);
+    let range_component = (estimated_range / 4.0).clamp(0.0, 100.0);
+    let range_efficiency_score =
+        (0.65 * efficiency_component + 0.35 * range_component).clamp(0.0, 100.0);
+
+    metrics.push(MetricCalc {
+        key: "ev_net_energy_efficiency",
+        value: net_energy_efficiency,
+        unit: "Wh_per_km",
+        direction: "lower_is_better",
+        sample_count,
+        confidence_level: confidence_from_samples(sample_count),
+    });
 
     metrics.push(MetricCalc {
         key: "ev_estimated_practical_range",
@@ -2200,6 +2433,75 @@ async fn compute_range_efficiency_metrics(
         sample_count,
         confidence_level: confidence_from_samples(sample_count),
     });
+
+    if let Some(urban_efficiency) = median(urban_wh_per_km_points.clone()) {
+        let urban_samples = urban_wh_per_km_points.len() as i64;
+        metrics.push(MetricCalc {
+            key: "ev_urban_efficiency",
+            value: urban_efficiency,
+            unit: "Wh_per_km",
+            direction: "lower_is_better",
+            sample_count: urban_samples,
+            confidence_level: confidence_from_samples(urban_samples),
+        });
+    }
+
+    if let Some(highway_efficiency) = median(highway_wh_per_km_points.clone()) {
+        let highway_samples = highway_wh_per_km_points.len() as i64;
+        metrics.push(MetricCalc {
+            key: "ev_highway_efficiency",
+            value: highway_efficiency,
+            unit: "Wh_per_km",
+            direction: "lower_is_better",
+            sample_count: highway_samples,
+            confidence_level: confidence_from_samples(highway_samples),
+        });
+    }
+
+    let mut regen_wh = 0.0;
+    let mut traction_wh = 0.0;
+    let mut regen_windows = 0_i64;
+
+    for window in power_windows.windows(2) {
+        let dt_seconds = window[1].0 - window[0].0;
+        if !(1..=300).contains(&dt_seconds) {
+            continue;
+        }
+
+        let dt_hours = dt_seconds as f64 / 3600.0;
+        let mut has_power_sample = false;
+
+        if let Some(regen_kw) = window[0]
+            .1
+            .filter(|value| value.is_finite() && *value > 0.0)
+        {
+            regen_wh += regen_kw * dt_hours * 1000.0;
+            has_power_sample = true;
+        }
+        if let Some(traction_kw) = window[0]
+            .2
+            .filter(|value| value.is_finite() && *value > 0.0)
+        {
+            traction_wh += traction_kw * dt_hours * 1000.0;
+            has_power_sample = true;
+        }
+
+        if has_power_sample {
+            regen_windows += 1;
+        }
+    }
+
+    if regen_wh > 0.0 && (regen_wh + traction_wh) > 0.0 {
+        let regen_ratio = (100.0 * regen_wh / (regen_wh + traction_wh)).clamp(0.0, 100.0);
+        metrics.push(MetricCalc {
+            key: "regeneration_recovery_ratio",
+            value: regen_ratio,
+            unit: "%",
+            direction: "higher_is_better",
+            sample_count: regen_windows.max(1),
+            confidence_level: confidence_from_samples(regen_windows.max(1)),
+        });
+    }
 
     Ok(metrics)
 }
@@ -2304,10 +2606,13 @@ async fn compute_charging_performance_metrics(
     Ok(metrics)
 }
 
-fn compute_composite_metrics(
+async fn compute_composite_metrics(
+    pool: &SqlitePool,
+    vehicle_uid: &str,
+    cutoff: DateTime<Utc>,
     range_metrics: &[MetricCalc],
     charging_metrics: &[MetricCalc],
-) -> Vec<MetricCalc> {
+) -> Result<Vec<MetricCalc>> {
     let range_score = range_metrics
         .iter()
         .find(|m| m.key == "ev_range_efficiency_score")
@@ -2317,14 +2622,18 @@ fn compute_composite_metrics(
         .find(|m| m.key == "charging_performance_score")
         .map(|m| m.value);
 
-    let Some(composite_value) = (match (range_score, charging_score) {
+    let Some(base_composite_score) = (match (range_score, charging_score) {
         (Some(r), Some(c)) => Some((0.6 * r + 0.4 * c).clamp(0.0, 100.0)),
         (Some(r), None) => Some(r.clamp(0.0, 100.0)),
         (None, Some(c)) => Some(c.clamp(0.0, 100.0)),
         (None, None) => None,
     }) else {
-        return Vec::new();
+        return Ok(Vec::new());
     };
+
+    let (health_penalty, health_sample_count) =
+        compute_health_modifier_penalty(pool, vehicle_uid, cutoff).await?;
+    let adjusted_score = (base_composite_score - health_penalty).clamp(0.0, 100.0);
 
     let sample_count = (range_metrics
         .iter()
@@ -2337,16 +2646,91 @@ fn compute_composite_metrics(
             .find(|m| m.key == "charging_performance_score")
             .map(|m| m.sample_count)
             .unwrap_or(0),
-    );
+    )
+    .max(health_sample_count);
 
-    vec![MetricCalc {
-        key: "ev_composite_score",
-        value: composite_value,
-        unit: "score",
-        direction: "higher_is_better",
-        sample_count,
-        confidence_level: confidence_from_samples(sample_count),
-    }]
+    Ok(vec![
+        MetricCalc {
+            key: "ev_composite_base_score",
+            value: base_composite_score,
+            unit: "score",
+            direction: "higher_is_better",
+            sample_count,
+            confidence_level: confidence_from_samples(sample_count),
+        },
+        MetricCalc {
+            key: "ev_health_modifier_penalty",
+            value: health_penalty,
+            unit: "score_points",
+            direction: "lower_is_better",
+            sample_count: health_sample_count,
+            confidence_level: confidence_from_samples(health_sample_count),
+        },
+        MetricCalc {
+            key: "ev_composite_score",
+            value: adjusted_score,
+            unit: "score",
+            direction: "higher_is_better",
+            sample_count,
+            confidence_level: confidence_from_samples(sample_count),
+        },
+    ])
+}
+
+async fn compute_health_modifier_penalty(
+    pool: &SqlitePool,
+    vehicle_uid: &str,
+    cutoff: DateTime<Utc>,
+) -> Result<(f64, i64)> {
+    let dtc_row = sqlx::query(
+        r#"
+        SELECT COUNT(DISTINCT code) AS dtc_count
+        FROM vehicle_diagnostic_event
+        WHERE vehicle_uid = ?
+          AND observed_at >= ?
+          AND event_type = 'DTC_ACTIVE'
+          AND code IS NOT NULL
+        "#,
+    )
+    .bind(vehicle_uid)
+    .bind(cutoff.to_rfc3339())
+    .fetch_one(pool)
+    .await
+    .context("failed to compute active DTC count for health modifier")?;
+
+    let dtc_count: i64 = dtc_row
+        .try_get("dtc_count")
+        .context("failed to parse active DTC count")?;
+
+    let mil_row = sqlx::query(
+        r#"
+        SELECT event_type
+        FROM vehicle_diagnostic_event
+        WHERE vehicle_uid = ?
+          AND observed_at >= ?
+          AND event_type IN ('MIL_ON', 'MIL_OFF')
+        ORDER BY observed_at DESC
+        LIMIT 1
+        "#,
+    )
+    .bind(vehicle_uid)
+    .bind(cutoff.to_rfc3339())
+    .fetch_optional(pool)
+    .await
+    .context("failed to load MIL status for health modifier")?;
+
+    let mil_event_type = mil_row.and_then(|row| row.try_get::<String, _>("event_type").ok());
+    let mil_on = mil_event_type
+        .as_deref()
+        .map(|event_type| event_type == "MIL_ON")
+        .unwrap_or(false);
+
+    let mil_penalty = if mil_on { 6.0 } else { 0.0 };
+    let dtc_penalty = (dtc_count.max(0) as f64 * 0.5).min(4.0);
+    let penalty = (mil_penalty + dtc_penalty).min(10.0);
+
+    let sample_count = dtc_count.max(0) + if mil_event_type.is_some() { 1 } else { 0 };
+    Ok((penalty, sample_count.max(1)))
 }
 
 async fn compute_vehicle_metrics(
@@ -2552,15 +2936,18 @@ fn score_from_kpi_map(ranking_type: &str, kpis: &BTreeMap<String, f64>) -> f64 {
             .copied()
             .or_else(|| {
                 let est = kpis.get("ev_estimated_practical_range").copied()?;
-                let depletion = kpis
-                    .get("soc_depletion_rate_per_100km")
-                    .copied()
-                    .unwrap_or(50.0);
-                Some(
-                    (0.7 * (est / 5.0).clamp(0.0, 100.0)
-                        + 0.3 * (100.0 - depletion).clamp(0.0, 100.0))
-                    .clamp(0.0, 100.0),
-                )
+                let efficiency_component =
+                    if let Some(net_eff) = kpis.get("ev_net_energy_efficiency").copied() {
+                        (100.0 - (net_eff / 3.0)).clamp(0.0, 100.0)
+                    } else {
+                        let depletion = kpis
+                            .get("soc_depletion_rate_per_100km")
+                            .copied()
+                            .unwrap_or(50.0);
+                        (100.0 - depletion).clamp(0.0, 100.0)
+                    };
+                let range_component = (est / 4.0).clamp(0.0, 100.0);
+                Some((0.65 * efficiency_component + 0.35 * range_component).clamp(0.0, 100.0))
             })
             .unwrap_or(0.0),
         "ev_charging_performance" => kpis
@@ -2690,6 +3077,38 @@ fn read_positive_env(name: &str, default: i64) -> i64 {
         .unwrap_or(default)
 }
 
+fn read_positive_env_f64(name: &str, default: f64) -> f64 {
+    std::env::var(name)
+        .ok()
+        .and_then(|v| v.parse::<f64>().ok())
+        .filter(|v| *v > 0.0)
+        .unwrap_or(default)
+}
+
+fn wh_per_km_from_soc_delta(
+    delta_soc_pct: f64,
+    delta_km: f64,
+    usable_battery_kwh: f64,
+) -> Option<f64> {
+    if !delta_soc_pct.is_finite()
+        || !delta_km.is_finite()
+        || !usable_battery_kwh.is_finite()
+        || delta_soc_pct <= 0.0
+        || delta_km <= 0.0
+        || usable_battery_kwh <= 0.0
+    {
+        return None;
+    }
+
+    let energy_wh = (delta_soc_pct / 100.0) * usable_battery_kwh * 1000.0;
+    let wh_per_km = energy_wh / delta_km;
+    if wh_per_km.is_finite() && wh_per_km > 0.0 {
+        Some(wh_per_km)
+    } else {
+        None
+    }
+}
+
 fn mean(values: &[f64]) -> Option<f64> {
     if values.is_empty() {
         return None;
@@ -2795,6 +3214,8 @@ fn cmp_f64_desc(a: f64, b: f64) -> Ordering {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::Json;
+    use axum::extract::State;
 
     #[test]
     fn temperature_bin_boundaries() {
@@ -2819,5 +3240,436 @@ mod tests {
         let values = vec![10.0, 20.0, 30.0, 40.0];
         assert_eq!(percentile_rank(&values, 20.0, false), 75);
         assert_eq!(percentile_rank(&values, 40.0, false), 25);
+    }
+
+    #[test]
+    fn locked_kpi_catalog_contains_core_composite_metric() {
+        let spec = lookup_kpi_spec("ev_composite", "ev_composite_score");
+        assert!(spec.is_some());
+    }
+
+    #[test]
+    fn wh_per_km_from_soc_delta_works() {
+        let wh_per_km = wh_per_km_from_soc_delta(5.0, 20.0, 60.0).expect("expected value");
+        assert!((wh_per_km - 150.0).abs() < 0.0001);
+    }
+
+    #[test]
+    fn score_from_kpi_map_range_fallback_uses_net_efficiency() {
+        let mut kpis = BTreeMap::new();
+        kpis.insert("ev_estimated_practical_range".to_string(), 280.0);
+        kpis.insert("ev_net_energy_efficiency".to_string(), 160.0);
+
+        let score = score_from_kpi_map("ev_range_efficiency", &kpis);
+        assert!(score > 0.0);
+        assert!(score <= 100.0);
+    }
+
+    #[tokio::test]
+    async fn end_to_end_kpi_job_materializes_locked_kpi_sets() -> Result<()> {
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .context("failed to connect in-memory sqlite")?;
+        apply_schema(&pool).await?;
+
+        let state = AppState {
+            pool: pool.clone(),
+            signal_keys: Arc::new(load_signal_keys()?),
+        };
+
+        let vehicle_uid = Uuid::new_v4();
+        let mild_charge_session_id = Uuid::new_v4();
+        let cold_charge_session_id = Uuid::new_v4();
+        let now = Utc::now();
+
+        let drive_start = now - Duration::hours(6);
+        let mild_charge_start = now - Duration::hours(3);
+        let mild_charge_stop = now - Duration::hours(2) - Duration::minutes(30);
+        let cold_charge_start = now - Duration::hours(2);
+        let cold_charge_stop = now - Duration::hours(1) - Duration::minutes(20);
+
+        let number_record = |observed_at: DateTime<Utc>,
+                             signal_key: &str,
+                             value_number: f64,
+                             unit: Option<&str>,
+                             session_id: Option<Uuid>|
+         -> TelemetryRecord {
+            TelemetryRecord {
+                observed_at,
+                signal_key: signal_key.to_string(),
+                value_number: Some(value_number),
+                value_string: None,
+                value_bool: None,
+                value_json: None,
+                unit: unit.map(str::to_string),
+                status: "ok".to_string(),
+                confidence: Some(1.0),
+                source_signal: Some(signal_key.to_string()),
+                freshness_ttl_seconds: Some(30),
+                temperature_bin: if signal_key == "environment.ambient_temp_c" {
+                    Some(derive_temperature_bin(value_number).to_string())
+                } else {
+                    None
+                },
+                is_temperature_estimated: Some(false),
+                session_id,
+                raw_payload_ref: None,
+            }
+        };
+
+        let string_record = |observed_at: DateTime<Utc>,
+                             signal_key: &str,
+                             value_string: &str,
+                             session_id: Option<Uuid>|
+         -> TelemetryRecord {
+            TelemetryRecord {
+                observed_at,
+                signal_key: signal_key.to_string(),
+                value_number: None,
+                value_string: Some(value_string.to_string()),
+                value_bool: None,
+                value_json: None,
+                unit: None,
+                status: "ok".to_string(),
+                confidence: Some(1.0),
+                source_signal: Some(signal_key.to_string()),
+                freshness_ttl_seconds: Some(60),
+                temperature_bin: None,
+                is_temperature_estimated: Some(false),
+                session_id,
+                raw_payload_ref: None,
+            }
+        };
+
+        let mut records = Vec::new();
+        for i in 0..9 {
+            let ts = drive_start + Duration::minutes(i * 5);
+            let odo_km = 1000.0 + (i as f64 * 2.5);
+            let soc_pct = 90.0 - (i as f64 * 0.8);
+            let ambient_temp_c = if i < 4 { 20.0 } else { 0.0 };
+            let speed_kmh = if i % 2 == 0 { 35.0 } else { 95.0 };
+            let regen_kw = 4.0 + (i % 2) as f64;
+            let traction_kw = 18.0 + (i % 3) as f64;
+
+            records.push(number_record(
+                ts,
+                "distance.odometer",
+                odo_km,
+                Some("km"),
+                None,
+            ));
+            records.push(number_record(ts, "ev.soc_pct", soc_pct, Some("%"), None));
+            records.push(number_record(
+                ts,
+                "environment.ambient_temp_c",
+                ambient_temp_c,
+                Some("C"),
+                None,
+            ));
+            records.push(number_record(
+                ts,
+                "speed.vehicle",
+                speed_kmh,
+                Some("km/h"),
+                None,
+            ));
+            records.push(number_record(
+                ts,
+                "ev.regen_power_kw",
+                regen_kw,
+                Some("kW"),
+                None,
+            ));
+            records.push(number_record(
+                ts,
+                "ev.traction_power_kw",
+                traction_kw,
+                Some("kW"),
+                None,
+            ));
+        }
+
+        for (session_id, start, stop, power_a, power_b, temp_a, temp_b, soc_a, soc_b) in [
+            (
+                mild_charge_session_id,
+                mild_charge_start,
+                mild_charge_stop,
+                62.0,
+                58.0,
+                20.0,
+                21.0,
+                40.0,
+                50.0,
+            ),
+            (
+                cold_charge_session_id,
+                cold_charge_start,
+                cold_charge_stop,
+                36.0,
+                34.0,
+                0.0,
+                1.0,
+                52.0,
+                60.0,
+            ),
+        ] {
+            let mid = start + Duration::minutes(10);
+            let near_end = stop - Duration::minutes(5);
+
+            records.push(number_record(
+                start,
+                "ev.soc_pct",
+                soc_a,
+                Some("%"),
+                Some(session_id),
+            ));
+            records.push(number_record(
+                near_end,
+                "ev.soc_pct",
+                soc_b,
+                Some("%"),
+                Some(session_id),
+            ));
+            records.push(number_record(
+                start,
+                "ev.charge_power_kw",
+                power_a,
+                Some("kW"),
+                Some(session_id),
+            ));
+            records.push(number_record(
+                mid,
+                "ev.charge_power_kw",
+                power_b,
+                Some("kW"),
+                Some(session_id),
+            ));
+            records.push(number_record(
+                start,
+                "environment.ambient_temp_c",
+                temp_a,
+                Some("C"),
+                Some(session_id),
+            ));
+            records.push(number_record(
+                near_end,
+                "environment.ambient_temp_c",
+                temp_b,
+                Some("C"),
+                Some(session_id),
+            ));
+            records.push(number_record(
+                mid,
+                "ev.battery_temp_c",
+                if temp_a > 10.0 { 25.0 } else { 6.0 },
+                Some("C"),
+                Some(session_id),
+            ));
+            records.push(string_record(
+                mid,
+                "ev.charger_type",
+                "dc_fast",
+                Some(session_id),
+            ));
+            records.push(string_record(
+                start,
+                "ev.charging_state",
+                "charging",
+                Some(session_id),
+            ));
+        }
+
+        let payload = TelemetryBatchRequest {
+            batch_id: Uuid::new_v4(),
+            schema_version: "0.2".to_string(),
+            vehicle_uid,
+            source: "OBD".to_string(),
+            client: Some(ClientInfo {
+                platform: Some("ios".to_string()),
+                app_version: Some("1.0.0-test".to_string()),
+                adapter_fingerprint: Some("adapter-test-123".to_string()),
+            }),
+            capture_window: CaptureWindow {
+                started_at: drive_start - Duration::minutes(1),
+                ended_at: now,
+                sample_interval_seconds: Some(60),
+            },
+            records,
+            session_events: vec![
+                SessionEventInput {
+                    event_type: "charging_session_start".to_string(),
+                    observed_at: mild_charge_start,
+                    session_id: mild_charge_session_id,
+                },
+                SessionEventInput {
+                    event_type: "charging_session_stop".to_string(),
+                    observed_at: mild_charge_stop,
+                    session_id: mild_charge_session_id,
+                },
+                SessionEventInput {
+                    event_type: "charging_session_start".to_string(),
+                    observed_at: cold_charge_start,
+                    session_id: cold_charge_session_id,
+                },
+                SessionEventInput {
+                    event_type: "charging_session_stop".to_string(),
+                    observed_at: cold_charge_stop,
+                    session_id: cold_charge_session_id,
+                },
+            ],
+            diagnostics: vec![DiagnosticInput {
+                observed_at: now - Duration::minutes(45),
+                mil_on: Some(true),
+                dtcs_active: Some(vec!["P0ABC".to_string(), "P0DEF".to_string()]),
+            }],
+        };
+
+        let Json(ingest_response) = post_telemetry_batches(State(state.clone()), Json(payload))
+            .await
+            .map_err(|err| anyhow::anyhow!("ingest failed: {} {}", err.error, err.message))?;
+        assert!(ingest_response.accepted);
+        assert!(!ingest_response.duplicate);
+        assert_eq!(ingest_response.records_rejected, 0);
+
+        let job = run_kpi_job(&pool)
+            .await
+            .map_err(|err| anyhow::anyhow!("kpi job failed: {} {}", err.error, err.message))?;
+        assert!(job.ok);
+        assert_eq!(job.recomputed_vehicles, 1);
+        assert!(job.kpi_rows_upserted > 0);
+        assert!(job.ranking_rows_upserted > 0);
+
+        let vehicle_uid_text = vehicle_uid.to_string();
+        let expected_by_ranking: [(&str, &[&str]); 4] = [
+            (
+                "ev_range_efficiency",
+                &[
+                    "ev_net_energy_efficiency",
+                    "ev_estimated_practical_range",
+                    "ev_urban_efficiency",
+                    "ev_highway_efficiency",
+                    "regeneration_recovery_ratio",
+                    "soc_depletion_rate_per_100km",
+                    "ev_range_efficiency_score",
+                ],
+            ),
+            (
+                "ev_charging_performance",
+                &[
+                    "temp_adjusted_charge_acceptance_score",
+                    "cold_weather_charge_speed_retention",
+                    "charging_performance_score",
+                ],
+            ),
+            (
+                "ev_temperature_impact",
+                &[
+                    "cold_weather_range_retention",
+                    "range_temperature_sensitivity_index",
+                    "cold_weather_charge_speed_retention",
+                ],
+            ),
+            (
+                "ev_composite",
+                &[
+                    "ev_composite_base_score",
+                    "ev_health_modifier_penalty",
+                    "ev_composite_score",
+                ],
+            ),
+        ];
+
+        for (ranking_type, expected_keys) in expected_by_ranking {
+            let rows = sqlx::query(
+                r#"
+                SELECT DISTINCT kpi_key
+                FROM vehicle_kpi_snapshot
+                WHERE vehicle_uid = ?
+                  AND ranking_type = ?
+                  AND timeframe = '30d'
+                "#,
+            )
+            .bind(&vehicle_uid_text)
+            .bind(ranking_type)
+            .fetch_all(&pool)
+            .await
+            .with_context(|| format!("failed to fetch keys for {}", ranking_type))?;
+
+            let keys: HashSet<String> = rows
+                .into_iter()
+                .map(|row| row.try_get::<String, _>("kpi_key"))
+                .collect::<std::result::Result<HashSet<_>, _>>()
+                .with_context(|| format!("failed to parse keys for {}", ranking_type))?;
+
+            for expected_key in expected_keys {
+                assert!(
+                    keys.contains(*expected_key),
+                    "missing {} for ranking_type {}",
+                    expected_key,
+                    ranking_type
+                );
+            }
+        }
+
+        let composite_rows = sqlx::query(
+            r#"
+            SELECT kpi_key, kpi_value
+            FROM vehicle_kpi_snapshot
+            WHERE vehicle_uid = ?
+              AND ranking_type = 'ev_composite'
+              AND timeframe = '30d'
+            "#,
+        )
+        .bind(&vehicle_uid_text)
+        .fetch_all(&pool)
+        .await
+        .context("failed to fetch composite KPI values")?;
+
+        let mut composite_map = BTreeMap::new();
+        for row in composite_rows {
+            let key: String = row.try_get("kpi_key")?;
+            let value: f64 = row.try_get("kpi_value")?;
+            composite_map.insert(key, value);
+        }
+
+        let base = *composite_map
+            .get("ev_composite_base_score")
+            .context("missing ev_composite_base_score")?;
+        let penalty = *composite_map
+            .get("ev_health_modifier_penalty")
+            .context("missing ev_health_modifier_penalty")?;
+        let final_score = *composite_map
+            .get("ev_composite_score")
+            .context("missing ev_composite_score")?;
+
+        assert!(penalty > 0.0);
+        assert!(final_score <= base);
+        assert!((final_score - (base - penalty).clamp(0.0, 100.0)).abs() < 0.0001);
+
+        for ranking_type in [
+            "ev_range_efficiency",
+            "ev_charging_performance",
+            "ev_composite",
+            "ev_temperature_impact",
+        ] {
+            let count: i64 = sqlx::query_scalar(
+                r#"
+                SELECT COUNT(*)
+                FROM cohort_ranking_snapshot
+                WHERE ranking_type = ?
+                  AND timeframe = '30d'
+                "#,
+            )
+            .bind(ranking_type)
+            .fetch_one(&pool)
+            .await
+            .with_context(|| format!("failed to count rankings for {}", ranking_type))?;
+
+            assert!(count > 0, "expected ranking rows for {}", ranking_type);
+        }
+
+        Ok(())
     }
 }

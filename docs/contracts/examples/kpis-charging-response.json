@@ -1,13 +1,13 @@
 {
   "vehicle_uid": "1df2e819-c57e-4fd6-9808-65fcb5f613b0",
-  "generated_at": "2026-02-17T11:00:00Z",
+  "generated_at": "2026-02-20T11:00:00Z",
   "timeframe": "90d",
   "temperature_bin": "all",
   "ranking_type": "ev_charging_performance",
   "kpis": [
     {
-      "kpi_key": "charging_performance_score",
-      "value": 74.3,
+      "kpi_key": "temp_adjusted_charge_acceptance_score",
+      "value": 81.6,
       "unit": "score",
       "direction": "higher_is_better",
       "confidence_level": "preview",
@@ -22,8 +22,8 @@
       "sample_count": 1
     },
     {
-      "kpi_key": "temp_adjusted_charge_acceptance_score",
-      "value": 81.6,
+      "kpi_key": "charging_performance_score",
+      "value": 74.3,
       "unit": "score",
       "direction": "higher_is_better",
       "confidence_level": "preview",

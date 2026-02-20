@@ -1,6 +1,7 @@
 # `GET /v1/rankings`
 
-Status: Draft v2 (thin-slice aligned)  
+Status: Draft v3 (locked KPI mapping aligned)  
+Date: 2026-02-20  
 Purpose: Return EV ranking snapshots with cohort filters and temperature slicing.
 
 ## Query Parameters
@@ -34,7 +35,7 @@ Purpose: Return EV ranking snapshots with cohort filters and temperature slicing
 
 ```json
 {
-  "generated_at": "2026-02-17T11:05:00Z",
+  "generated_at": "2026-02-20T11:05:00Z",
   "ranking_type": "ev_temperature_impact",
   "timeframe": "90d",
   "temperature_bin": "cold",
@@ -59,6 +60,7 @@ Purpose: Return EV ranking snapshots with cohort filters and temperature slicing
       "confidence_level": "medium",
       "kpis": {
         "cold_weather_range_retention": 60.0,
+        "range_temperature_sensitivity_index": 12.5,
         "cold_weather_charge_speed_retention": 63.3
       }
     }
@@ -72,10 +74,26 @@ Purpose: Return EV ranking snapshots with cohort filters and temperature slicing
 ```
 
 ## Ranking Type KPI Mapping
-- `ev_range_efficiency`: `ev_estimated_practical_range`, `soc_depletion_rate_per_100km`, `ev_range_efficiency_score`
-- `ev_charging_performance`: `temp_adjusted_charge_acceptance_score`, `cold_weather_charge_speed_retention`, `charging_performance_score`
-- `ev_composite`: `ev_composite_score`
-- `ev_temperature_impact`: `cold_weather_range_retention`, `cold_weather_charge_speed_retention`
+- `ev_range_efficiency`:
+  - `ev_net_energy_efficiency`
+  - `ev_estimated_practical_range`
+  - `ev_urban_efficiency` (when speed signal coverage allows)
+  - `ev_highway_efficiency` (when speed signal coverage allows)
+  - `regeneration_recovery_ratio` (when regen/traction signal coverage allows)
+  - `soc_depletion_rate_per_100km`
+  - `ev_range_efficiency_score`
+- `ev_charging_performance`:
+  - `temp_adjusted_charge_acceptance_score`
+  - `cold_weather_charge_speed_retention`
+  - `charging_performance_score`
+- `ev_composite`:
+  - `ev_composite_base_score`
+  - `ev_health_modifier_penalty`
+  - `ev_composite_score`
+- `ev_temperature_impact`:
+  - `cold_weather_range_retention`
+  - `range_temperature_sensitivity_index`
+  - `cold_weather_charge_speed_retention`
 
 ## Confidence and Sample Gates
 - Low sample sizes return data with `confidence_level=preview`.

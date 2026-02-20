@@ -272,13 +272,12 @@ Phase 3 candidates:
 
 ## 12. Open Questions (Need Your Input)
 1. Final temperature-bin definitions and cold-climate thresholds for comparisons.
-2. Exact EV-first **top 10 KPI definitions** for v1 (including temperature and charging fallback rules).
+2. Resolved on **2026-02-20**: EV-first KPI formulas and required signal mapping are locked in backend KPI catalog and contract docs.
 3. Ambient-temperature fallback policy when OBD temperature signals are missing.
 4. Priority order for remaining tradeoffs (speed-to-market vs cost vs KPI accuracy vs maintainability).
 
 ## 13. Immediate Next Steps
-1. Lock EV-first KPI formulas (driving + charging + temperature impact) and map each KPI to required OBD signals.
-2. Lock temperature-bin derivation logic and minimum sample gates for cold-climate insights.
-3. Lock ingestion payload schema and idempotency strategy for 1-minute cadence.
-4. Implement the Postgres schema + signal registry from `research/schema/`.
-5. Build thin end-to-end slice on single EC2: iOS capture -> batch upload -> KPI calc -> ranking API.
+1. Lock temperature-bin derivation logic and minimum sample gates for cold-climate insights.
+2. Lock ingestion payload schema and idempotency strategy for 1-minute cadence.
+3. Implement the Postgres schema + signal registry from `research/schema/`.
+4. Build thin end-to-end slice on single EC2: iOS capture -> batch upload -> KPI calc -> ranking API.

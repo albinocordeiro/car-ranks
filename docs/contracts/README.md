@@ -1,7 +1,7 @@
 # API Contracts (MVP)
 
-Status: Draft v2  
-Date: 2026-02-17
+Status: Draft v3  
+Date: 2026-02-20
 
 This folder contains executable contract drafts for the EV-first MVP APIs.
 
@@ -26,4 +26,4 @@ This folder contains executable contract drafts for the EV-first MVP APIs.
 - Temperature-related keys align with signal registry v0.2.
 - `confidence_level` enum: `preview`, `medium`, `stable`.
 - `temperature_bin` enum: `all`, `very_cold`, `cold`, `cool`, `mild`, `hot`.
-- This folder documents the current thin-slice backend behavior; some fields are marked as reserved/no-op where they are accepted but not yet enforced.
+- This folder documents the current thin-slice backend behavior with locked KPI formulas and signal mappings.
