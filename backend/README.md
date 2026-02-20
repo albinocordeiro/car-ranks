@@ -126,7 +126,16 @@ curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type
 - Postgres-ready bootstrap schema lives in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/0001_init.sql`.
 - Ownership/auth additive migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/*/0002_auth_ownership.sql`.
 - `/Users/albinocordeiro/Code/car_ranks/backend/schema.sql` remains as a legacy SQLite schema snapshot and is kept in sync with SQLite `0001_init.sql`.
-- Current Postgres runtime endpoints: `/health`, `/v1/config/sampling`, `/v1/kpis/me`, `/v1/kpis/charging`.
+- Current Postgres runtime endpoints:
+  - `/health`
+  - `/v1/config/sampling`
+  - `/v1/telemetry/batches`
+  - `/v1/kpis/me`
+  - `/v1/kpis/charging`
+  - `/v1/kpis/temperature-impact`
+  - `/v1/rankings`
+  - `/internal/jobs/recompute-kpis`
+  - `/internal/jobs/build-ranking-snapshots`
 
 ## Dev checks
 
@@ -136,12 +145,15 @@ cargo check
 cargo test
 ```
 
-Postgres migration integration check (optional):
+Postgres integration checks (optional):
 
 ```bash
 export POSTGRES_TEST_DATABASE_URL=postgres://<user>:<pass>@<host>:5432/<db>
 cargo test postgres_bootstrap_migration_applies_when_env_set
 cargo test postgres_kpi_fetch_and_charging_handler_work_when_env_set
+cargo test postgres_ingest_enforces_idempotency_and_vehicle_ownership_when_env_set
+cargo test postgres_rankings_and_temperature_impact_handlers_work_when_env_set
+cargo test postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set
 ```
 
 ## References
