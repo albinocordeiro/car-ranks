@@ -52,6 +52,16 @@ fn internal_job_run_migrations_define_expected_table() {
     }
 }
 
+#[test]
+fn internal_job_lock_migrations_define_expected_table() {
+    for migration in [
+        crate::migrations::SQLITE_MIGRATION_0004,
+        crate::migrations::POSTGRES_MIGRATION_0004,
+    ] {
+        assert!(migration.contains("CREATE TABLE IF NOT EXISTS internal_job_lock"));
+    }
+}
+
 #[tokio::test]
 async fn apply_schema_records_migrations_once() -> Result<()> {
     let pool = SqlitePoolOptions::new()
@@ -104,5 +114,19 @@ async fn apply_schema_records_migrations_once() -> Result<()> {
     .context("failed to count internal job run migration")?;
 
     assert_eq!(job_run_count, 1);
+
+    let job_lock_count: i64 = sqlx::query_scalar(
+        r#"
+        SELECT COUNT(*)
+        FROM schema_migration
+        WHERE migration_id = '0004_internal_job_locks'
+          AND backend = 'sqlite'
+        "#,
+    )
+    .fetch_one(&pool)
+    .await
+    .context("failed to count internal job lock migration")?;
+
+    assert_eq!(job_lock_count, 1);
     Ok(())
 }

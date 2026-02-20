@@ -32,6 +32,29 @@ pub(crate) async fn get_latest_job_status(
 }
 
 async fn run_tracked_job(state: &AppState, job_kind: &str) -> Result<Json<JobResponse>, ApiError> {
+    let lock_owner = uuid::Uuid::new_v4().to_string();
+    crate::job_locks::acquire_job_lock(state, job_kind, &lock_owner).await?;
+
+    let run_result = run_tracked_job_with_lock(state, job_kind).await;
+    if let Err(release_error) =
+        crate::job_locks::release_job_lock(state, job_kind, &lock_owner).await
+    {
+        eprintln!(
+            "failed to release internal job lock for {}: {}",
+            job_kind, release_error.message
+        );
+        if run_result.is_ok() {
+            return Err(release_error);
+        }
+    }
+
+    run_result
+}
+
+async fn run_tracked_job_with_lock(
+    state: &AppState,
+    job_kind: &str,
+) -> Result<Json<JobResponse>, ApiError> {
     let job_run_id = crate::job_runs::record_job_run_started(state, job_kind).await?;
     match crate::jobs::run_kpi_job_by_backend(state).await {
         Ok(response) => {

@@ -8,6 +8,7 @@ Completed backend milestones:
 - Test coverage expanded to validate Postgres ingest idempotency/ownership, rankings, temperature-impact, and internal job bridge execution.
 - Priority 1 delivered: `GET /v1/kpis/readiness` now returns per-family readiness, confidence, and gate diagnostics.
 - Priority 2 partially delivered: internal job runs are now persisted in `internal_job_run`, and `GET /internal/jobs/latest` exposes latest run status.
+- Priority 4 partially delivered: internal job endpoints now enforce per-job-kind lease locks to reject overlapping runs.
 
 Current runtime status:
 - SQLite mode: full MVP API surface available.
@@ -17,7 +18,6 @@ Current runtime status:
 ## Risks and Gaps
 
 - Postgres KPI/ranking jobs are bridge-based and perform full-table syncs, which is acceptable for MVP but not scalable.
-- Internal jobs still lack distributed lock/lease semantics for multi-instance deployments.
 - Postgres runtime still computes KPI/ranking jobs through a SQLite bridge rather than native Postgres stages.
 
 ## Next Product Development Plan
@@ -27,8 +27,8 @@ Priority 3: Postgres-native compute path
 - Keep module boundaries aligned with single responsibility (charging sessions, KPI recompute, ranking snapshots).
 
 Priority 4: Job execution safety
-- Add lightweight lock/lease semantics so concurrent internal job triggers are safe.
 - Add stale-run detection/recovery semantics for interrupted jobs.
+- Add lock ownership observability (for example, include lock owner + expiry in internal status payloads).
 
 Priority 5: Product contract hardening
 - Expand API contract examples for freshness/readiness telemetry and status fields.
@@ -37,5 +37,5 @@ Priority 5: Product contract hardening
 ## Suggested Execution Order
 
 1. Migrate job computation to Postgres-native stages and deprecate bridge sync path.
-2. Add lock/lease semantics for safe multi-instance job execution.
+2. Extend lock handling with stale-run recovery and richer lock diagnostics.
 3. Expand docs/contracts around freshness and operational status payloads.

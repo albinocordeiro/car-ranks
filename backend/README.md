@@ -123,6 +123,7 @@ curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type
   - cold charging retention requires cold + mild charging sessions (defaults: `1` each)
 - Temperature-impact rankings include only vehicles that pass both gated retention metrics (`cold_weather_range_retention` and `cold_weather_charge_speed_retention`).
 - KPI persistence is restricted by a locked KPI catalog in `src/main.rs`; unknown KPI keys are rejected at write time.
+- Internal job endpoints enforce a per-`job_kind` lease lock (~10 minutes) and reject overlapping triggers with `409 conflict`.
 
 ## Migrations
 - Startup applies SQLite migrations from `/Users/albinocordeiro/Code/car_ranks/backend/migrations/sqlite/`.
@@ -131,6 +132,7 @@ curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type
 - Postgres-ready bootstrap schema lives in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/0001_init.sql`.
 - Ownership/auth additive migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/*/0002_auth_ownership.sql`.
 - Internal job-run metadata migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/*/0003_internal_job_runs.sql`.
+- Internal job lock/lease migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/*/0004_internal_job_locks.sql`.
 - `/Users/albinocordeiro/Code/car_ranks/backend/schema.sql` remains as a legacy SQLite schema snapshot and is kept in sync with SQLite `0001_init.sql`.
 - Current Postgres runtime endpoints:
   - `/health`

@@ -92,3 +92,61 @@ async fn latest_job_status_returns_not_found_when_no_runs_exist() -> Result<()> 
 
     Ok(())
 }
+
+#[tokio::test]
+async fn recompute_job_releases_lock_after_success() -> Result<()> {
+    let state = job_status_test_state().await?;
+
+    let Json(job_response) = crate::handlers::post_recompute_kpis(State(state.clone()))
+        .await
+        .map_err(|err| anyhow::anyhow!("recompute job failed: {}", err.message))?;
+    assert!(job_response.ok);
+
+    let lock_count: i64 = sqlx::query_scalar(
+        r#"
+        SELECT COUNT(*)
+        FROM internal_job_lock
+        WHERE job_kind = 'recompute_kpis'
+        "#,
+    )
+    .fetch_one(&state.sqlite_pool)
+    .await
+    .context("failed to count internal job locks after run")?;
+    assert_eq!(lock_count, 0);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn recompute_job_rejects_when_active_lock_exists() -> Result<()> {
+    let state = job_status_test_state().await?;
+    let now = chrono::Utc::now();
+
+    sqlx::query(
+        r#"
+        INSERT INTO internal_job_lock (
+          job_kind,
+          owner_token,
+          acquired_at,
+          expires_at
+        ) VALUES (?, ?, ?, ?)
+        "#,
+    )
+    .bind("recompute_kpis")
+    .bind("preexisting-owner")
+    .bind(now.to_rfc3339())
+    .bind((now + chrono::Duration::minutes(5)).to_rfc3339())
+    .execute(&state.sqlite_pool)
+    .await
+    .context("failed to seed active job lock")?;
+
+    let err = crate::handlers::post_recompute_kpis(State(state))
+        .await
+        .expect_err("expected recompute job lock conflict");
+
+    assert_eq!(err.status, StatusCode::CONFLICT);
+    assert_eq!(err.error, "conflict");
+    assert!(err.message.contains("already running"));
+
+    Ok(())
+}
