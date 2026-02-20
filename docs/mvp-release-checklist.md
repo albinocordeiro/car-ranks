@@ -17,10 +17,10 @@ Goal: submit the MVP iOS app to App Store review by **February 28, 2026**.
 
 ### Backend
 
-- [ ] End-to-end path validated for PostgreSQL runtime: ingest -> recompute job -> KPI reads -> ranking reads. (`Due: 2026-02-24`, `Status: TODO`)
-- [ ] Ownership/auth checks verified across all public vehicle-bound endpoints. (`Due: 2026-02-23`, `Status: TODO`)
-- [ ] Internal recompute job reliability verified: lock conflicts, stale-run recovery, latest-status metadata. (`Due: 2026-02-23`, `Status: TODO`)
-- [ ] Critical API contracts current for mobile consumption (KPI, ranking, internal jobs). (`Due: 2026-02-26`, `Status: TODO`)
+- [x] End-to-end path validated for PostgreSQL runtime: ingest -> recompute job -> KPI reads -> ranking reads. (`Due: 2026-02-24`, `Completed: 2026-02-20`, `Status: DONE`)
+- [x] Ownership/auth checks verified across all public vehicle-bound endpoints. (`Due: 2026-02-23`, `Completed: 2026-02-20`, `Status: DONE`)
+- [x] Internal recompute job reliability verified: lock conflicts, stale-run recovery, latest-status metadata. (`Due: 2026-02-23`, `Completed: 2026-02-20`, `Status: DONE`)
+- [x] Critical API contracts current for mobile consumption (KPI, ranking, internal jobs). (`Due: 2026-02-26`, `Completed: 2026-02-20`, `Status: DONE`)
 - [ ] No open P0/P1 backend defects. (`Due: 2026-02-27`, `Status: TODO`)
 
 ### Mobile App
@@ -58,9 +58,21 @@ Goal: submit the MVP iOS app to App Store review by **February 28, 2026**.
 
 ## Today (2026-02-20) In Progress
 
-- [ ] Scope freeze confirmed across current feature work. (`Due: 2026-02-20`, `Status: IN_PROGRESS`)
-- [ ] MVP checklist locked as the active source of truth. (`Due: 2026-02-20`, `Status: IN_PROGRESS`)
-- [ ] Due dates assigned for all unchecked must-have items. (`Due: 2026-02-20`, `Status: IN_PROGRESS`)
+- [x] Scope freeze confirmed across current feature work. (`Due: 2026-02-20`, `Completed: 2026-02-20`, `Status: DONE`)
+- [x] MVP checklist locked as the active source of truth. (`Due: 2026-02-20`, `Completed: 2026-02-20`, `Status: DONE`)
+- [x] Due dates assigned for all unchecked must-have items. (`Due: 2026-02-20`, `Completed: 2026-02-20`, `Status: DONE`)
+
+## Evidence Snapshot (2026-02-20)
+
+- End-to-end Postgres smoke baseline captured at `/Users/albinocordeiro/Code/car_ranks/docs/smoke/postgres-local-20260220T233027Z/summary.md` with all endpoint captures returning `200`.
+- Manual CI smoke workflow succeeded: [run 22245386692](https://github.com/albinocordeiro/car-ranks/actions/runs/22245386692), artifact `postgres-smoke-1`.
+- Integration tests confirm auth/ownership and job reliability:
+  - `postgres_ingest_enforces_idempotency_and_vehicle_ownership_when_env_set`
+  - `postgres_public_vehicle_handlers_enforce_user_scope_when_env_set`
+  - `postgres_latest_job_status_reports_active_lock_metadata_when_env_set`
+  - `postgres_recompute_job_conflict_includes_lock_diagnostics_when_env_set`
+  - `postgres_internal_job_handler_runs_native_pipeline_when_env_set`
+- API contracts are updated in `/Users/albinocordeiro/Code/car_ranks/docs/contracts/` (`kpi-api.md`, `ranking-api.md`, `internal-jobs-api.md`, and matching `examples/*.json`).
 
 ## Daily Exit Criteria
 

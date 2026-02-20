@@ -6,6 +6,7 @@ Completed backend milestones:
 - Milestone 1: auth + ownership enforcement across public vehicle-bound APIs.
 - Milestone 2: Postgres parity for ingest, rankings, temperature-impact KPIs, and internal job routes.
 - Test coverage expanded to validate Postgres ingest idempotency/ownership, rankings, temperature-impact, and internal job execution.
+- Auth-scope coverage now explicitly validates foreign-user rejection across all public vehicle-bound KPI handlers and scoped ranking visibility.
 - Priority 1 delivered: `GET /v1/kpis/readiness` now returns per-family readiness, confidence, and gate diagnostics.
 - Priority 2 partially delivered: internal job runs are now persisted in `internal_job_run`, and `GET /internal/jobs/latest` exposes latest run status.
 - Priority 4 delivered baseline: internal job endpoints enforce per-job-kind lease locks, status and conflict payloads expose lock owner/expiry metadata, and stale `running` rows are auto-recovered on next trigger.
@@ -16,9 +17,15 @@ Current runtime status:
 - Runtime bootstrap requires a Postgres `DATABASE_URL`.
 - Internal KPI/ranking recompute in Postgres mode is fully native.
 
+Recent verification evidence:
+- Latest local smoke baseline: `/Users/albinocordeiro/Code/car_ranks/docs/smoke/postgres-local-20260220T233027Z/summary.md` (all endpoint captures `200`).
+- Smoke runner automation: `/Users/albinocordeiro/Code/car_ranks/docs/smoke/scripts/run_local_postgres_smoke.sh`.
+- Manual CI smoke workflow: `Postgres Smoke (Manual)` at [run 22245386692](https://github.com/albinocordeiro/car-ranks/actions/runs/22245386692) with uploaded artifact `postgres-smoke-1`.
+
 ## Risks and Gaps
 
-- Main MVP risk is release readiness and cross-surface stability.
+- Main MVP risk shifted from backend runtime parity to mobile/release readiness and cross-surface stability.
+- Backend still needs ongoing P0/P1 defect triage until submission freeze.
 
 ## Next Product Development Plan
 
@@ -35,16 +42,17 @@ Priority 2: Reviewer-friendly implementation gate
   - small commits with matching tests/docs.
 - Avoid opportunistic refactors outside MVP scope.
 
-Priority 3: Job execution safety
-- Baseline delivered; optional follow-up is exporting lock/run metrics for external observability.
+Priority 3: Release operations package
+- Prepare App Store metadata/screenshots/privacy/support URLs and keep them aligned with current MVP behavior.
+- Draft App Review notes with deterministic smoke path and known constraints.
 
-Priority 4: Product contract hardening
-- Expand API contract examples for freshness/readiness telemetry and status fields.
-- Add API tests for new freshness paths in Postgres runtime.
+Priority 4: Defect burn-down
+- Track and close backend/mobile P0/P1 issues daily.
+- Keep smoke baseline current after blocker fixes using the one-command runner and manual CI workflow.
 
 ## Suggested Execution Order
 
-1. Lock MVP scope and release checklist (`docs/mvp-release-checklist.md`).
-2. Finish remaining Postgres-runtime release-blocker fixes using the reviewer-friendly coding gate.
-3. Expand docs/contracts and targeted tests for freshness/readiness operational paths.
-4. Prepare release operations (metadata/privacy/support artifacts) for App Store submission.
+1. Complete mobile must-have flows (auth, vehicle linkage, KPI/ranking screens, and core empty/loading/error states).
+2. Run device-level crash-free smoke on iOS targets and fix blocker defects.
+3. Finalize App Store operations package (metadata, screenshots, privacy/support URLs, review notes, TestFlight QA sign-off).
+4. Maintain daily P0/P1 triage plus smoke re-validation through submission.

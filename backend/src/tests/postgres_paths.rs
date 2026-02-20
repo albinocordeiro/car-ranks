@@ -642,6 +642,225 @@ async fn postgres_ingest_enforces_idempotency_and_vehicle_ownership_when_env_set
 }
 
 #[tokio::test]
+async fn postgres_public_vehicle_handlers_enforce_user_scope_when_env_set() -> Result<()> {
+    let Some(ctx) = PostgresTestContext::maybe_new().await? else {
+        return Ok(());
+    };
+
+    let result = async {
+        let state = ctx.app_state().await?;
+        let now = Utc::now().to_rfc3339();
+        let owner_user = Uuid::new_v4();
+        let foreign_user = Uuid::new_v4();
+        let vehicle_uid = Uuid::new_v4();
+
+        insert_vehicle_owner_access(
+            &ctx.pool,
+            &vehicle_uid.to_string(),
+            owner_user,
+            &now,
+            "auth_make",
+            "auth_model",
+        )
+        .await?;
+
+        // Seed one KPI per family so owner reads are valid and ranking rows can materialize KPI maps.
+        sqlx::query(
+            r#"
+            INSERT INTO vehicle_kpi_snapshot (
+              snapshot_id,
+              vehicle_uid,
+              ranking_type,
+              timeframe,
+              kpi_key,
+              kpi_value,
+              kpi_unit,
+              direction,
+              confidence_level,
+              sample_count,
+              temperature_bin,
+              computed_at
+            ) VALUES
+              ($1, $2, 'ev_range_efficiency', '90d', 'ev_net_energy_efficiency', 181.0, 'wh_per_km', 'lower_is_better', 'preview', 9, 'all', $3),
+              ($4, $2, 'ev_charging_performance', '90d', 'charging_performance_score', 74.0, 'score', 'higher_is_better', 'preview', 2, 'all', $3)
+            "#,
+        )
+        .bind(Uuid::new_v4().to_string())
+        .bind(vehicle_uid.to_string())
+        .bind(&now)
+        .bind(Uuid::new_v4().to_string())
+        .execute(&ctx.pool)
+        .await
+        .context("failed to seed postgres KPI snapshots for ownership test")?;
+
+        sqlx::query(
+            r#"
+            INSERT INTO vehicle_kpi_snapshot (
+              snapshot_id,
+              vehicle_uid,
+              ranking_type,
+              timeframe,
+              kpi_key,
+              kpi_value,
+              kpi_unit,
+              direction,
+              confidence_level,
+              sample_count,
+              temperature_bin,
+              baseline_temperature_bin,
+              compare_temperature_bin,
+              computed_at
+            ) VALUES
+              ($1, $2, 'ev_temperature_impact', '90d', 'cold_weather_range_retention', 0.81, 'ratio', 'higher_is_better', 'preview', 2, 'cold', 'mild', 'cold', $3),
+              ($4, $2, 'ev_temperature_impact', '90d', 'cold_weather_charge_speed_retention', 0.77, 'ratio', 'higher_is_better', 'preview', 2, 'cold', 'mild', 'cold', $3)
+            "#,
+        )
+        .bind(Uuid::new_v4().to_string())
+        .bind(vehicle_uid.to_string())
+        .bind(&now)
+        .bind(Uuid::new_v4().to_string())
+        .execute(&ctx.pool)
+        .await
+        .context("failed to seed postgres temperature KPI snapshots for ownership test")?;
+
+        // Seed one ranking row so owner can read rankings while foreign users remain scoped out.
+        sqlx::query(
+            r#"
+            INSERT INTO cohort_ranking_snapshot (
+              ranking_snapshot_id,
+              ranking_type,
+              timeframe,
+              temperature_bin,
+              cohort_key,
+              cohort_size,
+              sample_gate_passed,
+              vehicle_uid,
+              rank_position,
+              score,
+              confidence_level,
+              computed_at
+            ) VALUES ($1, 'ev_range_efficiency', '90d', 'all', 'make_model:auth_make:auth_model', 1, 1, $2, 1, 0.91, 'preview', $3)
+            "#,
+        )
+        .bind(Uuid::new_v4().to_string())
+        .bind(vehicle_uid.to_string())
+        .bind(&now)
+        .execute(&ctx.pool)
+        .await
+        .context("failed to seed postgres ranking snapshot for ownership test")?;
+
+        // KPI handlers must return 403 when vehicle ownership does not match caller.
+        let me_err = crate::handlers::get_kpis_me(
+            State(state.clone()),
+            auth_context(foreign_user),
+            Query(KpiQuery {
+                vehicle_uid,
+                timeframe: Some("90d".to_string()),
+                temperature_bin: Some("all".to_string()),
+                charger_type: None,
+            }),
+        )
+        .await
+        .expect_err("expected forbidden response for foreign /v1/kpis/me");
+        assert_eq!(me_err.status, StatusCode::FORBIDDEN);
+        assert_eq!(me_err.error, "forbidden");
+
+        let charging_err = crate::handlers::get_kpis_charging(
+            State(state.clone()),
+            auth_context(foreign_user),
+            Query(KpiQuery {
+                vehicle_uid,
+                timeframe: Some("90d".to_string()),
+                temperature_bin: Some("all".to_string()),
+                charger_type: Some("all".to_string()),
+            }),
+        )
+        .await
+        .expect_err("expected forbidden response for foreign /v1/kpis/charging");
+        assert_eq!(charging_err.status, StatusCode::FORBIDDEN);
+        assert_eq!(charging_err.error, "forbidden");
+
+        let readiness_err = crate::handlers::get_kpis_readiness(
+            State(state.clone()),
+            auth_context(foreign_user),
+            Query(ReadinessQuery {
+                vehicle_uid,
+                timeframe: Some("90d".to_string()),
+            }),
+        )
+        .await
+        .expect_err("expected forbidden response for foreign /v1/kpis/readiness");
+        assert_eq!(readiness_err.status, StatusCode::FORBIDDEN);
+        assert_eq!(readiness_err.error, "forbidden");
+
+        let temp_err = crate::handlers::get_kpis_temperature_impact(
+            State(state.clone()),
+            auth_context(foreign_user),
+            Query(KpiTempQuery {
+                vehicle_uid,
+                timeframe: Some("90d".to_string()),
+                baseline_temperature_bin: Some("mild".to_string()),
+                compare_temperature_bin: Some("cold".to_string()),
+            }),
+        )
+        .await
+        .expect_err("expected forbidden response for foreign /v1/kpis/temperature-impact");
+        assert_eq!(temp_err.status, StatusCode::FORBIDDEN);
+        assert_eq!(temp_err.error, "forbidden");
+
+        // Rankings are user-scoped by SQL join on user_vehicle_access. Foreign users see no rows.
+        let owner_rankings = crate::handlers::get_rankings(
+            State(state.clone()),
+            auth_context(owner_user),
+            Query(RankingsQuery {
+                ranking_type: "ev_range_efficiency".to_string(),
+                timeframe: Some("90d".to_string()),
+                temperature_bin: Some("all".to_string()),
+                powertrain_class: None,
+                make: None,
+                model: None,
+                trim: None,
+                year_band: None,
+                region: None,
+                limit: Some(10),
+                offset: Some(0),
+            }),
+        )
+        .await
+        .map_err(|err| anyhow::anyhow!("owner rankings read failed unexpectedly: {}", err.message))?;
+        assert_eq!(owner_rankings.0.rows.len(), 1);
+
+        let rankings_err = crate::handlers::get_rankings(
+            State(state),
+            auth_context(foreign_user),
+            Query(RankingsQuery {
+                ranking_type: "ev_range_efficiency".to_string(),
+                timeframe: Some("90d".to_string()),
+                temperature_bin: Some("all".to_string()),
+                powertrain_class: None,
+                make: None,
+                model: None,
+                trim: None,
+                year_band: None,
+                region: None,
+                limit: Some(10),
+                offset: Some(0),
+            }),
+        )
+        .await
+        .expect_err("expected scoped-not-found for foreign /v1/rankings");
+        assert_eq!(rankings_err.status, StatusCode::NOT_FOUND);
+        assert_eq!(rankings_err.error, "not_found");
+
+        Ok(())
+    }
+    .await;
+
+    ctx.cleanup().await?;
+    result
+}
+
+#[tokio::test]
 async fn postgres_rankings_and_temperature_impact_handlers_work_when_env_set() -> Result<()> {
     let Some(ctx) = PostgresTestContext::maybe_new().await? else {
         return Ok(());

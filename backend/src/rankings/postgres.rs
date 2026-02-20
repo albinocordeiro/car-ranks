@@ -83,7 +83,9 @@ async fn fetch_latest_computed_at_postgres(
     temperature_bin: &str,
     user_id: &str,
 ) -> Result<String, ApiError> {
-    let computed_at = sqlx::query_scalar::<_, String>(
+    // MAX() always returns one row; when no scoped snapshots exist, the value is NULL.
+    // Decode as Option<String> so no-data maps to a clean 404 instead of a decode error.
+    let computed_at = sqlx::query_scalar::<_, Option<String>>(
         r#"
         SELECT MAX(r.computed_at)
         FROM cohort_ranking_snapshot r
@@ -98,7 +100,7 @@ async fn fetch_latest_computed_at_postgres(
     .bind(timeframe)
     .bind(temperature_bin)
     .bind(user_id)
-    .fetch_optional(pool)
+    .fetch_one(pool)
     .await
     .context("failed to fetch latest postgres ranking computed_at")?;
 
