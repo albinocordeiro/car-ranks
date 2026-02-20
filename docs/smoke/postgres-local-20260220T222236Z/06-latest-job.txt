@@ -1,0 +1,2 @@
+{"job_run_id":"6c74713d-86ed-403b-becb-b1306e6c15f8","job_kind":"recompute_kpis","backend":"postgres","status":"succeeded","started_at":"2026-02-20T22:22:39.574515+00:00","finished_at":"2026-02-20T22:22:39.692199+00:00","error_message":null,"response_job_id":"8376efcd-1136-406e-80a5-f56115000704","charging_sessions_upserted":2,"kpi_rows_upserted":42,"ranking_rows_upserted":15,"recomputed_vehicles":1,"active_lock_owner_token":null,"active_lock_expires_at":null}
+__STATUS__:200

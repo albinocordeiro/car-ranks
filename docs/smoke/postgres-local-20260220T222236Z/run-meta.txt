@@ -1,0 +1,6 @@
+snapshot_dir=/Users/albinocordeiro/Code/car_ranks/docs/smoke/postgres-local-20260220T222236Z
+user_id=54e9b082-226f-4b7b-b98b-703832c5dfb2
+vehicle_uid=5bf1cb17-a0c6-404b-81f6-c407b80ea3b4
+database_url=postgres://postgres:postgres@127.0.0.1:55435/car_ranks_smoke
+api_base=http://127.0.0.1:18080
+created_at_utc=2026-02-20T22:22:39Z
