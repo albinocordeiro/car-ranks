@@ -275,8 +275,8 @@ Phase 3 candidates:
 2. Resolved on **2026-02-20**: EV-first KPI formulas and required signal mapping are locked in backend KPI catalog and contract docs.
 3. Ambient-temperature fallback policy when OBD temperature signals are missing.
 4. Priority order for remaining tradeoffs (speed-to-market vs cost vs KPI accuracy vs maintainability).
+5. Resolved on **2026-02-20**: telemetry ingest schema and idempotency envelope checks are locked in `POST /v1/telemetry/batches`.
 
 ## 13. Immediate Next Steps
-1. Lock ingestion payload schema and idempotency strategy for 1-minute cadence.
-2. Implement the Postgres schema + signal registry from `research/schema/`.
-3. Build thin end-to-end slice on single EC2: iOS capture -> batch upload -> KPI calc -> ranking API.
+1. Implement the Postgres schema + signal registry from `research/schema/`.
+2. Build thin end-to-end slice on single EC2: iOS capture -> batch upload -> KPI calc -> ranking API.

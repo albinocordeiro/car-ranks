@@ -1,0 +1,4 @@
+{
+  "error": "conflict",
+  "message": "batch_id already exists with a different payload envelope"
+}

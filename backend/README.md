@@ -14,7 +14,7 @@ Current API surface:
 ## Stack
 - Rust
 - `axum` HTTP server
-- `sqlx` with SQLite
+- `sqlx` with SQLite and Postgres
 
 ## Run
 
@@ -85,6 +85,8 @@ curl "http://127.0.0.1:8080/v1/rankings?ranking_type=ev_temperature_impact&timef
 
 ## Thin-slice constraints
 - OBD-only ingest (`source=OBD`).
+- Ingest payload schema is locked to `schema_version=0.2`.
+- Duplicate `batch_id` replays are accepted only when payload envelope matches; mismatched envelopes return `409 conflict`.
 - No auth/authorization yet (MVP backend slice only).
 - Timeframes currently materialized by jobs: `30d`, `90d`, `180d`.
 - `temperature_bin` filters on rankings are supported only for `ev_temperature_impact`.
@@ -95,6 +97,14 @@ curl "http://127.0.0.1:8080/v1/rankings?ranking_type=ev_temperature_impact&timef
 - Temperature-impact rankings include only vehicles that pass both gated retention metrics (`cold_weather_range_retention` and `cold_weather_charge_speed_retention`).
 - KPI persistence is restricted by a locked KPI catalog in `src/main.rs`; unknown KPI keys are rejected at write time.
 
+## Migrations
+- Startup applies SQLite migrations from `/Users/albinocordeiro/Code/car_ranks/backend/migrations/sqlite/`.
+- Startup applies Postgres migrations from `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/` when `DATABASE_URL` is Postgres.
+- Applied migration ids are tracked in `schema_migration` to prevent duplicate execution.
+- Postgres-ready bootstrap schema lives in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/0001_init.sql`.
+- `/Users/albinocordeiro/Code/car_ranks/backend/schema.sql` remains as a legacy SQLite schema snapshot and is kept in sync with SQLite `0001_init.sql`.
+- Current Postgres runtime endpoints: `/health`, `/v1/config/sampling`, `/v1/kpis/me`, `/v1/kpis/charging`.
+
 ## Dev checks
 
 ```bash
@@ -103,6 +113,16 @@ cargo check
 cargo test
 ```
 
+Postgres migration integration check (optional):
+
+```bash
+export POSTGRES_TEST_DATABASE_URL=postgres://<user>:<pass>@<host>:5432/<db>
+cargo test postgres_bootstrap_migration_applies_when_env_set
+cargo test postgres_kpi_fetch_and_charging_handler_work_when_env_set
+```
+
 ## References
 - Schema bootstrapped from `/Users/albinocordeiro/Code/car_ranks/backend/schema.sql`.
+- SQLite migration source of truth: `/Users/albinocordeiro/Code/car_ranks/backend/migrations/sqlite/0001_init.sql`.
+- Postgres bootstrap schema: `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/0001_init.sql`.
 - Signal validation uses `/Users/albinocordeiro/Code/car_ranks/research/schema/signal_registry_v0_2.json`.

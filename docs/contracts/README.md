@@ -1,6 +1,6 @@
 # API Contracts (MVP)
 
-Status: Draft v4  
+Status: Draft v5  
 Date: 2026-02-20
 
 This folder contains executable contract drafts for the EV-first MVP APIs.
@@ -18,6 +18,8 @@ This folder contains executable contract drafts for the EV-first MVP APIs.
   - `rankings-response.json`
   - `telemetry-batch-request.json`
   - `telemetry-batch-response.json`
+  - `telemetry-batch-duplicate-response.json`
+  - `telemetry-batch-conflict-response.json`
 
 ## Contract Conventions
 - All timestamps are RFC3339 UTC strings.
@@ -26,4 +28,4 @@ This folder contains executable contract drafts for the EV-first MVP APIs.
 - Temperature-related keys align with signal registry v0.2.
 - `confidence_level` enum: `preview`, `medium`, `stable`.
 - `temperature_bin` enum: `all`, `very_cold`, `cold`, `cool`, `mild`, `hot`.
-- This folder documents the current thin-slice backend behavior with locked KPI formulas, signal mappings, and temperature sample gates.
+- This folder documents the current thin-slice backend behavior with locked ingest schema/idempotency checks, locked KPI formulas, signal mappings, and temperature sample gates.

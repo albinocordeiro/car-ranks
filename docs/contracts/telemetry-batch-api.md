@@ -1,6 +1,7 @@
 # `POST /v1/telemetry/batches`
 
-Status: Draft v1  
+Status: Draft v2 (locked schema + idempotency envelope checks)  
+Date: 2026-02-20  
 Purpose: Ingest iOS OBD telemetry in idempotent batches (default 60-second cadence).
 
 ## Request JSON
@@ -8,7 +9,7 @@ Purpose: Ingest iOS OBD telemetry in idempotent batches (default 60-second caden
 ```json
 {
   "batch_id": "uuid",
-  "schema_version": "1.0",
+  "schema_version": "0.2",
   "vehicle_uid": "uuid",
   "source": "OBD",
   "client": {
@@ -19,7 +20,7 @@ Purpose: Ingest iOS OBD telemetry in idempotent batches (default 60-second caden
   "capture_window": {
     "started_at": "2026-02-17T10:30:00Z",
     "ended_at": "2026-02-17T10:31:00Z",
-    "sample_interval_seconds": 5
+    "sample_interval_seconds": 60
   },
   "records": [
     {
@@ -36,11 +37,6 @@ Purpose: Ingest iOS OBD telemetry in idempotent batches (default 60-second caden
     {
       "event_type": "drive_session_start",
       "observed_at": "2026-02-17T10:30:00Z",
-      "session_id": "uuid"
-    },
-    {
-      "event_type": "charging_session_stop",
-      "observed_at": "2026-02-17T10:31:00Z",
       "session_id": "uuid"
     }
   ],
@@ -63,25 +59,37 @@ Purpose: Ingest iOS OBD telemetry in idempotent batches (default 60-second caden
 - `capture_window.ended_at`
 - `records` (can be empty only when sending session events/diagnostics)
 
-## Validation Rules
+## Locked Validation Rules
+- `schema_version` must be `0.2`.
 - `source` must be `OBD` in MVP.
-- `batch_id` is idempotency key. Duplicate `batch_id` returns success with `duplicate=true`.
-- `records[*].signal_key` must exist in active signal registry version (v0.2 for EV temperature work).
+- `client.platform` (when provided) must be `ios`.
+- `capture_window.ended_at` must be after `capture_window.started_at`.
+- `capture_window.sample_interval_seconds` (when provided) must be between configured min/max upload interval bounds.
+- `capture_window` duration must not exceed configured max upload interval.
+- `records[*].observed_at`, `session_events[*].observed_at`, and `diagnostics[*].observed_at` must be within capture window.
+- `records[*].signal_key` must exist in active signal registry version.
 - `records[*].status` enum: `ok`, `stale`, `unavailable`, `not_supported`, `permission_denied`, `error`.
 - `records[*].confidence` range: `0.0` to `1.0`.
-- `capture_window.ended_at` must be greater than `capture_window.started_at`.
-- Maximum records per batch: 5,000 (reject with `payload_too_large`).
+- Only one of `value_number`, `value_string`, `value_bool`, `value_json` may be set per record.
+- For status `ok` or `stale`, exactly one value field must be present.
+- `records[*].temperature_bin` (when provided) must be one of: `very_cold`, `cold`, `cool`, `mild`, `hot`.
+- `session_events[*].event_type` allowed values:
+  - `drive_session_start`
+  - `drive_session_stop`
+  - `charging_session_start`
+  - `charging_session_stop`
+- Maximum records per batch: 5,000.
 
-## EV/Temperature Signals Expected
-- Driving: `speed.vehicle`, `distance.odometer`, `ev.soc_pct`, `power.battery_voltage` (or derived power)
-- Charging: `ev.charging_state`, `ev.soc_pct`, charge power (derived or direct)
-- Temperature: `environment.ambient_temp_c` and `ev.battery_temp_c` when available
-
-## Session Event Types
-- `drive_session_start`
-- `drive_session_stop`
-- `charging_session_start`
-- `charging_session_stop`
+## Idempotency Strategy
+- `batch_id` is the idempotency key.
+- If `batch_id` already exists and envelope fields match:
+  - `vehicle_uid`
+  - `schema_version`
+  - `source`
+  - `capture_window.started_at`
+  - `capture_window.ended_at`
+  then response is `200` with `duplicate=true`.
+- If `batch_id` exists but envelope fields differ, response is `409 conflict`.
 
 ## Response (200)
 
@@ -105,14 +113,19 @@ Purpose: Ingest iOS OBD telemetry in idempotent batches (default 60-second caden
 }
 ```
 
+Duplicate replay example:
+- `/Users/albinocordeiro/Code/car_ranks/docs/contracts/examples/telemetry-batch-duplicate-response.json`
+
 ## Error Responses
 - `400` invalid payload
-- `401` unauthorized
+- `409` duplicate `batch_id` with mismatched payload envelope
 - `413` payload too large
-- `429` rate limited
 - `500` ingest failure
+
+Conflict example:
+- `/Users/albinocordeiro/Code/car_ranks/docs/contracts/examples/telemetry-batch-conflict-response.json`
 
 ## Storage Mapping
 - `records` -> `vehicle_signal_observation`
 - `diagnostics` -> `vehicle_diagnostic_event`
-- session events -> `vehicle_session_event` (v0.2 schema)
+- session events -> `vehicle_session_event`
