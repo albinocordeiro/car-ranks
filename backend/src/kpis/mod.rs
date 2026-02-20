@@ -2,16 +2,19 @@ use axum::Json;
 use axum::extract::{Query, State};
 
 use crate::{
-    ApiError, AppState, DatabaseBackend, GenericKpiResponse, KpiQuery, KpiTempQuery,
-    TemperatureImpactResponse, now_str,
+    ApiError, AppState, GenericKpiResponse, KpiQuery, KpiTempQuery, TemperatureImpactResponse,
+    now_str,
 };
 
+use self::backend_router::fetch_latest_vehicle_kpis_by_backend;
 use self::temperature_impact::get_kpis_temperature_impact_inner;
 
+mod backend_router;
 mod latest_vehicle;
 mod temperature_impact;
 mod temperature_impact_queries;
 
+#[allow(unused_imports)]
 pub(crate) use latest_vehicle::{
     fetch_latest_vehicle_kpis_postgres, fetch_latest_vehicle_kpis_sqlite,
 };
@@ -31,32 +34,14 @@ pub(crate) async fn get_kpis_me(
     }
 
     // Choose the backing query path by runtime backend so the HTTP contract stays stable.
-    let kpis = match state.backend {
-        DatabaseBackend::Sqlite => {
-            fetch_latest_vehicle_kpis_sqlite(
-                &state.sqlite_pool,
-                &vehicle_uid,
-                "ev_range_efficiency",
-                &timeframe,
-                &temperature_bin,
-            )
-            .await?
-        }
-        DatabaseBackend::Postgres => {
-            let pg_pool = state
-                .pg_pool
-                .as_ref()
-                .ok_or_else(|| ApiError::internal("postgres pool is not configured"))?;
-            fetch_latest_vehicle_kpis_postgres(
-                pg_pool,
-                &vehicle_uid,
-                "ev_range_efficiency",
-                &timeframe,
-                &temperature_bin,
-            )
-            .await?
-        }
-    };
+    let kpis = fetch_latest_vehicle_kpis_by_backend(
+        &state,
+        &vehicle_uid,
+        "ev_range_efficiency",
+        &timeframe,
+        &temperature_bin,
+    )
+    .await?;
 
     if kpis.is_empty() {
         return Err(ApiError::not_found(
@@ -90,32 +75,14 @@ pub(crate) async fn get_kpis_charging(
     }
 
     // Route through backend-specific readers to keep SQL dialect differences isolated.
-    let kpis = match state.backend {
-        DatabaseBackend::Sqlite => {
-            fetch_latest_vehicle_kpis_sqlite(
-                &state.sqlite_pool,
-                &vehicle_uid,
-                "ev_charging_performance",
-                &timeframe,
-                &temperature_bin,
-            )
-            .await?
-        }
-        DatabaseBackend::Postgres => {
-            let pg_pool = state
-                .pg_pool
-                .as_ref()
-                .ok_or_else(|| ApiError::internal("postgres pool is not configured"))?;
-            fetch_latest_vehicle_kpis_postgres(
-                pg_pool,
-                &vehicle_uid,
-                "ev_charging_performance",
-                &timeframe,
-                &temperature_bin,
-            )
-            .await?
-        }
-    };
+    let kpis = fetch_latest_vehicle_kpis_by_backend(
+        &state,
+        &vehicle_uid,
+        "ev_charging_performance",
+        &timeframe,
+        &temperature_bin,
+    )
+    .await?;
 
     if kpis.is_empty() {
         return Err(ApiError::not_found(
