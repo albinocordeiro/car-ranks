@@ -1,5 +1,11 @@
 use anyhow::{Context, Result};
-use sqlx::{Row, SqlitePool};
+use sqlx::SqlitePool;
+
+mod row_mapper;
+mod seed_builder;
+
+use row_mapper::map_temperature_seed_candidate;
+use seed_builder::build_ranking_seed;
 
 /// Minimal seed row used while rebuilding temperature-impact rankings.
 ///
@@ -50,39 +56,10 @@ pub(super) async fn fetch_temperature_ranking_seeds(
 
     let mut seeds = Vec::new();
     for row in rows {
-        let vehicle_uid: String = row.try_get("vehicle_uid")?;
-        let make: String = row.try_get("make")?;
-        let model: String = row.try_get("model")?;
-        let trim: String = row.try_get("trim")?;
-        let model_year: Option<i64> = row.try_get("model_year")?;
-        let range_retention: Option<f64> = row.try_get("range_retention")?;
-        let sensitivity: Option<f64> = row.try_get("sensitivity")?;
-        let charge_retention: Option<f64> = row.try_get("charge_retention")?;
-
-        // Temperature rankings are only valid when both retention KPIs pass
-        // their upstream sampling gates and are present on the seed row.
-        if range_retention.is_none() || charge_retention.is_none() {
-            continue;
+        let candidate = map_temperature_seed_candidate(&row)?;
+        if let Some(seed) = build_ranking_seed(candidate) {
+            seeds.push(seed);
         }
-
-        let confidence_level = if sensitivity.is_some() {
-            "stable"
-        } else {
-            "medium"
-        }
-        .to_string();
-
-        seeds.push(VehicleRankingSeed {
-            vehicle_uid,
-            make,
-            model,
-            trim,
-            model_year,
-            range_retention,
-            sensitivity,
-            charge_retention,
-            confidence_level,
-        });
     }
 
     Ok(seeds)
