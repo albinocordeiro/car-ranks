@@ -2,6 +2,10 @@ use super::temperature_impact_series::TemperatureImpactDriveSeries;
 use super::temperature_impact_snapshots::TemperatureTimestampSnapshot;
 use super::temperature_regression::VehiclePoint;
 
+mod point_collection;
+mod snapshot_state;
+mod temperature_buckets;
+
 /// Stateful accumulator that derives temperature-impact drive series points.
 pub(super) struct TemperatureImpactAccumulator {
     current_odo: Option<f64>,
@@ -33,35 +37,11 @@ impl TemperatureImpactAccumulator {
 
     /// Consumes one snapshot and updates series points and distance buckets.
     pub(super) fn observe_snapshot(&mut self, snapshot: &TemperatureTimestampSnapshot) {
-        if snapshot.odo.is_some() {
-            self.current_odo = snapshot.odo;
-        }
-        if snapshot.soc.is_some() {
-            self.current_soc = snapshot.soc;
-        }
-        if snapshot.temp.is_some() {
-            self.current_temp = snapshot.temp;
-        }
+        // Update sparse sensor fields into the running snapshot state.
+        self.refresh_latest_snapshot_state(snapshot);
 
-        if let (Some(odo), Some(soc), Some(temp)) =
-            (self.current_odo, self.current_soc, self.current_temp)
-        {
-            if let Some((prev_odo, prev_soc, _prev_temp)) = self.prev_filled {
-                let delta_km = odo - prev_odo;
-                let delta_soc = prev_soc - soc;
-                if delta_km > 0.05 && delta_soc > 0.05 && delta_soc < 30.0 {
-                    let km_per_soc = delta_km / delta_soc;
-                    if km_per_soc.is_finite() && km_per_soc > 0.0 && km_per_soc < 50.0 {
-                        self.points.push(VehiclePoint {
-                            temperature_c: temp,
-                            km_per_soc,
-                        });
-                        self.bucket_temperature_distance(temp, km_per_soc, delta_km);
-                    }
-                }
-            }
-            self.prev_filled = Some((odo, soc, temp));
-        }
+        // Convert state deltas into temperature-impact driving points.
+        self.capture_drive_point();
     }
 
     /// Finalizes accumulated vectors into the shared series container.
@@ -72,17 +52,6 @@ impl TemperatureImpactAccumulator {
             mild_values: self.mild_values,
             cold_distance_km: self.cold_distance_km,
             mild_distance_km: self.mild_distance_km,
-        }
-    }
-
-    fn bucket_temperature_distance(&mut self, temp: f64, km_per_soc: f64, delta_km: f64) {
-        if temp <= 5.0 {
-            self.cold_values.push(km_per_soc);
-            self.cold_distance_km += delta_km;
-        }
-        if temp > 15.0 && temp <= 25.0 {
-            self.mild_values.push(km_per_soc);
-            self.mild_distance_km += delta_km;
         }
     }
 }
