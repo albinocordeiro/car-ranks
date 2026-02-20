@@ -1,0 +1,16 @@
+{
+  "job_run_id": "19e622d3-a847-4680-bb52-b3ae4e638f91",
+  "job_kind": "recompute_kpis",
+  "backend": "sqlite",
+  "status": "running",
+  "started_at": "2026-02-20T11:16:00Z",
+  "finished_at": null,
+  "error_message": null,
+  "response_job_id": null,
+  "charging_sessions_upserted": null,
+  "kpi_rows_upserted": null,
+  "ranking_rows_upserted": null,
+  "recomputed_vehicles": null,
+  "active_lock_owner_token": "a0df6e64-bf66-46cc-8a26-b7c429f303d5",
+  "active_lock_expires_at": "2026-02-20T11:26:00Z"
+}

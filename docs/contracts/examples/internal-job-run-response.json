@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "job_id": "f8db2ef7-83a3-4ad4-962a-89e771f2fc3c",
+  "charging_sessions_upserted": 7,
+  "kpi_rows_upserted": 54,
+  "ranking_rows_upserted": 18,
+  "recomputed_vehicles": 6
+}
