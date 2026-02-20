@@ -15,6 +15,7 @@ mod migrations;
 mod models;
 mod rankings;
 mod routes;
+mod runtime_env;
 mod signals;
 mod state;
 mod utils;
