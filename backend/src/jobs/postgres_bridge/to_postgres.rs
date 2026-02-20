@@ -7,6 +7,7 @@ use crate::ApiError;
 pub(super) struct OutputSyncOptions {
     pub(super) sync_charging_sessions: bool,
     pub(super) sync_charging_kpi_snapshots: bool,
+    pub(super) sync_charging_rankings: bool,
 }
 
 macro_rules! get_col {
@@ -36,7 +37,7 @@ pub(super) async fn sync_job_outputs_to_postgres(
         export_charging_sessions(sqlite_pool, &mut pg_tx).await?;
     }
     export_kpi_snapshots(sqlite_pool, &mut pg_tx, options).await?;
-    export_ranking_snapshots(sqlite_pool, &mut pg_tx).await?;
+    export_ranking_snapshots(sqlite_pool, &mut pg_tx, options).await?;
 
     pg_tx
         .commit()
@@ -49,7 +50,14 @@ async fn clear_postgres_output_tables(
     pg_tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     options: &OutputSyncOptions,
 ) -> Result<(), ApiError> {
-    let mut statements = vec!["DELETE FROM cohort_ranking_snapshot"];
+    let mut statements = Vec::new();
+    if options.sync_charging_rankings {
+        statements.push("DELETE FROM cohort_ranking_snapshot");
+    } else {
+        statements.push(
+            "DELETE FROM cohort_ranking_snapshot WHERE ranking_type <> 'ev_charging_performance'",
+        );
+    }
     if options.sync_charging_kpi_snapshots {
         statements.push("DELETE FROM vehicle_kpi_snapshot");
     } else {
@@ -280,28 +288,54 @@ async fn export_kpi_snapshots(
 async fn export_ranking_snapshots(
     sqlite_pool: &SqlitePool,
     pg_tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    options: &OutputSyncOptions,
 ) -> Result<(), ApiError> {
-    let rows = sqlx::query(
-        r#"
-        SELECT
-          ranking_snapshot_id,
-          ranking_type,
-          timeframe,
-          temperature_bin,
-          cohort_key,
-          cohort_size,
-          sample_gate_passed,
-          vehicle_uid,
-          rank_position,
-          score,
-          confidence_level,
-          computed_at
-        FROM cohort_ranking_snapshot
-        "#,
-    )
-    .fetch_all(sqlite_pool)
-    .await
-    .context("failed to fetch sqlite ranking snapshots for postgres sync")?;
+    let rows = if options.sync_charging_rankings {
+        sqlx::query(
+            r#"
+            SELECT
+              ranking_snapshot_id,
+              ranking_type,
+              timeframe,
+              temperature_bin,
+              cohort_key,
+              cohort_size,
+              sample_gate_passed,
+              vehicle_uid,
+              rank_position,
+              score,
+              confidence_level,
+              computed_at
+            FROM cohort_ranking_snapshot
+            "#,
+        )
+        .fetch_all(sqlite_pool)
+        .await
+        .context("failed to fetch sqlite ranking snapshots for postgres sync")?
+    } else {
+        sqlx::query(
+            r#"
+            SELECT
+              ranking_snapshot_id,
+              ranking_type,
+              timeframe,
+              temperature_bin,
+              cohort_key,
+              cohort_size,
+              sample_gate_passed,
+              vehicle_uid,
+              rank_position,
+              score,
+              confidence_level,
+              computed_at
+            FROM cohort_ranking_snapshot
+            WHERE ranking_type <> 'ev_charging_performance'
+            "#,
+        )
+        .fetch_all(sqlite_pool)
+        .await
+        .context("failed to fetch sqlite non-charging ranking snapshots for postgres sync")?
+    };
 
     for row in rows {
         sqlx::query(

@@ -20,6 +20,7 @@ pub(super) async fn run_kpi_job_postgres(
     tracing::debug!(
         charging_sessions_upserted = native_summary.charging_sessions_upserted,
         charging_kpi_rows_upserted = native_summary.charging_kpi_rows_upserted,
+        charging_ranking_rows_upserted = native_summary.charging_ranking_rows_upserted,
         "native postgres job stages completed"
     );
 
@@ -31,6 +32,7 @@ pub(super) async fn run_kpi_job_postgres(
         &OutputSyncOptions {
             sync_charging_sessions: false,
             sync_charging_kpi_snapshots: false,
+            sync_charging_rankings: false,
         },
     )
     .await?;
