@@ -1,19 +1,7 @@
-use anyhow::Context;
-use sqlx::SqlitePool;
-use sqlx::sqlite::SqliteRow;
+use crate::RankingsQuery;
 
-use crate::{ApiError, RankingsQuery};
-
-/// Fetches one page of ranking rows matching the filter set.
-pub(crate) async fn fetch_ranking_rows(
-    pool: &SqlitePool,
-    params: &RankingsQuery,
-    timeframe: &str,
-    temperature_bin: &str,
-    computed_at: &str,
-    limit: i64,
-    offset: i64,
-) -> Result<Vec<SqliteRow>, ApiError> {
+/// Builds the rankings page SQL, including optional filters in bind order.
+pub(super) fn build_rankings_page_sql(params: &RankingsQuery) -> String {
     let mut sql = String::from(
         r#"
         SELECT
@@ -35,33 +23,7 @@ pub(crate) async fn fetch_ranking_rows(
 
     append_optional_filters(&mut sql, params);
     sql.push_str(" ORDER BY r.rank_position ASC LIMIT ? OFFSET ? ");
-
-    let mut query = sqlx::query(&sql)
-        .bind(&params.ranking_type)
-        .bind(timeframe)
-        .bind(temperature_bin)
-        .bind(computed_at);
-
-    if let Some(make) = &params.make {
-        query = query.bind(make);
-    }
-    if let Some(model) = &params.model {
-        query = query.bind(model);
-    }
-    if let Some(trim) = &params.trim {
-        query = query.bind(trim);
-    }
-    if let Some(powertrain_class) = &params.powertrain_class {
-        query = query.bind(powertrain_class);
-    }
-
-    query = query.bind(limit).bind(offset);
-
-    query
-        .fetch_all(pool)
-        .await
-        .context("failed to fetch rankings")
-        .map_err(Into::into)
+    sql
 }
 
 /// Appends optional ranking filters in the same bind order used by query binds.
