@@ -1,28 +1,21 @@
 use axum::http::StatusCode;
 
-use crate::{
-    ApiError, TelemetryBatchRequest, map_session_event, read_positive_env,
-    timestamp_in_capture_window,
-};
+use crate::{ApiError, TelemetryBatchRequest, read_positive_env};
 
-/// Sanitized envelope fields that downstream ingest stages depend on.
-pub(super) struct ValidatedEnvelope {
-    pub(super) source_upper: String,
-}
-
-/// Validates request-level ingest rules before opening a DB transaction.
-pub(super) fn validate_batch_payload(
+/// Validates envelope-level ingest rules that do not inspect individual records.
+pub(super) fn validate_envelope_basics(
     payload: &TelemetryBatchRequest,
-) -> Result<ValidatedEnvelope, ApiError> {
+    expected_schema_version: &str,
+) -> Result<String, ApiError> {
     let source_upper = payload.source.to_uppercase();
     if source_upper != "OBD" {
         return Err(ApiError::bad_request("source must be OBD for MVP"));
     }
 
-    if payload.schema_version != super::INGEST_SCHEMA_VERSION {
+    if payload.schema_version != expected_schema_version {
         return Err(ApiError::bad_request(format!(
             "schema_version must be {} for MVP",
-            super::INGEST_SCHEMA_VERSION
+            expected_schema_version
         )));
     }
 
@@ -81,59 +74,5 @@ pub(super) fn validate_batch_payload(
         }
     }
 
-    // Validate envelope timestamps before opening a write transaction.
-    for event in &payload.session_events {
-        if map_session_event(&event.event_type).is_none() {
-            return Err(ApiError::bad_request(format!(
-                "unsupported session_events.event_type: {}",
-                event.event_type
-            )));
-        }
-        if !timestamp_in_capture_window(
-            &event.observed_at,
-            &payload.capture_window.started_at,
-            &payload.capture_window.ended_at,
-        ) {
-            return Err(ApiError::bad_request(
-                "session_events.observed_at must be within capture_window",
-            ));
-        }
-    }
-
-    for diag in &payload.diagnostics {
-        if !timestamp_in_capture_window(
-            &diag.observed_at,
-            &payload.capture_window.started_at,
-            &payload.capture_window.ended_at,
-        ) {
-            return Err(ApiError::bad_request(
-                "diagnostics.observed_at must be within capture_window",
-            ));
-        }
-    }
-
-    for record in &payload.records {
-        if !timestamp_in_capture_window(
-            &record.observed_at,
-            &payload.capture_window.started_at,
-            &payload.capture_window.ended_at,
-        ) {
-            return Err(ApiError::bad_request(
-                "records.observed_at must be within capture_window",
-            ));
-        }
-        if let Some(temperature_bin) = &record.temperature_bin {
-            let valid_bin = matches!(
-                temperature_bin.as_str(),
-                "very_cold" | "cold" | "cool" | "mild" | "hot"
-            );
-            if !valid_bin {
-                return Err(ApiError::bad_request(
-                    "records.temperature_bin must be one of very_cold,cold,cool,mild,hot",
-                ));
-            }
-        }
-    }
-
-    Ok(ValidatedEnvelope { source_upper })
+    Ok(source_upper)
 }
