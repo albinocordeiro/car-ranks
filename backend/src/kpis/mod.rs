@@ -12,6 +12,7 @@ use self::temperature_impact::get_kpis_temperature_impact_inner;
 mod backend_router;
 mod latest_vehicle;
 mod temperature_impact;
+mod temperature_impact_metrics;
 mod temperature_impact_queries;
 
 #[allow(unused_imports)]
