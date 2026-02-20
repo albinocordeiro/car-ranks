@@ -7,7 +7,9 @@ use self::cleanup::clear_native_charging_kpi_snapshots_postgres;
 use self::vehicle_pass::recompute_vehicle_timeframe_charging_kpis_postgres;
 
 mod cleanup;
+mod range_pass;
 mod snapshot_writer;
+mod temperature_pass;
 mod vehicle_pass;
 
 const KPI_TIMEFRAMES: [&str; 3] = ["30d", "90d", "180d"];
@@ -43,6 +45,16 @@ pub(super) async fn recompute_charging_performance_kpis_postgres(pool: &PgPool) 
     Ok(rows_inserted)
 }
 
+/// Rebuilds range-efficiency KPI snapshots directly in Postgres.
+pub(super) async fn recompute_range_efficiency_kpis_postgres(pool: &PgPool) -> Result<usize> {
+    range_pass::recompute_range_efficiency_kpis_postgres(pool).await
+}
+
+/// Rebuilds temperature-impact KPI snapshots directly in Postgres.
+pub(super) async fn recompute_temperature_impact_kpis_postgres(pool: &PgPool) -> Result<usize> {
+    temperature_pass::recompute_temperature_impact_kpis_postgres(pool).await
+}
+
 /// Persists one native KPI snapshot row for any native ranking family.
 ///
 /// This wrapper keeps write logic encapsulated in `snapshot_writer` while exposing
@@ -61,6 +73,32 @@ pub(in crate::jobs::postgres_native) async fn insert_native_kpi_snapshot_postgre
         vehicle_uid,
         timeframe,
         metric,
+        snapshot_ts,
+    )
+    .await
+}
+
+/// Persists one native KPI snapshot row with explicit temperature bins.
+pub(in crate::jobs::postgres_native) async fn insert_native_kpi_snapshot_with_bins_postgres(
+    pool: &PgPool,
+    ranking_type: &str,
+    vehicle_uid: &str,
+    timeframe: &str,
+    metric: &MetricCalc,
+    temperature_bin: &str,
+    baseline_temperature_bin: Option<&str>,
+    compare_temperature_bin: Option<&str>,
+    snapshot_ts: &str,
+) -> Result<()> {
+    snapshot_writer::insert_native_kpi_snapshot_with_bins_postgres(
+        pool,
+        ranking_type,
+        vehicle_uid,
+        timeframe,
+        metric,
+        temperature_bin,
+        baseline_temperature_bin,
+        compare_temperature_bin,
         snapshot_ts,
     )
     .await

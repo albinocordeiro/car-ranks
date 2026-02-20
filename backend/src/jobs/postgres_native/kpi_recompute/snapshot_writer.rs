@@ -13,6 +13,32 @@ pub(super) async fn insert_native_kpi_snapshot_postgres(
     metric: &MetricCalc,
     snapshot_ts: &str,
 ) -> Result<()> {
+    insert_native_kpi_snapshot_with_bins_postgres(
+        pool,
+        ranking_type,
+        vehicle_uid,
+        timeframe,
+        metric,
+        "all",
+        None,
+        None,
+        snapshot_ts,
+    )
+    .await
+}
+
+/// Persists one native Postgres KPI snapshot row with explicit temperature bins.
+pub(super) async fn insert_native_kpi_snapshot_with_bins_postgres(
+    pool: &PgPool,
+    ranking_type: &str,
+    vehicle_uid: &str,
+    timeframe: &str,
+    metric: &MetricCalc,
+    temperature_bin: &str,
+    baseline_temperature_bin: Option<&str>,
+    compare_temperature_bin: Option<&str>,
+    snapshot_ts: &str,
+) -> Result<()> {
     if crate::kpi_specs::locked_kpi_spec_details(ranking_type, metric.key).is_none() {
         return Err(anyhow::anyhow!(
             "kpi_key {} is not locked for ranking_type {}",
@@ -62,9 +88,9 @@ pub(super) async fn insert_native_kpi_snapshot_postgres(
     .bind(metric.direction)
     .bind(metric.confidence_level)
     .bind(metric.sample_count)
-    .bind("all")
-    .bind(None::<String>)
-    .bind(None::<String>)
+    .bind(temperature_bin)
+    .bind(baseline_temperature_bin.map(str::to_string))
+    .bind(compare_temperature_bin.map(str::to_string))
     .bind(snapshot_ts)
     .bind("internal_recompute")
     .execute(pool)

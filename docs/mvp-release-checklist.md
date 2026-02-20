@@ -6,7 +6,6 @@ Goal: submit the MVP iOS app to App Store review by **February 28, 2026**.
 
 - Scope freeze: no non-blocking architecture work before submission.
 - Runtime target for MVP: PostgreSQL only.
-- SQLite is dev/test and bridge-internal support only during the MVP release window.
 - Reviewer-friendly gate on every change:
   - one clear responsibility per file/module,
   - small focused functions with explicit names,
@@ -22,7 +21,6 @@ Goal: submit the MVP iOS app to App Store review by **February 28, 2026**.
 - [ ] Ownership/auth checks verified across all public vehicle-bound endpoints. (`Due: 2026-02-23`, `Status: TODO`)
 - [ ] Internal recompute job reliability verified: lock conflicts, stale-run recovery, latest-status metadata. (`Due: 2026-02-23`, `Status: TODO`)
 - [ ] Critical API contracts current for mobile consumption (KPI, ranking, internal jobs). (`Due: 2026-02-26`, `Status: TODO`)
-- [ ] SQLite regression smoke kept green for dev/test and bridge support only (non-product runtime). (`Due: 2026-02-24`, `Status: TODO`)
 - [ ] No open P0/P1 backend defects. (`Due: 2026-02-27`, `Status: TODO`)
 
 ### Mobile App
@@ -46,8 +44,6 @@ Goal: submit the MVP iOS app to App Store review by **February 28, 2026**.
 
 ## Explicitly Deferred Until After Submission
 
-- Remaining Postgres-native migration work for bridge-backed families.
-- Removing SQLite code paths entirely.
 - Broad refactors not tied to release blockers.
 - Non-critical performance tuning and cleanup-only changes.
 - Nice-to-have UX enhancements that do not affect MVP acceptance.

@@ -20,7 +20,7 @@ Auth scope (MVP):
 ## Stack
 - Rust
 - `axum` HTTP server
-- `sqlx` with Postgres (SQLite remains internal for bridge/dev support while migration completes)
+- `sqlx` with Postgres
 
 ## Run
 
@@ -126,18 +126,16 @@ curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type
 - Internal job endpoints enforce a per-`job_kind` lease lock (~10 minutes) and reject overlapping triggers with `409 conflict` including lock owner + expiry diagnostics.
 - `GET /internal/jobs/latest` includes active lock owner token + lease expiry when a matching job lock is currently held.
 - Triggering a new internal job automatically marks stale prior `running` rows as `failed` when their lease window has elapsed.
-- In Postgres mode, charging-session/KPI/ranking recompute runs natively before bridge sync; range ranking + composite KPI/ranking recompute run natively after bridge sync; range KPI and temperature KPI/ranking recompute still use the SQLite bridge path.
+- Internal recompute runs fully natively in Postgres (charging sessions, KPI families, and ranking families).
 
 ## Migrations
 - Startup requires `DATABASE_URL` with a Postgres scheme (`postgres://` or `postgresql://`).
 - Startup applies Postgres migrations from `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/`.
-- SQLite migrations remain for internal bridge/dev-test support only and are not a supported runtime backend.
 - Applied migration ids are tracked in `schema_migration` to prevent duplicate execution.
 - Postgres-ready bootstrap schema lives in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/0001_init.sql`.
-- Ownership/auth additive migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/*/0002_auth_ownership.sql`.
-- Internal job-run metadata migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/*/0003_internal_job_runs.sql`.
-- Internal job lock/lease migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/*/0004_internal_job_locks.sql`.
-- `/Users/albinocordeiro/Code/car_ranks/backend/schema.sql` remains as a legacy SQLite schema snapshot and is kept in sync with SQLite `0001_init.sql`.
+- Ownership/auth additive migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/0002_auth_ownership.sql`.
+- Internal job-run metadata migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/0003_internal_job_runs.sql`.
+- Internal job lock/lease migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/0004_internal_job_locks.sql`.
 - Current Postgres runtime endpoints:
   - `/health`
   - `/v1/config/sampling`
@@ -166,12 +164,10 @@ cargo test postgres_bootstrap_migration_applies_when_env_set
 cargo test postgres_kpi_fetch_and_charging_handler_work_when_env_set
 cargo test postgres_ingest_enforces_idempotency_and_vehicle_ownership_when_env_set
 cargo test postgres_rankings_and_temperature_impact_handlers_work_when_env_set
-cargo test postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set
+cargo test postgres_internal_job_handler_runs_native_pipeline_when_env_set
 cargo test postgres_readiness_handler_returns_family_statuses_when_env_set
 ```
 
 ## References
-- Schema bootstrapped from `/Users/albinocordeiro/Code/car_ranks/backend/schema.sql`.
-- SQLite migration source of truth: `/Users/albinocordeiro/Code/car_ranks/backend/migrations/sqlite/0001_init.sql`.
 - Postgres bootstrap schema: `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/0001_init.sql`.
 - Signal validation uses `/Users/albinocordeiro/Code/car_ranks/research/schema/signal_registry_v0_2.json`.

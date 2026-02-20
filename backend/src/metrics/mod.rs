@@ -1,15 +1,9 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use sqlx::SqlitePool;
+use sqlx::PgPool;
 
 use crate::MetricCalc;
 
-mod charging_performance;
-mod charging_performance_buckets;
-mod charging_performance_retention;
-mod charging_performance_scoring;
-mod composite;
-mod composite_health;
 mod core;
 mod range_efficiency;
 mod range_efficiency_accumulator;
@@ -44,37 +38,20 @@ pub(crate) fn temperature_sample_gates() -> core::TemperatureSampleGates {
     core::temperature_sample_gates()
 }
 
-pub(crate) async fn compute_range_efficiency_metrics(
-    pool: &SqlitePool,
+/// Rebuilds range-efficiency KPIs directly from Postgres observations.
+pub(crate) async fn compute_range_efficiency_metrics_postgres(
+    pool: &PgPool,
     vehicle_uid: &str,
     cutoff: DateTime<Utc>,
 ) -> Result<Vec<MetricCalc>> {
-    range_efficiency::compute_range_efficiency_metrics(pool, vehicle_uid, cutoff).await
+    range_efficiency::compute_range_efficiency_metrics_postgres(pool, vehicle_uid, cutoff).await
 }
 
-pub(crate) async fn compute_charging_performance_metrics(
-    pool: &SqlitePool,
+/// Rebuilds temperature-impact KPIs directly from Postgres observations.
+pub(crate) async fn compute_vehicle_metrics_postgres(
+    pool: &PgPool,
     vehicle_uid: &str,
     cutoff: DateTime<Utc>,
 ) -> Result<Vec<MetricCalc>> {
-    charging_performance::compute_charging_performance_metrics(pool, vehicle_uid, cutoff).await
-}
-
-pub(crate) async fn compute_composite_metrics(
-    pool: &SqlitePool,
-    vehicle_uid: &str,
-    cutoff: DateTime<Utc>,
-    range_metrics: &[MetricCalc],
-    charging_metrics: &[MetricCalc],
-) -> Result<Vec<MetricCalc>> {
-    composite::compute_composite_metrics(pool, vehicle_uid, cutoff, range_metrics, charging_metrics)
-        .await
-}
-
-pub(crate) async fn compute_vehicle_metrics(
-    pool: &SqlitePool,
-    vehicle_uid: &str,
-    cutoff: DateTime<Utc>,
-) -> Result<Vec<MetricCalc>> {
-    temperature_impact::compute_vehicle_metrics(pool, vehicle_uid, cutoff).await
+    temperature_impact::compute_vehicle_metrics_postgres(pool, vehicle_uid, cutoff).await
 }

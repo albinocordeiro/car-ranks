@@ -1,8 +1,9 @@
 use anyhow::Result;
-use sqlx::sqlite::SqliteRow;
 
 use super::temperature_impact_accumulator::TemperatureImpactAccumulator;
-use super::temperature_impact_snapshots::normalize_temperature_impact_snapshots;
+use super::temperature_impact_snapshots::{
+    TemperatureObservationRow, normalize_temperature_impact_snapshots,
+};
 use super::temperature_regression::VehiclePoint;
 
 /// Derived driving series used by temperature-impact KPI builders.
@@ -15,7 +16,9 @@ pub(super) struct TemperatureImpactDriveSeries {
 }
 
 /// Converts raw observation rows into aligned series for temperature KPIs.
-pub(super) fn build_drive_series(obs_rows: Vec<SqliteRow>) -> Result<TemperatureImpactDriveSeries> {
+pub(super) fn build_drive_series(
+    obs_rows: Vec<TemperatureObservationRow>,
+) -> Result<TemperatureImpactDriveSeries> {
     let by_ts = normalize_temperature_impact_snapshots(obs_rows)?;
     let mut accumulator = TemperatureImpactAccumulator::new();
     for snapshot in by_ts.values() {

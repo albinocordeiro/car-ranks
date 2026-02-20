@@ -1,7 +1,6 @@
 use anyhow::Result;
 use sqlx::Row;
 use sqlx::postgres::PgRow;
-use sqlx::sqlite::SqliteRow;
 
 use crate::TelemetryBatchRequest;
 
@@ -15,17 +14,6 @@ pub(super) struct ExistingBatchEnvelope {
 }
 
 impl ExistingBatchEnvelope {
-    /// Decodes a stored ingest-batch envelope row.
-    pub(super) fn from_row(row: &SqliteRow) -> Result<Self> {
-        Ok(Self {
-            vehicle_uid: row.try_get("vehicle_uid")?,
-            schema_version: row.try_get("schema_version")?,
-            source: row.try_get("source")?,
-            capture_started_at: row.try_get("capture_started_at")?,
-            capture_ended_at: row.try_get("capture_ended_at")?,
-        })
-    }
-
     /// Decodes a stored ingest-batch envelope row from PostgreSQL.
     pub(super) fn from_pg_row(row: &PgRow) -> Result<Self> {
         Ok(Self {

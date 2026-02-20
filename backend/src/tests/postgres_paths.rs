@@ -6,7 +6,6 @@ use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use chrono::{DateTime, Duration, Utc};
 use sqlx::postgres::PgPoolOptions;
-use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{Connection, Executor};
 use uuid::Uuid;
 
@@ -55,18 +54,10 @@ impl PostgresTestContext {
         }))
     }
 
-    /// Builds app state that mirrors runtime Postgres mode (with SQLite job sidecar).
+    /// Builds app state that mirrors runtime Postgres mode.
     async fn app_state(&self) -> Result<AppState> {
-        let sqlite_pool = SqlitePoolOptions::new()
-            .max_connections(1)
-            .connect("sqlite::memory:")
-            .await
-            .context("failed to create sqlite state pool")?;
-        crate::migrations::apply_schema(&sqlite_pool).await?;
         Ok(AppState {
-            sqlite_pool,
-            pg_pool: Some(self.pool.clone()),
-            backend: DatabaseBackend::Postgres,
+            pg_pool: self.pool.clone(),
             signal_keys: Arc::new(load_signal_keys()?),
         })
     }
@@ -504,16 +495,8 @@ async fn postgres_kpi_fetch_and_charging_handler_work_when_env_set() -> Result<(
     assert!((fetched[0].value - 170.0).abs() < f64::EPSILON);
     assert_eq!(fetched[0].sample_count, 18);
 
-    let sqlite_pool = SqlitePoolOptions::new()
-        .max_connections(1)
-        .connect("sqlite::memory:")
-        .await
-        .context("failed to create sqlite state pool")?;
-    crate::migrations::apply_schema(&sqlite_pool).await?;
     let state = AppState {
-        sqlite_pool,
-        pg_pool: Some(pool.clone()),
-        backend: DatabaseBackend::Postgres,
+        pg_pool: pool.clone(),
         signal_keys: Arc::new(load_signal_keys()?),
     };
     let query = KpiQuery {
@@ -865,7 +848,7 @@ async fn postgres_rankings_and_temperature_impact_handlers_work_when_env_set() -
 }
 
 #[tokio::test]
-async fn postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set() -> Result<()> {
+async fn postgres_internal_job_handler_runs_native_pipeline_when_env_set() -> Result<()> {
     let Some(ctx) = PostgresTestContext::maybe_new().await? else {
         return Ok(());
     };

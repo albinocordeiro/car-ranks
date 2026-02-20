@@ -13,8 +13,8 @@ mod storage;
 
 /// Rebuilds charging-session aggregates directly inside PostgreSQL.
 ///
-/// This stage mirrors the existing SQLite job semantics but avoids the
-/// sync-to-SQLite bridge for session materialization.
+/// The pass reads raw session observations and writes materialized charging
+/// sessions without any cross-database synchronization.
 pub(super) async fn build_charging_sessions(pool: &PgPool) -> Result<usize> {
     let session_rows = fetch_charging_session_windows_postgres(pool).await?;
     let mut upserted = 0usize;

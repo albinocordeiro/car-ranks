@@ -26,7 +26,7 @@ mod utils;
 pub(crate) use errors::ApiError;
 pub(crate) use models::*;
 pub(crate) use signals::{load_signal_keys, map_session_event};
-pub(crate) use state::{AppState, DatabaseBackend};
+pub(crate) use state::AppState;
 pub(crate) use utils::{
     cmp_f64_desc, derive_temperature_bin, normalize_charger_type, now_str, parse_ts,
     percentile_rank, read_positive_env, read_positive_env_f64, timeframe_cutoff,

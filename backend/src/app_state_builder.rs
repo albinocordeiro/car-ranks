@@ -15,12 +15,10 @@ pub(crate) async fn build_app_state() -> Result<crate::AppState> {
         crate::kpi_specs::locked_kpi_catalog_len()
     );
 
-    let (backend, sqlite_pool, pg_pool) = crate::db_bootstrap::initialize_database().await?;
+    let pg_pool = crate::db_bootstrap::initialize_database().await?;
 
     Ok(crate::AppState {
-        sqlite_pool,
         pg_pool,
-        backend,
         signal_keys,
     })
 }

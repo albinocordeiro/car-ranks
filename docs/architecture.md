@@ -97,7 +97,7 @@ flowchart LR
 - Supports offline capture and retry, improving data completeness.
 
 ### Key implementation notes
-- Local storage: SQLite/Core Data ring buffer for telemetry chunks.
+- Local storage: Core Data ring buffer for telemetry chunks.
 - Upload envelopes: compressed JSON payloads by session/window.
 - Backoff + retry with idempotent upload token per batch.
 - Config endpoint controls sampling and upload intervals.

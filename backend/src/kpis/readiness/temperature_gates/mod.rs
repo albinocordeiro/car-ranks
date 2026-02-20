@@ -1,7 +1,6 @@
-use crate::{ApiError, AppState, DatabaseBackend};
+use crate::{ApiError, AppState};
 
 mod postgres;
-mod sqlite;
 
 /// Timeframe-scoped evidence used to explain temperature KPI readiness gates.
 #[derive(Debug, Default, Clone, Copy)]
@@ -18,24 +17,7 @@ pub(super) async fn fetch_temperature_gate_evidence(
     vehicle_uid: &str,
     cutoff_ts: &str,
 ) -> Result<TemperatureGateEvidence, ApiError> {
-    match state.backend {
-        DatabaseBackend::Sqlite => {
-            sqlite::fetch_temperature_gate_evidence_sqlite(
-                &state.sqlite_pool,
-                vehicle_uid,
-                cutoff_ts,
-            )
-            .await
-        }
-        DatabaseBackend::Postgres => {
-            let pg_pool = state
-                .pg_pool
-                .as_ref()
-                .ok_or_else(|| ApiError::internal("postgres pool is not configured"))?;
-            postgres::fetch_temperature_gate_evidence_postgres(pg_pool, vehicle_uid, cutoff_ts)
-                .await
-        }
-    }
+    postgres::fetch_temperature_gate_evidence_postgres(&state.pg_pool, vehicle_uid, cutoff_ts).await
 }
 
 /// Computes human-readable readiness gaps from current gate evidence.

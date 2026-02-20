@@ -21,13 +21,10 @@ pub(super) async fn get_rankings_postgres(
     auth: AuthContext,
     params: RankingsQuery,
 ) -> Result<Json<RankingsResponse>, ApiError> {
-    let pg_pool = state
-        .pg_pool
-        .as_ref()
-        .ok_or_else(|| ApiError::internal("postgres pool is not configured"))?;
+    let pg_pool = &state.pg_pool;
 
     let window = normalize_rankings_window(&params);
-    validate_rankings_request(state.backend, &params.ranking_type, &window.temperature_bin)?;
+    validate_rankings_request(&params.ranking_type, &window.temperature_bin)?;
     let user_id = auth.user_id.to_string();
 
     let computed_at = fetch_latest_computed_at_postgres(

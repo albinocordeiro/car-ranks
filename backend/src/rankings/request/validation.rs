@@ -1,8 +1,7 @@
-use crate::{ApiError, DatabaseBackend};
+use crate::ApiError;
 
-/// Enforces backend and ranking-type constraints for the rankings endpoint.
+/// Enforces ranking-type constraints for the rankings endpoint.
 pub(in crate::rankings) fn validate_rankings_request(
-    _backend: DatabaseBackend,
     ranking_type: &str,
     temperature_bin: &str,
 ) -> Result<(), ApiError> {

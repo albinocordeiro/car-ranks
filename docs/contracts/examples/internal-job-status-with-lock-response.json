@@ -1,7 +1,7 @@
 {
   "job_run_id": "19e622d3-a847-4680-bb52-b3ae4e638f91",
   "job_kind": "recompute_kpis",
-  "backend": "sqlite",
+  "backend": "postgres",
   "status": "running",
   "started_at": "2026-02-20T11:16:00Z",
   "finished_at": null,

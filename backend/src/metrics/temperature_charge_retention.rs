@@ -1,21 +1,22 @@
 use anyhow::Result;
-use sqlx::Row;
-use sqlx::sqlite::SqliteRow;
 
 use crate::MetricCalc;
 
+/// Raw charging-session row needed for charge-retention KPI scoring.
+pub(super) struct ChargingPowerSampleRow {
+    pub(super) avg_charge_power_kw: Option<f64>,
+    pub(super) temperature_bin: Option<String>,
+}
+
 /// Splits charging-session rows into cold and mild power buckets.
 pub(super) fn split_charge_power_by_temperature_bin(
-    charge_rows: Vec<SqliteRow>,
+    charge_rows: Vec<ChargingPowerSampleRow>,
 ) -> Result<(Vec<f64>, Vec<f64>)> {
     let mut cold_charge = Vec::new();
     let mut mild_charge = Vec::new();
 
     for row in charge_rows {
-        let power: Option<f64> = row.try_get("avg_charge_power_kw")?;
-        let bin: Option<String> = row.try_get("temperature_bin")?;
-
-        if let (Some(power), Some(bin)) = (power, bin) {
+        if let (Some(power), Some(bin)) = (row.avg_charge_power_kw, row.temperature_bin) {
             if power <= 0.0 || !power.is_finite() {
                 continue;
             }

@@ -14,10 +14,7 @@ pub(super) async fn get_kpis_temperature_impact_postgres(
     state: &AppState,
     params: KpiTempQuery,
 ) -> Result<Json<TemperatureImpactResponse>, ApiError> {
-    let pg_pool = state
-        .pg_pool
-        .as_ref()
-        .ok_or_else(|| ApiError::internal("postgres pool is not configured"))?;
+    let pg_pool = &state.pg_pool;
 
     let timeframe = params
         .timeframe

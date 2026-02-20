@@ -1,8 +1,9 @@
 use anyhow::Result;
-use sqlx::sqlite::SqliteRow;
 
 use super::range_efficiency_accumulator::RangeEfficiencyAccumulator;
-use super::range_efficiency_snapshots::normalize_range_efficiency_snapshots;
+use super::range_efficiency_snapshots::{
+    RangeEfficiencyObservationRow, normalize_range_efficiency_snapshots,
+};
 
 /// Intermediate series derived from raw observations before KPI scoring.
 pub(super) struct RangeEfficiencySeries {
@@ -16,7 +17,7 @@ pub(super) struct RangeEfficiencySeries {
 
 /// Normalizes raw observation rows into aligned series used by KPI builders.
 pub(super) fn build_range_efficiency_series(
-    obs_rows: Vec<SqliteRow>,
+    obs_rows: Vec<RangeEfficiencyObservationRow>,
     default_usable_battery_kwh: f64,
 ) -> Result<RangeEfficiencySeries> {
     let by_ts = normalize_range_efficiency_snapshots(obs_rows)?;

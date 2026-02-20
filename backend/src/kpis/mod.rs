@@ -13,15 +13,10 @@ mod latest_vehicle;
 mod range_efficiency;
 mod readiness;
 mod temperature_impact;
-mod temperature_impact_metrics;
 mod temperature_impact_postgres;
-mod temperature_impact_queries;
 
 pub(crate) use charging::get_kpis_charging;
-#[allow(unused_imports)]
-pub(crate) use latest_vehicle::{
-    fetch_latest_vehicle_kpis_postgres, fetch_latest_vehicle_kpis_sqlite,
-};
+pub(crate) use latest_vehicle::fetch_latest_vehicle_kpis_postgres;
 pub(crate) use range_efficiency::get_kpis_me;
 
 pub(crate) async fn get_kpis_temperature_impact(
