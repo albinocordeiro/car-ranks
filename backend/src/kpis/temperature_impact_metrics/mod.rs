@@ -1,12 +1,16 @@
 use std::collections::BTreeMap;
 
-use anyhow::Context;
-use sqlx::Row;
 use sqlx::SqlitePool;
 use sqlx::sqlite::SqliteRow;
 
 use super::temperature_impact_queries::fetch_cohort_kpi_values;
-use crate::{ApiError, KpiMetric, percentile_rank};
+use crate::{ApiError, KpiMetric};
+
+mod percentile_benchmarks;
+mod row_mapper;
+
+use percentile_benchmarks::compute_percentile_benchmark;
+use row_mapper::map_temperature_kpi_row;
 
 /// Materialized KPI payload and benchmark metadata for temperature-impact APIs.
 pub(super) struct TemperatureImpactMetricPayload {
@@ -33,7 +37,10 @@ pub(super) async fn build_temperature_impact_metric_payload(
     let mut cohort_size = 0usize;
 
     for row in rows {
+        // Translate each SQL row into the stable API metric shape first.
         let metric = map_temperature_kpi_row(&row)?;
+
+        // Pull the peer cohort for this KPI so percentile math runs per metric key.
         let values = fetch_cohort_kpi_values(
             pool,
             &metric.kpi_key,
@@ -45,12 +52,9 @@ pub(super) async fn build_temperature_impact_metric_payload(
         )
         .await?;
 
+        // Track the largest cohort and compute the benchmark percentile for the metric.
         cohort_size = cohort_size.max(values.len());
-        let percentile = percentile_rank(
-            &values,
-            metric.value,
-            metric.direction.as_str() == "higher_is_better",
-        );
+        let percentile = compute_percentile_benchmark(&values, &metric);
         percentiles.insert(metric.kpi_key.clone(), percentile);
         metrics.push(metric);
     }
@@ -59,35 +63,5 @@ pub(super) async fn build_temperature_impact_metric_payload(
         metrics,
         cohort_size,
         percentiles,
-    })
-}
-
-/// Maps one SQL row into the `KpiMetric` API shape with parse context.
-fn map_temperature_kpi_row(row: &SqliteRow) -> Result<KpiMetric, ApiError> {
-    let kpi_key: String = row.try_get("kpi_key").context("failed to parse kpi_key")?;
-    let value: f64 = row
-        .try_get("kpi_value")
-        .context("failed to parse kpi_value")?;
-    let unit = row
-        .try_get::<Option<String>, _>("kpi_unit")
-        .context("failed to parse kpi_unit")?
-        .unwrap_or_else(|| "score".to_string());
-    let direction: String = row
-        .try_get("direction")
-        .context("failed to parse direction")?;
-    let confidence_level: String = row
-        .try_get("confidence_level")
-        .context("failed to parse confidence_level")?;
-    let sample_count: i64 = row
-        .try_get("sample_count")
-        .context("failed to parse sample_count")?;
-
-    Ok(KpiMetric {
-        kpi_key,
-        value,
-        unit,
-        direction,
-        confidence_level,
-        sample_count,
     })
 }
