@@ -1,6 +1,7 @@
 use crate::MetricCalc;
 
 use super::charging_performance_buckets::ChargingPowerBuckets;
+use super::charging_performance_retention::cold_charge_retention_metric;
 
 /// Scores charging-performance KPIs from normalized power buckets.
 ///
@@ -39,24 +40,11 @@ pub(super) fn score_charging_power_buckets(
     ));
 
     let mut retention_score = None;
-    if gates.charge_gate_passed(cold_power.len(), mild_power.len()) {
-        if let (Some(cold_median), Some(mild_median)) = (
-            super::median(cold_power.clone()),
-            super::median(mild_power.clone()),
-        ) {
-            if mild_median > 0.0 {
-                let retention = (100.0 * cold_median / mild_median).clamp(0.0, 200.0);
-                let retention_samples = cold_power.len().min(mild_power.len()) as i64;
-                metrics.push(build_metric(
-                    "cold_weather_charge_speed_retention",
-                    retention,
-                    "%",
-                    "higher_is_better",
-                    retention_samples,
-                ));
-                retention_score = Some(retention);
-            }
-        }
+    if let Some((retention_metric, retention)) =
+        cold_charge_retention_metric(&cold_power, &mild_power, gates)
+    {
+        metrics.push(retention_metric);
+        retention_score = Some(retention);
     }
 
     let charging_score = if let Some(retention_score) = retention_score {
