@@ -1,5 +1,6 @@
 use crate::MetricCalc;
 
+use super::range_efficiency_additional::speed_segment_efficiency_metrics;
 use super::range_efficiency_baseline::compute_range_efficiency_baseline;
 use super::range_efficiency_regeneration::regeneration_recovery_ratio_metric;
 use super::range_efficiency_series::RangeEfficiencySeries;
@@ -61,28 +62,10 @@ pub(super) fn score_range_efficiency_series(
         "higher_is_better",
         sample_count,
     ));
-
-    if let Some(urban_efficiency) = super::median(urban_wh_per_km_points.clone()) {
-        let urban_samples = urban_wh_per_km_points.len() as i64;
-        metrics.push(build_metric(
-            "ev_urban_efficiency",
-            urban_efficiency,
-            "Wh_per_km",
-            "lower_is_better",
-            urban_samples,
-        ));
-    }
-
-    if let Some(highway_efficiency) = super::median(highway_wh_per_km_points.clone()) {
-        let highway_samples = highway_wh_per_km_points.len() as i64;
-        metrics.push(build_metric(
-            "ev_highway_efficiency",
-            highway_efficiency,
-            "Wh_per_km",
-            "lower_is_better",
-            highway_samples,
-        ));
-    }
+    metrics.extend(speed_segment_efficiency_metrics(
+        &urban_wh_per_km_points,
+        &highway_wh_per_km_points,
+    ));
 
     if let Some(regen_metric) = regeneration_recovery_ratio_metric(&power_windows) {
         metrics.push(regen_metric);

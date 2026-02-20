@@ -11,6 +11,7 @@ mod composite;
 mod composite_health;
 mod core;
 mod range_efficiency;
+mod range_efficiency_additional;
 mod range_efficiency_baseline;
 mod range_efficiency_regeneration;
 mod range_efficiency_scoring;
