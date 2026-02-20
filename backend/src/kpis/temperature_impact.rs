@@ -11,10 +11,11 @@ pub(super) async fn get_kpis_temperature_impact_inner(
     state: &AppState,
     params: KpiTempQuery,
 ) -> Result<Json<TemperatureImpactResponse>, ApiError> {
-    if state.backend != DatabaseBackend::Sqlite {
-        return Err(crate::errors::postgres_rollout_not_enabled(
-            "/v1/kpis/temperature-impact",
-        ));
+    if state.backend == DatabaseBackend::Postgres {
+        return super::temperature_impact_postgres::get_kpis_temperature_impact_postgres(
+            state, params,
+        )
+        .await;
     }
 
     let timeframe = params.timeframe.unwrap_or_else(|| "90d".to_string());

@@ -11,6 +11,7 @@ mod latest_vehicle;
 mod range_efficiency;
 mod temperature_impact;
 mod temperature_impact_metrics;
+mod temperature_impact_postgres;
 mod temperature_impact_queries;
 
 pub(crate) use charging::get_kpis_charging;

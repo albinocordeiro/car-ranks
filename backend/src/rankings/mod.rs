@@ -2,7 +2,9 @@ use axum::Json;
 use axum::extract::{Query, State};
 
 use crate::auth::AuthContext;
-use crate::{ApiError, AppState, RankingPage, RankingsQuery, RankingsResponse, now_str};
+use crate::{
+    ApiError, AppState, DatabaseBackend, RankingPage, RankingsQuery, RankingsResponse, now_str,
+};
 
 use self::materialization::materialize_ranking_rows;
 use self::request::{build_rankings_filters, normalize_rankings_window, validate_rankings_request};
@@ -10,10 +12,22 @@ use self::snapshot_rows::{fetch_latest_computed_at, fetch_ranking_rows};
 
 mod kpi_details;
 mod materialization;
+mod postgres;
 mod request;
 mod snapshot_rows;
 
 pub(crate) async fn get_rankings(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Query(params): Query<RankingsQuery>,
+) -> Result<Json<RankingsResponse>, ApiError> {
+    match state.backend {
+        DatabaseBackend::Sqlite => get_rankings_sqlite(State(state), auth, Query(params)).await,
+        DatabaseBackend::Postgres => postgres::get_rankings_postgres(&state, auth, params).await,
+    }
+}
+
+async fn get_rankings_sqlite(
     State(state): State<AppState>,
     auth: AuthContext,
     Query(params): Query<RankingsQuery>,

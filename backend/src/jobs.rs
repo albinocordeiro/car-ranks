@@ -1,11 +1,13 @@
 use anyhow::{Context, Result};
+use sqlx::PgPool;
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
-use crate::{ApiError, JobResponse};
+use crate::{ApiError, AppState, DatabaseBackend, JobResponse};
 
 mod charging_sessions;
 mod kpi_recompute;
+mod postgres_bridge;
 mod ranking_snapshots;
 
 pub(crate) async fn run_kpi_job(pool: &SqlitePool) -> Result<JobResponse, ApiError> {
@@ -32,6 +34,27 @@ pub(crate) async fn run_kpi_job(pool: &SqlitePool) -> Result<JobResponse, ApiErr
         ranking_rows_upserted,
         recomputed_vehicles,
     })
+}
+
+/// Runs the KPI/rebuild job against the active runtime backend.
+pub(crate) async fn run_kpi_job_by_backend(state: &AppState) -> Result<JobResponse, ApiError> {
+    match state.backend {
+        DatabaseBackend::Sqlite => run_kpi_job(&state.sqlite_pool).await,
+        DatabaseBackend::Postgres => {
+            let pg_pool = state
+                .pg_pool
+                .as_ref()
+                .ok_or_else(|| ApiError::internal("postgres pool is not configured"))?;
+            run_kpi_job_postgres_bridge(&state.sqlite_pool, pg_pool).await
+        }
+    }
+}
+
+async fn run_kpi_job_postgres_bridge(
+    sqlite_pool: &SqlitePool,
+    pg_pool: &PgPool,
+) -> Result<JobResponse, ApiError> {
+    postgres_bridge::run_kpi_job_postgres(sqlite_pool, pg_pool).await
 }
 
 pub(crate) async fn recompute_all_kpis(pool: &SqlitePool) -> Result<(usize, usize)> {

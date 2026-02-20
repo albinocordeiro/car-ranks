@@ -15,6 +15,7 @@ mod idempotency;
 mod idempotency_envelope;
 mod idempotency_response;
 mod persistence;
+mod postgres;
 mod record_validation;
 mod request_validation;
 mod response;
@@ -28,12 +29,32 @@ pub(crate) async fn post_telemetry_batches(
     auth: AuthContext,
     Json(payload): Json<TelemetryBatchRequest>,
 ) -> Result<Json<IngestResponse>, ApiError> {
-    if state.backend != DatabaseBackend::Sqlite {
-        return Err(crate::errors::postgres_rollout_not_enabled(
-            "/v1/telemetry/batches",
-        ));
+    match state.backend {
+        DatabaseBackend::Sqlite => {
+            post_telemetry_batches_sqlite(State(state), auth, Json(payload)).await
+        }
+        DatabaseBackend::Postgres => {
+            let pg_pool = state
+                .pg_pool
+                .as_ref()
+                .ok_or_else(|| ApiError::internal("postgres pool is not configured"))?;
+            postgres::post_telemetry_batches_postgres(
+                pg_pool,
+                auth,
+                payload,
+                state.signal_keys.as_ref(),
+            )
+            .await
+        }
     }
+}
 
+/// SQLite ingest execution path.
+async fn post_telemetry_batches_sqlite(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Json(payload): Json<TelemetryBatchRequest>,
+) -> Result<Json<IngestResponse>, ApiError> {
     let validated_envelope = validate_batch_payload(&payload)?;
     let source_context = build_source_context(&payload, validated_envelope.source_upper);
 

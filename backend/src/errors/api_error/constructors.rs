@@ -57,15 +57,6 @@ impl ApiError {
         }
     }
 
-    /// Builds a 501 response for non-shipped API paths.
-    pub(crate) fn not_implemented(message: impl Into<String>) -> Self {
-        Self {
-            status: StatusCode::NOT_IMPLEMENTED,
-            error: "not_implemented".to_string(),
-            message: message.into(),
-        }
-    }
-
     /// Builds a 500 response for unexpected server-side failures.
     pub(crate) fn internal(message: impl Into<String>) -> Self {
         Self {

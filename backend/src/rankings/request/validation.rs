@@ -2,14 +2,10 @@ use crate::{ApiError, DatabaseBackend};
 
 /// Enforces backend and ranking-type constraints for the rankings endpoint.
 pub(in crate::rankings) fn validate_rankings_request(
-    backend: DatabaseBackend,
+    _backend: DatabaseBackend,
     ranking_type: &str,
     temperature_bin: &str,
 ) -> Result<(), ApiError> {
-    if backend != DatabaseBackend::Sqlite {
-        return Err(crate::errors::postgres_rollout_not_enabled("/v1/rankings"));
-    }
-
     if !is_supported_ranking_type(ranking_type) {
         return Err(ApiError::unprocessable("unsupported ranking_type"));
     }
