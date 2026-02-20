@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -29,10 +29,12 @@ mod kpis;
 mod metrics;
 mod migrations;
 mod rankings;
+mod signals;
 mod state;
 mod utils;
 
 use errors::{ApiError, postgres_rollout_not_enabled};
+pub(crate) use signals::{load_signal_keys, map_session_event};
 pub(crate) use state::{AppState, DatabaseBackend};
 pub(crate) use utils::{
     cmp_f64_desc, derive_temperature_bin, normalize_charger_type, now_str, parse_ts,
@@ -553,35 +555,6 @@ async fn apply_schema(pool: &SqlitePool) -> Result<()> {
 async fn apply_postgres_schema(pool: &PgPool) -> Result<()> {
     // Postgres migration tracking mirrors sqlite migration semantics.
     migrations::apply_postgres_schema(pool).await
-}
-
-fn load_signal_keys() -> Result<HashSet<String>> {
-    let raw = include_str!("../../research/schema/signal_registry_v0_2.json");
-    let value: Value = serde_json::from_str(raw).context("invalid JSON in signal_registry_v0_2")?;
-
-    let signals = value
-        .get("signals")
-        .and_then(Value::as_array)
-        .context("signals array missing in signal_registry_v0_2")?;
-
-    let mut keys = HashSet::new();
-    for signal in signals {
-        if let Some(key) = signal.get("signal_key").and_then(Value::as_str) {
-            keys.insert(key.to_string());
-        }
-    }
-
-    Ok(keys)
-}
-
-fn map_session_event(event_type: &str) -> Option<(&'static str, &'static str)> {
-    match event_type {
-        "drive_session_start" => Some(("drive", "start")),
-        "drive_session_stop" => Some(("drive", "stop")),
-        "charging_session_start" => Some(("charging", "start")),
-        "charging_session_stop" => Some(("charging", "stop")),
-        _ => None,
-    }
 }
 
 #[cfg(test)]
