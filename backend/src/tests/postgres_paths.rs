@@ -1076,6 +1076,86 @@ async fn postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set()
 }
 
 #[tokio::test]
+async fn postgres_latest_job_status_reports_active_lock_metadata_when_env_set() -> Result<()> {
+    let Some(ctx) = PostgresTestContext::maybe_new().await? else {
+        return Ok(());
+    };
+
+    let result = async {
+        let state = ctx.app_state().await?;
+        let started_at = crate::now_str();
+        let lock_owner = Uuid::new_v4().to_string();
+        let lock_expires_at = (Utc::now() + Duration::minutes(5)).to_rfc3339();
+        let job_run_id = Uuid::new_v4().to_string();
+
+        sqlx::query(
+            r#"
+            INSERT INTO internal_job_run (
+              job_run_id,
+              job_kind,
+              backend,
+              status,
+              started_at
+            ) VALUES ($1, $2, $3, $4, $5)
+            "#,
+        )
+        .bind(&job_run_id)
+        .bind("recompute_kpis")
+        .bind("postgres")
+        .bind("running")
+        .bind(&started_at)
+        .execute(&ctx.pool)
+        .await
+        .context("failed to seed postgres internal_job_run row")?;
+
+        sqlx::query(
+            r#"
+            INSERT INTO internal_job_lock (
+              job_kind,
+              owner_token,
+              acquired_at,
+              expires_at
+            ) VALUES ($1, $2, $3, $4)
+            "#,
+        )
+        .bind("recompute_kpis")
+        .bind(&lock_owner)
+        .bind(&started_at)
+        .bind(&lock_expires_at)
+        .execute(&ctx.pool)
+        .await
+        .context("failed to seed postgres internal_job_lock row")?;
+
+        let Json(status_response) = crate::handlers::get_latest_job_status(
+            State(state),
+            Query(JobStatusQuery {
+                job_kind: Some("recompute_kpis".to_string()),
+            }),
+        )
+        .await
+        .map_err(|err| {
+            anyhow::anyhow!("postgres latest-job-status handler failed: {}", err.message)
+        })?;
+
+        assert_eq!(status_response.job_run_id, job_run_id);
+        assert_eq!(
+            status_response.active_lock_owner_token.as_deref(),
+            Some(lock_owner.as_str())
+        );
+        assert_eq!(
+            status_response.active_lock_expires_at.as_deref(),
+            Some(lock_expires_at.as_str())
+        );
+
+        Ok(())
+    }
+    .await;
+
+    ctx.cleanup().await?;
+    result
+}
+
+#[tokio::test]
 async fn postgres_readiness_handler_returns_family_statuses_when_env_set() -> Result<()> {
     let Some(ctx) = PostgresTestContext::maybe_new().await? else {
         return Ok(());
