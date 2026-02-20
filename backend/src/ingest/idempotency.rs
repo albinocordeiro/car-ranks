@@ -1,9 +1,11 @@
 use anyhow::Context;
-use sqlx::Row;
 use sqlx::{Sqlite, Transaction};
 use uuid::Uuid;
 
 use crate::{ApiError, IngestResponse, TelemetryBatchRequest};
+
+use super::idempotency_envelope::ExistingBatchEnvelope;
+use super::idempotency_response::build_duplicate_ingest_response;
 
 /// Result of idempotency lookup before ingest writes begin.
 pub(super) enum IdempotencyOutcome {
@@ -35,31 +37,13 @@ pub(super) async fn resolve_batch_idempotency(
     .context("failed to check idempotency")?;
 
     let ingest_id = Uuid::new_v4();
-    let Some(existing_batch) = existing_batch else {
+    let Some(existing_batch_row) = existing_batch else {
         return Ok(IdempotencyOutcome::Fresh { ingest_id });
     };
 
-    let existing_vehicle_uid: String = existing_batch
-        .try_get("vehicle_uid")
-        .context("failed to parse existing vehicle_uid for idempotency check")?;
-    let existing_schema_version: String = existing_batch
-        .try_get("schema_version")
-        .context("failed to parse existing schema_version for idempotency check")?;
-    let existing_source: String = existing_batch
-        .try_get("source")
-        .context("failed to parse existing source for idempotency check")?;
-    let existing_capture_started_at: String = existing_batch
-        .try_get("capture_started_at")
-        .context("failed to parse existing capture_started_at for idempotency check")?;
-    let existing_capture_ended_at: String = existing_batch
-        .try_get("capture_ended_at")
-        .context("failed to parse existing capture_ended_at for idempotency check")?;
-
-    let same_envelope = existing_vehicle_uid == payload.vehicle_uid.to_string()
-        && existing_schema_version == payload.schema_version
-        && existing_source.to_uppercase() == source_upper
-        && existing_capture_started_at == payload.capture_window.started_at.to_rfc3339()
-        && existing_capture_ended_at == payload.capture_window.ended_at.to_rfc3339();
+    let existing_envelope = ExistingBatchEnvelope::from_row(&existing_batch_row)
+        .context("failed to parse existing ingest_batch envelope for idempotency check")?;
+    let same_envelope = existing_envelope.matches(payload, source_upper);
 
     if !same_envelope {
         return Err(ApiError::conflict(
@@ -68,16 +52,6 @@ pub(super) async fn resolve_batch_idempotency(
     }
 
     Ok(IdempotencyOutcome::Duplicate {
-        response: IngestResponse {
-            accepted: true,
-            batch_id: payload.batch_id,
-            ingest_id,
-            duplicate: true,
-            records_received: payload.records.len(),
-            records_accepted: 0,
-            records_rejected: 0,
-            errors: Vec::new(),
-            next_upload_after_seconds: payload.capture_window.sample_interval_seconds.unwrap_or(60),
-        },
+        response: build_duplicate_ingest_response(payload, ingest_id),
     })
 }

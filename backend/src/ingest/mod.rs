@@ -14,6 +14,8 @@ use self::storage::{
 };
 
 mod idempotency;
+mod idempotency_envelope;
+mod idempotency_response;
 mod record_validation;
 mod request_validation;
 mod response;
