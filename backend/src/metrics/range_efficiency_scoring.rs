@@ -1,5 +1,6 @@
 use crate::MetricCalc;
 
+use super::range_efficiency_baseline::compute_range_efficiency_baseline;
 use super::range_efficiency_regeneration::regeneration_recovery_ratio_metric;
 use super::range_efficiency_series::RangeEfficiencySeries;
 
@@ -20,54 +21,42 @@ pub(super) fn score_range_efficiency_series(
         latest_soc,
     } = series;
 
-    // The median distance-per-SOC is the anchor for all downstream range KPIs.
-    let Some(median_km_per_soc) = super::median(km_per_soc_points.clone()) else {
+    let Some(baseline) = compute_range_efficiency_baseline(
+        &km_per_soc_points,
+        &wh_per_km_points,
+        latest_soc,
+        default_usable_battery_kwh,
+    ) else {
         return Vec::new();
     };
 
     let mut metrics = Vec::new();
-    let sample_count = km_per_soc_points.len() as i64;
-    let soc_depletion_per_100km = if median_km_per_soc > 0.0 {
-        100.0 / median_km_per_soc
-    } else {
-        100.0
-    };
-    let latest_soc = latest_soc.unwrap_or(50.0).clamp(0.0, 100.0);
-    let estimated_range = (latest_soc * median_km_per_soc).max(0.0);
-
-    // Prefer direct Wh/km observations, but keep a deterministic fallback based
-    // on SOC depletion so the score remains stable when energy samples are sparse.
-    let net_energy_efficiency = super::median(wh_per_km_points.clone())
-        .unwrap_or((soc_depletion_per_100km * default_usable_battery_kwh / 10.0).max(0.0));
-    let efficiency_component = (100.0 - (net_energy_efficiency / 3.0)).clamp(0.0, 100.0);
-    let range_component = (estimated_range / 4.0).clamp(0.0, 100.0);
-    let range_efficiency_score =
-        (0.65 * efficiency_component + 0.35 * range_component).clamp(0.0, 100.0);
+    let sample_count = baseline.sample_count;
 
     metrics.push(build_metric(
         "ev_net_energy_efficiency",
-        net_energy_efficiency,
+        baseline.net_energy_efficiency,
         "Wh_per_km",
         "lower_is_better",
         sample_count,
     ));
     metrics.push(build_metric(
         "ev_estimated_practical_range",
-        estimated_range,
+        baseline.estimated_range,
         "km",
         "higher_is_better",
         sample_count,
     ));
     metrics.push(build_metric(
         "soc_depletion_rate_per_100km",
-        soc_depletion_per_100km,
+        baseline.soc_depletion_per_100km,
         "%_per_100km",
         "lower_is_better",
         sample_count,
     ));
     metrics.push(build_metric(
         "ev_range_efficiency_score",
-        range_efficiency_score,
+        baseline.range_efficiency_score,
         "score",
         "higher_is_better",
         sample_count,
