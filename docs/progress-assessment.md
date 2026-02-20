@@ -18,24 +18,33 @@ Current runtime status:
 
 ## Risks and Gaps
 
-- Postgres KPI/ranking jobs still perform bridge table syncs for range KPI and temperature families, which is acceptable for MVP but not scalable.
-- Postgres runtime still depends on SQLite bridge stages for range KPI and temperature KPI/ranking recompute.
+- Remaining bridge compute stages (range KPI + temperature families) are not ideal long-term, but are acceptable for MVP ship velocity.
+- Main MVP risk is release readiness and cross-surface stability, not architecture purity.
 
 ## Next Product Development Plan
 
-Priority 3: Postgres-native compute path
-- Replace bridge-based Postgres internal jobs with native Postgres computation stages.
-- Keep module boundaries aligned with single responsibility (charging sessions, KPI recompute, ranking snapshots).
+Priority 1: MVP ship readiness
+- Freeze scope to must-have product behavior and defer non-blocking architecture work.
+- Focus engineering time on release blockers: correctness, crash risk, ownership/auth safety, and UX-critical API stability.
 
-Priority 4: Job execution safety
+Priority 2: Reviewer-friendly implementation gate
+- Every change must be reviewer-friendly by default:
+  - one responsibility per file/module,
+  - small focused functions and explicit naming,
+  - comments that explain intent/tradeoffs (why/how),
+  - small commits with matching tests/docs.
+- Avoid opportunistic refactors outside MVP scope.
+
+Priority 3: Job execution safety
 - Baseline delivered; optional follow-up is exporting lock/run metrics for external observability.
 
-Priority 5: Product contract hardening
+Priority 4: Product contract hardening
 - Expand API contract examples for freshness/readiness telemetry and status fields.
 - Add API tests for new freshness paths in both SQLite and Postgres modes.
 
 ## Suggested Execution Order
 
-1. Complete migration of remaining range + temperature job stages to Postgres-native paths and deprecate bridge sync.
-2. Expand docs/contracts around freshness and operational status payloads.
-3. Add API tests for freshness/readiness operational paths in both SQLite and Postgres modes.
+1. Lock MVP scope and release checklist; defer further native Postgres migration work unless a blocker demands it (`docs/mvp-release-checklist.md`).
+2. Finish remaining release-blocker fixes using the reviewer-friendly coding gate.
+3. Expand docs/contracts and targeted tests for freshness/readiness operational paths.
+4. Prepare release operations (metadata/privacy/support artifacts) for App Store submission.
