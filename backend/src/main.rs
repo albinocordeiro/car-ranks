@@ -3,10 +3,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use axum::extract::{Query, State};
+use axum::Router;
 use axum::routing::{get, post};
-use axum::{Json, Router};
-use serde_json::{Value, json};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use sqlx::{PgPool, SqlitePool};
@@ -15,6 +13,7 @@ use tracing::info;
 
 mod config;
 mod errors;
+mod handlers;
 mod ingest;
 mod jobs;
 mod kpi_specs;
@@ -27,7 +26,14 @@ mod signals;
 mod state;
 mod utils;
 
-use errors::{ApiError, postgres_rollout_not_enabled};
+use errors::ApiError;
+pub(crate) use errors::postgres_rollout_not_enabled;
+#[cfg(test)]
+pub(crate) use handlers::fetch_latest_vehicle_kpis_postgres;
+pub(crate) use handlers::{
+    get_config_sampling, get_kpis_charging, get_kpis_me, get_kpis_temperature_impact, get_rankings,
+    health, post_build_rankings, post_recompute_kpis, post_telemetry_batches,
+};
 pub(crate) use models::*;
 pub(crate) use signals::{load_signal_keys, map_session_event};
 pub(crate) use state::{AppState, DatabaseBackend};
@@ -142,95 +148,6 @@ async fn main() -> Result<()> {
     axum::serve(listener, app).await.context("server error")?;
 
     Ok(())
-}
-
-async fn health() -> Json<Value> {
-    Json(json!({
-        "ok": true,
-        "service": "car-ranks-backend",
-        "timestamp": now_str()
-    }))
-}
-
-async fn get_config_sampling() -> Json<SamplingConfigResponse> {
-    config::get_config_sampling().await
-}
-
-async fn post_telemetry_batches(
-    State(state): State<AppState>,
-    Json(payload): Json<TelemetryBatchRequest>,
-) -> Result<Json<IngestResponse>, ApiError> {
-    // Keep router-facing handlers thin; ingestion rules and persistence live in ingest.rs.
-    ingest::post_telemetry_batches(State(state), Json(payload)).await
-}
-
-async fn post_recompute_kpis(State(state): State<AppState>) -> Result<Json<JobResponse>, ApiError> {
-    if state.backend != DatabaseBackend::Sqlite {
-        return Err(postgres_rollout_not_enabled(
-            "/internal/jobs/recompute-kpis",
-        ));
-    }
-    run_kpi_job(&state.sqlite_pool).await.map(Json)
-}
-
-async fn post_build_rankings(State(state): State<AppState>) -> Result<Json<JobResponse>, ApiError> {
-    if state.backend != DatabaseBackend::Sqlite {
-        return Err(postgres_rollout_not_enabled(
-            "/internal/jobs/build-ranking-snapshots",
-        ));
-    }
-    run_kpi_job(&state.sqlite_pool).await.map(Json)
-}
-
-async fn get_kpis_me(
-    State(state): State<AppState>,
-    Query(params): Query<KpiQuery>,
-) -> Result<Json<GenericKpiResponse>, ApiError> {
-    // KPI reads are delegated to kpis.rs so backend-specific query logic is isolated.
-    kpis::get_kpis_me(State(state), Query(params)).await
-}
-
-async fn get_kpis_charging(
-    State(state): State<AppState>,
-    Query(params): Query<KpiQuery>,
-) -> Result<Json<GenericKpiResponse>, ApiError> {
-    // Keep endpoint wiring stable while charging KPI behavior evolves in one module.
-    kpis::get_kpis_charging(State(state), Query(params)).await
-}
-
-async fn get_kpis_temperature_impact(
-    State(state): State<AppState>,
-    Query(params): Query<KpiTempQuery>,
-) -> Result<Json<TemperatureImpactResponse>, ApiError> {
-    // Temperature KPI aggregation and cohort percentile logic are centralized in kpis.rs.
-    kpis::get_kpis_temperature_impact(State(state), Query(params)).await
-}
-
-#[cfg(test)]
-async fn fetch_latest_vehicle_kpis_postgres(
-    pool: &PgPool,
-    vehicle_uid: &str,
-    ranking_type: &str,
-    timeframe: &str,
-    temperature_bin: &str,
-) -> Result<Vec<KpiMetric>> {
-    // Postgres-specific KPI fetch path is only needed in tests for now.
-    kpis::fetch_latest_vehicle_kpis_postgres(
-        pool,
-        vehicle_uid,
-        ranking_type,
-        timeframe,
-        temperature_bin,
-    )
-    .await
-}
-
-async fn get_rankings(
-    State(state): State<AppState>,
-    Query(params): Query<RankingsQuery>,
-) -> Result<Json<RankingsResponse>, ApiError> {
-    // Ranking query construction and row materialization live in rankings.rs.
-    rankings::get_rankings(State(state), Query(params)).await
 }
 
 async fn run_kpi_job(pool: &SqlitePool) -> Result<JobResponse, ApiError> {
