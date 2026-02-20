@@ -1,5 +1,4 @@
 use std::net::SocketAddr;
-use std::sync::Arc;
 
 use anyhow::{Context, Result};
 use tracing::info;
@@ -8,7 +7,7 @@ use tracing::info;
 pub(crate) async fn run() -> Result<()> {
     init_tracing();
 
-    let app_state = build_app_state().await?;
+    let app_state = crate::app_state_builder::build_app_state().await?;
     let app = crate::routes::build_router(app_state);
     let addr = bind_addr_from_env()?;
 
@@ -29,25 +28,6 @@ fn init_tracing() {
                 .unwrap_or_else(|_| "info,sqlx=warn,tower_http=info".to_string()),
         )
         .init();
-}
-
-/// Build application state by loading signal metadata and establishing DB pools.
-async fn build_app_state() -> Result<crate::AppState> {
-    let signal_keys =
-        Arc::new(crate::load_signal_keys().context("failed to load signal registry v0.2")?);
-    info!(
-        "locked KPI catalog loaded with {} metric definitions",
-        crate::kpi_specs::locked_kpi_catalog_len()
-    );
-
-    let (backend, sqlite_pool, pg_pool) = crate::db_bootstrap::initialize_database().await?;
-
-    Ok(crate::AppState {
-        sqlite_pool,
-        pg_pool,
-        backend,
-        signal_keys,
-    })
 }
 
 /// Parse the configured bind address from environment.
