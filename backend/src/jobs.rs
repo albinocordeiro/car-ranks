@@ -454,7 +454,7 @@ pub(crate) async fn insert_kpi_snapshot(
     snapshot_ts: &str,
 ) -> Result<()> {
     let Some((formula, required_signals, optional_signals)) =
-        crate::locked_kpi_spec_details(ranking_type, metric.key)
+        crate::kpi_specs::locked_kpi_spec_details(ranking_type, metric.key)
     else {
         return Err(anyhow::anyhow!(
             "kpi_key {} is not locked for ranking_type {}",

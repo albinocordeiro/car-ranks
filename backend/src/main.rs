@@ -23,6 +23,7 @@ use uuid::Uuid;
 mod errors;
 mod ingest;
 mod jobs;
+mod kpi_specs;
 mod kpis;
 mod metrics;
 mod migrations;
@@ -287,146 +288,6 @@ struct MetricCalc {
     pub(crate) confidence_level: &'static str,
 }
 
-#[derive(Debug)]
-struct LockedKpiSpec {
-    ranking_type: &'static str,
-    kpi_key: &'static str,
-    formula: &'static str,
-    required_signals: &'static [&'static str],
-    optional_signals: &'static [&'static str],
-}
-
-const LOCKED_KPI_SPECS: &[LockedKpiSpec] = &[
-    LockedKpiSpec {
-        ranking_type: "ev_range_efficiency",
-        kpi_key: "ev_net_energy_efficiency",
-        formula: "median(((delta_soc_pct/100) * DEFAULT_USABLE_BATTERY_KWH * 1000) / delta_km)",
-        required_signals: &["distance.odometer", "ev.soc_pct"],
-        optional_signals: &["power.battery_power_kw", "environment.ambient_temp_c"],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_range_efficiency",
-        kpi_key: "ev_estimated_practical_range",
-        formula: "latest_soc_pct * median(delta_km / delta_soc_pct)",
-        required_signals: &["distance.odometer", "ev.soc_pct"],
-        optional_signals: &["environment.ambient_temp_c"],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_range_efficiency",
-        kpi_key: "ev_urban_efficiency",
-        formula: "median(ev_net_energy_efficiency for segments where speed.vehicle < 45 km/h)",
-        required_signals: &["distance.odometer", "ev.soc_pct", "speed.vehicle"],
-        optional_signals: &[],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_range_efficiency",
-        kpi_key: "ev_highway_efficiency",
-        formula: "median(ev_net_energy_efficiency for segments where speed.vehicle >= 80 km/h)",
-        required_signals: &["distance.odometer", "ev.soc_pct", "speed.vehicle"],
-        optional_signals: &[],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_range_efficiency",
-        kpi_key: "regeneration_recovery_ratio",
-        formula: "100 * regen_energy_wh / (regen_energy_wh + traction_energy_wh) over integrated power windows",
-        required_signals: &["ev.regen_power_kw", "ev.traction_power_kw"],
-        optional_signals: &[],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_range_efficiency",
-        kpi_key: "soc_depletion_rate_per_100km",
-        formula: "100 / median(delta_km / delta_soc_pct)",
-        required_signals: &["distance.odometer", "ev.soc_pct"],
-        optional_signals: &[],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_range_efficiency",
-        kpi_key: "ev_range_efficiency_score",
-        formula: "0.65 * normalized_efficiency_component + 0.35 * normalized_estimated_range_component",
-        required_signals: &["distance.odometer", "ev.soc_pct"],
-        optional_signals: &["speed.vehicle", "environment.ambient_temp_c"],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_charging_performance",
-        kpi_key: "temp_adjusted_charge_acceptance_score",
-        formula: "clamp(100 * median(all_charge_kw) / median(mild_charge_kw), 0, 120)",
-        required_signals: &["ev.charging_state", "ev.charge_power_kw", "ev.soc_pct"],
-        optional_signals: &[
-            "ev.battery_temp_c",
-            "environment.ambient_temp_c",
-            "ev.charger_type",
-        ],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_charging_performance",
-        kpi_key: "cold_weather_charge_speed_retention",
-        formula: "100 * median(cold_charge_kw) / median(mild_charge_kw)",
-        required_signals: &["ev.charging_state", "ev.charge_power_kw", "ev.soc_pct"],
-        optional_signals: &[
-            "ev.battery_temp_c",
-            "environment.ambient_temp_c",
-            "ev.charger_type",
-        ],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_charging_performance",
-        kpi_key: "charging_performance_score",
-        formula: "0.6 * temp_adjusted_charge_acceptance_score + 0.4 * cold_weather_charge_speed_retention",
-        required_signals: &["ev.charging_state", "ev.charge_power_kw", "ev.soc_pct"],
-        optional_signals: &["ev.battery_temp_c", "environment.ambient_temp_c"],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_temperature_impact",
-        kpi_key: "cold_weather_range_retention",
-        formula: "100 * median(cold_km_per_soc) / median(mild_km_per_soc)",
-        required_signals: &[
-            "distance.odometer",
-            "ev.soc_pct",
-            "environment.ambient_temp_c",
-        ],
-        optional_signals: &["ev.battery_temp_c"],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_temperature_impact",
-        kpi_key: "range_temperature_sensitivity_index",
-        formula: "max(0, -slope(km_per_soc vs temp_c) * 10 / mild_km_per_soc * 100)",
-        required_signals: &[
-            "distance.odometer",
-            "ev.soc_pct",
-            "environment.ambient_temp_c",
-        ],
-        optional_signals: &["ev.battery_temp_c"],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_temperature_impact",
-        kpi_key: "cold_weather_charge_speed_retention",
-        formula: "100 * median(cold_charge_kw) / median(mild_charge_kw)",
-        required_signals: &["ev.charging_state", "ev.charge_power_kw", "ev.soc_pct"],
-        optional_signals: &["ev.battery_temp_c", "environment.ambient_temp_c"],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_composite",
-        kpi_key: "ev_composite_base_score",
-        formula: "0.6 * ev_range_efficiency_score + 0.4 * charging_performance_score",
-        required_signals: &[],
-        optional_signals: &[],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_composite",
-        kpi_key: "ev_health_modifier_penalty",
-        formula: "min(10, (MIL_ON ? 6 : 0) + min(4, 0.5 * distinct_active_dtc_count))",
-        required_signals: &["diag.mil_on", "diag.dtcs_active"],
-        optional_signals: &[],
-    },
-    LockedKpiSpec {
-        ranking_type: "ev_composite",
-        kpi_key: "ev_composite_score",
-        formula: "clamp(ev_composite_base_score - ev_health_modifier_penalty, 0, 100)",
-        required_signals: &[],
-        optional_signals: &[],
-    },
-];
-
 #[cfg(test)]
 const INGEST_SCHEMA_VERSION: &str = ingest::INGEST_SCHEMA_VERSION;
 #[cfg(test)]
@@ -435,24 +296,6 @@ const SQLITE_MIGRATION_0001: &str = migrations::SQLITE_MIGRATION_0001;
 const LEGACY_SQLITE_SCHEMA: &str = migrations::LEGACY_SQLITE_SCHEMA;
 #[cfg(test)]
 const POSTGRES_MIGRATION_0001: &str = migrations::POSTGRES_MIGRATION_0001;
-
-fn lookup_kpi_spec(ranking_type: &str, kpi_key: &str) -> Option<&'static LockedKpiSpec> {
-    LOCKED_KPI_SPECS
-        .iter()
-        .find(|spec| spec.ranking_type == ranking_type && spec.kpi_key == kpi_key)
-}
-
-pub(crate) fn locked_kpi_spec_details(
-    ranking_type: &str,
-    kpi_key: &str,
-) -> Option<(
-    &'static str,
-    &'static [&'static str],
-    &'static [&'static str],
-)> {
-    lookup_kpi_spec(ranking_type, kpi_key)
-        .map(|spec| (spec.formula, spec.required_signals, spec.optional_signals))
-}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -466,7 +309,7 @@ async fn main() -> Result<()> {
     let signal_keys = Arc::new(load_signal_keys().context("failed to load signal registry v0.2")?);
     info!(
         "locked KPI catalog loaded with {} metric definitions",
-        LOCKED_KPI_SPECS.len()
+        kpi_specs::locked_kpi_catalog_len()
     );
 
     let database_url =
@@ -878,7 +721,7 @@ mod tests {
 
     #[test]
     fn locked_kpi_catalog_contains_core_composite_metric() {
-        let spec = lookup_kpi_spec("ev_composite", "ev_composite_score");
+        let spec = kpi_specs::lookup_kpi_spec("ev_composite", "ev_composite_score");
         assert!(spec.is_some());
     }
 
