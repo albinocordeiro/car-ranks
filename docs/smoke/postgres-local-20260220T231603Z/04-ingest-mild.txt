@@ -1,0 +1,2 @@
+{"accepted":true,"batch_id":"a82db0fb-9c3f-41a7-81aa-2ecfa2716bb7","ingest_id":"cd3d2e48-53fe-4faa-9a7f-6f448907d4ca","duplicate":false,"records_received":15,"records_accepted":15,"records_rejected":0,"errors":[],"next_upload_after_seconds":60}
+__STATUS__:200

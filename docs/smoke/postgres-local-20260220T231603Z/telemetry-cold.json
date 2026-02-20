@@ -1,0 +1,167 @@
+{
+  "batch_id": "a979421d-d8c7-4e1d-b2c9-ce69f0f0771f",
+  "schema_version": "0.2",
+  "vehicle_uid": "e11889bf-504c-4238-9583-bc8840f20e19",
+  "source": "OBD",
+  "capture_window": {
+    "started_at": "2026-02-19T08:50:00Z",
+    "ended_at": "2026-02-19T10:40:00Z",
+    "sample_interval_seconds": 60
+  },
+  "records": [
+    {
+      "observed_at": "2026-02-19T09:00:00Z",
+      "signal_key": "distance.odometer",
+      "value_number": 12000.0,
+      "unit": "km",
+      "status": "ok",
+      "confidence": 0.99,
+      "source_signal": "odo"
+    },
+    {
+      "observed_at": "2026-02-19T09:00:00Z",
+      "signal_key": "ev.soc_pct",
+      "value_number": 82.0,
+      "unit": "%",
+      "status": "ok",
+      "confidence": 0.99,
+      "source_signal": "soc"
+    },
+    {
+      "observed_at": "2026-02-19T09:00:00Z",
+      "signal_key": "speed.vehicle",
+      "value_number": 56.0,
+      "unit": "km/h",
+      "status": "ok",
+      "confidence": 0.95,
+      "source_signal": "speed"
+    },
+    {
+      "observed_at": "2026-02-19T09:00:00Z",
+      "signal_key": "environment.ambient_temp_c",
+      "value_number": -6.0,
+      "unit": "C",
+      "status": "ok",
+      "confidence": 0.90,
+      "source_signal": "amb"
+    },
+    {
+      "observed_at": "2026-02-19T09:20:00Z",
+      "signal_key": "distance.odometer",
+      "value_number": 12028.0,
+      "unit": "km",
+      "status": "ok",
+      "confidence": 0.99,
+      "source_signal": "odo"
+    },
+    {
+      "observed_at": "2026-02-19T09:20:00Z",
+      "signal_key": "ev.soc_pct",
+      "value_number": 72.0,
+      "unit": "%",
+      "status": "ok",
+      "confidence": 0.99,
+      "source_signal": "soc"
+    },
+    {
+      "observed_at": "2026-02-19T09:20:00Z",
+      "signal_key": "speed.vehicle",
+      "value_number": 62.0,
+      "unit": "km/h",
+      "status": "ok",
+      "confidence": 0.95,
+      "source_signal": "speed"
+    },
+    {
+      "observed_at": "2026-02-19T09:20:00Z",
+      "signal_key": "environment.ambient_temp_c",
+      "value_number": -4.0,
+      "unit": "C",
+      "status": "ok",
+      "confidence": 0.90,
+      "source_signal": "amb"
+    },
+    {
+      "observed_at": "2026-02-19T10:00:05Z",
+      "signal_key": "ev.soc_pct",
+      "value_number": 28.0,
+      "unit": "%",
+      "status": "ok",
+      "confidence": 0.99,
+      "source_signal": "soc",
+      "session_id": "e9f0defa-6002-4338-b836-89bccd105e77"
+    },
+    {
+      "observed_at": "2026-02-19T10:00:10Z",
+      "signal_key": "ev.charge_power_kw",
+      "value_number": 42.0,
+      "unit": "kW",
+      "status": "ok",
+      "confidence": 0.99,
+      "source_signal": "chg_kw",
+      "session_id": "e9f0defa-6002-4338-b836-89bccd105e77"
+    },
+    {
+      "observed_at": "2026-02-19T10:00:15Z",
+      "signal_key": "environment.ambient_temp_c",
+      "value_number": -3.0,
+      "unit": "C",
+      "status": "ok",
+      "confidence": 0.85,
+      "source_signal": "amb",
+      "session_id": "e9f0defa-6002-4338-b836-89bccd105e77"
+    },
+    {
+      "observed_at": "2026-02-19T10:29:50Z",
+      "signal_key": "ev.soc_pct",
+      "value_number": 54.0,
+      "unit": "%",
+      "status": "ok",
+      "confidence": 0.99,
+      "source_signal": "soc",
+      "session_id": "e9f0defa-6002-4338-b836-89bccd105e77"
+    },
+    {
+      "observed_at": "2026-02-19T10:29:45Z",
+      "signal_key": "ev.charge_power_kw",
+      "value_number": 48.0,
+      "unit": "kW",
+      "status": "ok",
+      "confidence": 0.99,
+      "source_signal": "chg_kw",
+      "session_id": "e9f0defa-6002-4338-b836-89bccd105e77"
+    },
+    {
+      "observed_at": "2026-02-19T10:29:40Z",
+      "signal_key": "ev.battery_temp_c",
+      "value_number": 6.0,
+      "unit": "C",
+      "status": "ok",
+      "confidence": 0.90,
+      "source_signal": "bat_temp",
+      "session_id": "e9f0defa-6002-4338-b836-89bccd105e77"
+    },
+    {
+      "observed_at": "2026-02-19T10:00:20Z",
+      "signal_key": "ev.charger_type",
+      "value_string": "dc_fast",
+      "status": "ok",
+      "confidence": 1.0,
+      "source_signal": "charger_type",
+      "session_id": "e9f0defa-6002-4338-b836-89bccd105e77"
+    }
+  ],
+  "session_events": [
+    {
+      "event_type": "charging_session_start",
+      "observed_at": "2026-02-19T10:00:00Z",
+      "session_id": "e9f0defa-6002-4338-b836-89bccd105e77"
+    },
+    {
+      "event_type": "charging_session_stop",
+      "observed_at": "2026-02-19T10:30:00Z",
+      "session_id": "e9f0defa-6002-4338-b836-89bccd105e77"
+    }
+  ],
+  "diagnostics": []
+}
