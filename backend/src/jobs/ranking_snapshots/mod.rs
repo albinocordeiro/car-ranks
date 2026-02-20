@@ -2,6 +2,7 @@ use anyhow::Result;
 use sqlx::SqlitePool;
 
 mod non_temperature;
+mod persistence;
 mod temperature;
 
 /// Public entrypoint for temperature-impact ranking rebuilds.

@@ -2,7 +2,8 @@ use std::collections::HashMap;
 
 use anyhow::{Context, Result};
 use sqlx::{Row, SqlitePool};
-use uuid::Uuid;
+
+use super::persistence::insert_cohort_ranking_snapshot;
 
 /// Minimal seed row used while rebuilding temperature-impact rankings.
 /// Keeping this private to the temperature module avoids coupling other job
@@ -125,39 +126,21 @@ pub(super) async fn rebuild_temperature_rankings(pool: &SqlitePool) -> Result<us
 
             for (index, (seed, score)) in entries.into_iter().enumerate() {
                 for bin in ["all", "cold"] {
-                    sqlx::query(
-                        r#"
-                        INSERT INTO cohort_ranking_snapshot (
-                            ranking_snapshot_id,
-                            ranking_type,
-                            timeframe,
-                            temperature_bin,
-                            cohort_key,
-                            cohort_size,
-                            sample_gate_passed,
-                            vehicle_uid,
-                            rank_position,
-                            score,
-                            confidence_level,
-                            computed_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        "#,
+                    insert_cohort_ranking_snapshot(
+                        pool,
+                        "ev_temperature_impact",
+                        timeframe,
+                        bin,
+                        &cohort_key,
+                        cohort_size,
+                        sample_gate_passed,
+                        &seed.vehicle_uid,
+                        (index + 1) as i64,
+                        score,
+                        &seed.confidence_level,
+                        &ranking_snapshot_ts,
                     )
-                    .bind(Uuid::new_v4().to_string())
-                    .bind("ev_temperature_impact")
-                    .bind(timeframe)
-                    .bind(bin)
-                    .bind(&cohort_key)
-                    .bind(cohort_size)
-                    .bind(i64::from(sample_gate_passed))
-                    .bind(&seed.vehicle_uid)
-                    .bind((index + 1) as i64)
-                    .bind(score)
-                    .bind(&seed.confidence_level)
-                    .bind(&ranking_snapshot_ts)
-                    .execute(pool)
-                    .await
-                    .context("failed to insert cohort ranking snapshot")?;
+                    .await?;
 
                     upserted_rows += 1;
                 }

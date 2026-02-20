@@ -2,7 +2,8 @@ use std::collections::{BTreeMap, HashMap};
 
 use anyhow::{Context, Result};
 use sqlx::{Row, SqlitePool};
-use uuid::Uuid;
+
+use super::persistence::insert_cohort_ranking_snapshot;
 
 /// Rebuild non-temperature rankings using the latest per-vehicle KPI sets.
 pub(super) async fn rebuild_non_temperature_rankings(pool: &SqlitePool) -> Result<usize> {
@@ -101,37 +102,20 @@ pub(super) async fn rebuild_non_temperature_rankings(pool: &SqlitePool) -> Resul
                 for (index, (vehicle_uid, score, confidence_level, _kpis)) in
                     entries.into_iter().enumerate()
                 {
-                    sqlx::query(
-                        r#"
-                        INSERT INTO cohort_ranking_snapshot (
-                            ranking_snapshot_id,
-                            ranking_type,
-                            timeframe,
-                            temperature_bin,
-                            cohort_key,
-                            cohort_size,
-                            sample_gate_passed,
-                            vehicle_uid,
-                            rank_position,
-                            score,
-                            confidence_level,
-                            computed_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        "#,
+                    insert_cohort_ranking_snapshot(
+                        pool,
+                        ranking_type,
+                        timeframe,
+                        "all",
+                        &cohort_key,
+                        cohort_size,
+                        sample_gate_passed,
+                        &vehicle_uid,
+                        (index + 1) as i64,
+                        score,
+                        &confidence_level,
+                        &ranking_snapshot_ts,
                     )
-                    .bind(Uuid::new_v4().to_string())
-                    .bind(ranking_type)
-                    .bind(timeframe)
-                    .bind("all")
-                    .bind(&cohort_key)
-                    .bind(cohort_size)
-                    .bind(i64::from(sample_gate_passed))
-                    .bind(vehicle_uid)
-                    .bind((index + 1) as i64)
-                    .bind(score)
-                    .bind(confidence_level)
-                    .bind(&ranking_snapshot_ts)
-                    .execute(pool)
                     .await
                     .with_context(|| {
                         format!(
