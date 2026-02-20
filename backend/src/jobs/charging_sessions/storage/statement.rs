@@ -1,23 +1,15 @@
 use anyhow::Result;
 use sqlx::SqlitePool;
-use uuid::Uuid;
 
-use super::session_metrics::SessionMetrics;
+use super::SessionUpsert;
 
-/// Fully-validated payload for one `vehicle_charging_session` upsert.
-pub(super) struct SessionUpsert<'a> {
-    pub(super) vehicle_uid: &'a str,
-    pub(super) session_id: &'a str,
-    pub(super) started_at: &'a str,
-    pub(super) ended_at: Option<&'a str>,
-    pub(super) status: &'a str,
-    pub(super) metrics: &'a SessionMetrics,
-}
-
-/// Persists one charging-session aggregate row.
-pub(super) async fn upsert_charging_session(
+/// Executes the concrete SQL upsert for one charging-session aggregate.
+pub(super) async fn execute_session_upsert(
     pool: &SqlitePool,
     payload: SessionUpsert<'_>,
+    charging_session_id: &str,
+    created_at: &str,
+    updated_at: &str,
 ) -> Result<()> {
     sqlx::query(
         r#"
@@ -62,7 +54,7 @@ pub(super) async fn upsert_charging_session(
             updated_at = excluded.updated_at
         "#,
     )
-    .bind(Uuid::new_v4().to_string())
+    .bind(charging_session_id)
     .bind(payload.vehicle_uid)
     .bind(payload.session_id)
     .bind(payload.started_at)
@@ -80,8 +72,8 @@ pub(super) async fn upsert_charging_session(
     .bind(&payload.metrics.temperature_bin)
     .bind(0_i64)
     .bind(payload.metrics.sample_count)
-    .bind(crate::now_str())
-    .bind(crate::now_str())
+    .bind(created_at)
+    .bind(updated_at)
     .execute(pool)
     .await?;
 
