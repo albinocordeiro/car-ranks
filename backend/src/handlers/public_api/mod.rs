@@ -13,7 +13,9 @@ mod kpis;
 
 #[cfg(test)]
 pub(crate) use kpis::fetch_latest_vehicle_kpis_postgres;
-pub(crate) use kpis::{get_kpis_charging, get_kpis_me, get_kpis_temperature_impact};
+pub(crate) use kpis::{
+    get_kpis_charging, get_kpis_me, get_kpis_readiness, get_kpis_temperature_impact,
+};
 
 pub(crate) async fn health() -> Json<Value> {
     Json(json!({

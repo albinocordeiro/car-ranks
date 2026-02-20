@@ -8,12 +8,13 @@ This folder contains executable contract drafts for the EV-first MVP APIs.
 ## Files
 - `telemetry-batch-api.md`: `POST /v1/telemetry/batches` request/response contract.
 - `config-sampling-api.md`: `GET /v1/config/sampling` response contract for cadence/profile config.
-- `kpi-api.md`: `GET /v1/kpis/me`, `GET /v1/kpis/charging`, and `GET /v1/kpis/temperature-impact`.
+- `kpi-api.md`: `GET /v1/kpis/me`, `GET /v1/kpis/charging`, `GET /v1/kpis/readiness`, and `GET /v1/kpis/temperature-impact`.
 - `ranking-api.md`: `GET /v1/rankings` query and response contract.
 - `examples/*.json`: copy-ready payload examples.
   - `config-sampling-response.json`
   - `kpis-me-response.json`
   - `kpis-charging-response.json`
+  - `kpis-readiness-response.json`
   - `kpis-temperature-impact-response.json`
   - `rankings-response.json`
   - `telemetry-batch-request.json`

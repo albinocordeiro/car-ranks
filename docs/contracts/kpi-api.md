@@ -149,6 +149,54 @@ Returns charging KPI snapshot (`ranking_type=ev_charging_performance`).
 Notes:
 - `cold_weather_charge_speed_retention` is withheld unless both cold and mild charging-session gate thresholds are met.
 
+## `GET /v1/kpis/readiness`
+
+Returns per-family readiness status for one vehicle/timeframe.
+
+### Query Parameters
+## Required
+- `vehicle_uid`: UUID
+
+## Optional
+- `timeframe`: `30d`, `90d`, `180d`, `7d` (default `90d`)
+
+### Response (200)
+
+```json
+{
+  "vehicle_uid": "uuid",
+  "generated_at": "2026-02-20T11:00:00Z",
+  "timeframe": "90d",
+  "families": [
+    {
+      "ranking_type": "ev_range_efficiency",
+      "confidence_level": "preview",
+      "sample_count": 8,
+      "status": "preview",
+      "missing_requirements": []
+    },
+    {
+      "ranking_type": "ev_temperature_impact",
+      "confidence_level": "none",
+      "sample_count": 0,
+      "status": "not_ready",
+      "missing_requirements": [
+        "cold_distance_km<20.0",
+        "cold_charging_sessions<1",
+        "mild_charging_sessions<1",
+        "temperature_kpis_missing"
+      ]
+    }
+  ]
+}
+```
+
+Notes:
+- `families` includes `ev_range_efficiency`, `ev_charging_performance`, `ev_composite`, and `ev_temperature_impact`.
+- `status` enum: `not_ready`, `preview`, `ready`.
+- `confidence_level` is aggregated from latest KPI snapshots for each family (`none` when no snapshots exist).
+- Temperature readiness includes explicit gate failures for distance/charging thresholds and a `temperature_kpis_missing` marker when no temperature KPI snapshots exist.
+
 ## `GET /v1/kpis/temperature-impact`
 
 Returns cold-climate delta metrics (`ranking_type=ev_temperature_impact`).

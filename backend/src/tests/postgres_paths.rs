@@ -994,3 +994,88 @@ async fn postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set()
     ctx.cleanup().await?;
     result
 }
+
+#[tokio::test]
+async fn postgres_readiness_handler_returns_family_statuses_when_env_set() -> Result<()> {
+    let Some(ctx) = PostgresTestContext::maybe_new().await? else {
+        return Ok(());
+    };
+
+    let result = async {
+        let state = ctx.app_state().await?;
+        let now = Utc::now().to_rfc3339();
+        let auth_user_id = Uuid::new_v4();
+        let vehicle_uid = Uuid::new_v4();
+
+        insert_vehicle_owner_access(
+            &ctx.pool,
+            &vehicle_uid.to_string(),
+            auth_user_id,
+            &now,
+            "test_make",
+            "test_model",
+        )
+        .await?;
+
+        sqlx::query(
+            r#"
+            INSERT INTO vehicle_kpi_snapshot (
+              snapshot_id,
+              vehicle_uid,
+              ranking_type,
+              timeframe,
+              kpi_key,
+              kpi_value,
+              kpi_unit,
+              direction,
+              confidence_level,
+              sample_count,
+              temperature_bin,
+              computed_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            "#,
+        )
+        .bind(Uuid::new_v4().to_string())
+        .bind(vehicle_uid.to_string())
+        .bind("ev_range_efficiency")
+        .bind("90d")
+        .bind("ev_net_energy_efficiency")
+        .bind(182.0_f64)
+        .bind("wh_per_km")
+        .bind("lower_is_better")
+        .bind("preview")
+        .bind(8_i64)
+        .bind("all")
+        .bind(&now)
+        .execute(&ctx.pool)
+        .await
+        .context("failed to insert postgres readiness range KPI snapshot")?;
+
+        let Json(response) = crate::handlers::get_kpis_readiness(
+            State(state),
+            auth_context(auth_user_id),
+            Query(ReadinessQuery {
+                vehicle_uid,
+                timeframe: Some("90d".to_string()),
+            }),
+        )
+        .await
+        .map_err(|err| anyhow::anyhow!("postgres readiness handler failed: {}", err.message))?;
+
+        assert_eq!(response.families.len(), 4);
+        let range_family = response
+            .families
+            .iter()
+            .find(|family| family.ranking_type == "ev_range_efficiency")
+            .context("range readiness family missing in postgres response")?;
+        assert_eq!(range_family.confidence_level, "preview");
+        assert_eq!(range_family.status, "preview");
+        assert_eq!(range_family.sample_count, 8);
+
+        Ok(())
+    }
+    .await;
+
+    ctx.cleanup().await?;
+    result
+}

@@ -8,7 +8,8 @@ use sqlx::PgPool;
 use crate::KpiMetric;
 use crate::auth::AuthContext;
 use crate::{
-    ApiError, AppState, GenericKpiResponse, KpiQuery, KpiTempQuery, TemperatureImpactResponse,
+    ApiError, AppState, GenericKpiResponse, KpiQuery, KpiTempQuery, ReadinessQuery,
+    ReadinessResponse, TemperatureImpactResponse,
 };
 
 pub(crate) async fn get_kpis_me(
@@ -39,6 +40,15 @@ pub(crate) async fn get_kpis_temperature_impact(
     crate::auth::ensure_vehicle_access(&state, auth.user_id, params.vehicle_uid).await?;
     // Temperature KPI aggregation and cohort percentile logic are centralized in kpis.rs.
     crate::kpis::get_kpis_temperature_impact(State(state), Query(params)).await
+}
+
+pub(crate) async fn get_kpis_readiness(
+    State(state): State<AppState>,
+    auth: AuthContext,
+    Query(params): Query<ReadinessQuery>,
+) -> Result<Json<ReadinessResponse>, ApiError> {
+    crate::auth::ensure_vehicle_access(&state, auth.user_id, params.vehicle_uid).await?;
+    crate::kpis::get_kpis_readiness(State(state), Query(params)).await
 }
 
 #[cfg(test)]

@@ -17,6 +17,10 @@ pub(crate) fn build_router(app_state: crate::AppState) -> Router {
         .route("/v1/kpis/me", get(crate::handlers::get_kpis_me))
         .route("/v1/kpis/charging", get(crate::handlers::get_kpis_charging))
         .route(
+            "/v1/kpis/readiness",
+            get(crate::handlers::get_kpis_readiness),
+        )
+        .route(
             "/v1/kpis/temperature-impact",
             get(crate::handlers::get_kpis_temperature_impact),
         )

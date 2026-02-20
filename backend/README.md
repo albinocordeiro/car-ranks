@@ -6,6 +6,7 @@ Current API surface:
 - `POST /v1/telemetry/batches`
 - `GET /v1/kpis/me`
 - `GET /v1/kpis/charging`
+- `GET /v1/kpis/readiness`
 - `GET /v1/kpis/temperature-impact`
 - `GET /v1/rankings`
 - `POST /internal/jobs/recompute-kpis`
@@ -76,6 +77,7 @@ curl -X POST http://127.0.0.1:8080/internal/jobs/recompute-kpis
 ```bash
 curl "http://127.0.0.1:8080/v1/kpis/me?vehicle_uid=<vehicle_uuid>&timeframe=90d"
 curl "http://127.0.0.1:8080/v1/kpis/charging?vehicle_uid=<vehicle_uuid>&timeframe=90d&temperature_bin=all"
+curl "http://127.0.0.1:8080/v1/kpis/readiness?vehicle_uid=<vehicle_uuid>&timeframe=90d"
 curl "http://127.0.0.1:8080/v1/kpis/temperature-impact?vehicle_uid=<vehicle_uuid>&timeframe=90d&baseline_temperature_bin=mild&compare_temperature_bin=cold"
 ```
 
@@ -84,6 +86,7 @@ With auth header:
 ```bash
 curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/kpis/me?vehicle_uid=<vehicle_uuid>&timeframe=90d"
 curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/kpis/charging?vehicle_uid=<vehicle_uuid>&timeframe=90d&temperature_bin=all"
+curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/kpis/readiness?vehicle_uid=<vehicle_uuid>&timeframe=90d"
 curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/kpis/temperature-impact?vehicle_uid=<vehicle_uuid>&timeframe=90d&baseline_temperature_bin=mild&compare_temperature_bin=cold"
 ```
 
@@ -132,6 +135,7 @@ curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type
   - `/v1/telemetry/batches`
   - `/v1/kpis/me`
   - `/v1/kpis/charging`
+  - `/v1/kpis/readiness`
   - `/v1/kpis/temperature-impact`
   - `/v1/rankings`
   - `/internal/jobs/recompute-kpis`
