@@ -29,28 +29,16 @@ mod kpis;
 mod metrics;
 mod migrations;
 mod rankings;
+mod state;
 mod utils;
 
 use errors::{ApiError, postgres_rollout_not_enabled};
+pub(crate) use state::{AppState, DatabaseBackend};
 pub(crate) use utils::{
     cmp_f64_desc, derive_temperature_bin, normalize_charger_type, now_str, parse_ts,
     percentile_rank, read_positive_env, read_positive_env_f64, timeframe_cutoff,
     timestamp_in_capture_window, year_band,
 };
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum DatabaseBackend {
-    Sqlite,
-    Postgres,
-}
-
-#[derive(Clone)]
-struct AppState {
-    sqlite_pool: SqlitePool,
-    pg_pool: Option<PgPool>,
-    backend: DatabaseBackend,
-    signal_keys: Arc<HashSet<String>>,
-}
 
 #[derive(Debug, Deserialize)]
 struct TelemetryBatchRequest {
