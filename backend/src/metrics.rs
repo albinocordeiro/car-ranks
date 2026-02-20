@@ -114,7 +114,8 @@ pub(crate) fn temperature_sample_gates() -> TemperatureSampleGates {
         crate::read_positive_env("CAR_RANKS_TEMP_GATE_MIN_COLD_CHARGE_SESSIONS", 1);
     let min_mild_charge_sessions =
         crate::read_positive_env("CAR_RANKS_TEMP_GATE_MIN_MILD_CHARGE_SESSIONS", 1);
-    let min_sensitivity_points = crate::read_positive_env("CAR_RANKS_TEMP_GATE_MIN_SENSITIVITY_POINTS", 6);
+    let min_sensitivity_points =
+        crate::read_positive_env("CAR_RANKS_TEMP_GATE_MIN_SENSITIVITY_POINTS", 6);
 
     TemperatureSampleGates {
         min_cold_distance_km: crate::read_positive_env_f64(
@@ -275,7 +276,8 @@ pub(crate) async fn compute_range_efficiency_metrics(
         }
     }
 
-    let default_usable_battery_kwh = crate::read_positive_env_f64("DEFAULT_USABLE_BATTERY_KWH", 75.0);
+    let default_usable_battery_kwh =
+        crate::read_positive_env_f64("DEFAULT_USABLE_BATTERY_KWH", 75.0);
 
     let mut current_odo: Option<f64> = None;
     let mut current_soc: Option<f64> = None;
@@ -429,11 +431,17 @@ pub(crate) async fn compute_range_efficiency_metrics(
         let dt_hours = dt_seconds as f64 / 3600.0;
         let mut has_power_sample = false;
 
-        if let Some(regen_kw) = window[0].1.filter(|value| value.is_finite() && *value > 0.0) {
+        if let Some(regen_kw) = window[0]
+            .1
+            .filter(|value| value.is_finite() && *value > 0.0)
+        {
             regen_wh += regen_kw * dt_hours * 1000.0;
             has_power_sample = true;
         }
-        if let Some(traction_kw) = window[0].2.filter(|value| value.is_finite() && *value > 0.0) {
+        if let Some(traction_kw) = window[0]
+            .2
+            .filter(|value| value.is_finite() && *value > 0.0)
+        {
             traction_wh += traction_kw * dt_hours * 1000.0;
             has_power_sample = true;
         }

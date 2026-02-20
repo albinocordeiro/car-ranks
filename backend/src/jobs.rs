@@ -292,7 +292,8 @@ pub(crate) async fn recompute_temperature_kpis(pool: &SqlitePool) -> Result<(usi
 
         for timeframe in ["30d", "90d", "180d"] {
             let cutoff = crate::timeframe_cutoff(timeframe)?;
-            let metrics = crate::metrics::compute_vehicle_metrics(pool, &vehicle_uid, cutoff).await?;
+            let metrics =
+                crate::metrics::compute_vehicle_metrics(pool, &vehicle_uid, cutoff).await?;
             let snapshot_ts = crate::now_str();
 
             for metric in metrics {
@@ -373,13 +374,11 @@ pub(crate) async fn recompute_non_temperature_kpis(pool: &SqlitePool) -> Result<
         for timeframe in ["30d", "90d", "180d"] {
             let cutoff = crate::timeframe_cutoff(timeframe)?;
             let range_metrics =
-                crate::metrics::compute_range_efficiency_metrics(pool, &vehicle_uid, cutoff).await?;
-            let charging_metrics = crate::metrics::compute_charging_performance_metrics(
-                pool,
-                &vehicle_uid,
-                cutoff,
-            )
-            .await?;
+                crate::metrics::compute_range_efficiency_metrics(pool, &vehicle_uid, cutoff)
+                    .await?;
+            let charging_metrics =
+                crate::metrics::compute_charging_performance_metrics(pool, &vehicle_uid, cutoff)
+                    .await?;
             let composite_metrics = crate::metrics::compute_composite_metrics(
                 pool,
                 &vehicle_uid,
@@ -745,7 +744,8 @@ pub(crate) async fn rebuild_non_temperature_rankings(pool: &SqlitePool) -> Resul
                     kpis.iter().map(|k| (k.kpi_key.clone(), k.value)).collect();
 
                 let score = crate::metrics::score_from_kpi_map(ranking_type, &kpi_map);
-                let confidence_level = crate::metrics::confidence_from_kpi_metrics(&kpis).to_string();
+                let confidence_level =
+                    crate::metrics::confidence_from_kpi_metrics(&kpis).to_string();
                 let cohort_key = format!(
                     "bev|{}|{}|{}|{}",
                     make,
