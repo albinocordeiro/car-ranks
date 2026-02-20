@@ -4,6 +4,10 @@ use uuid::Uuid;
 
 use crate::MetricCalc;
 
+use self::locked_spec::validate_locked_kpi_snapshot;
+
+mod locked_spec;
+
 /// Validates and persists one locked KPI snapshot row.
 ///
 /// The KPI lock check guarantees ranking rebuilds only consume approved formulas.
@@ -18,29 +22,13 @@ pub(super) async fn insert_kpi_snapshot(
     compare_temperature_bin: Option<&str>,
     snapshot_ts: &str,
 ) -> Result<()> {
-    let Some((formula, required_signals, optional_signals)) =
-        crate::kpi_specs::locked_kpi_spec_details(ranking_type, metric.key)
-    else {
-        return Err(anyhow::anyhow!(
-            "kpi_key {} is not locked for ranking_type {}",
-            metric.key,
-            ranking_type
-        ));
-    };
-    if metric.sample_count < 0 {
-        return Err(anyhow::anyhow!(
-            "kpi_key {} has invalid negative sample_count {}",
-            metric.key,
-            metric.sample_count
-        ));
-    }
-
+    let spec = validate_locked_kpi_snapshot(ranking_type, metric)?;
     tracing::debug!(
         ranking_type,
         kpi_key = metric.key,
-        formula,
-        ?required_signals,
-        ?optional_signals,
+        formula = spec.formula,
+        ?spec.required_signals,
+        ?spec.optional_signals,
         "persisting locked KPI snapshot"
     );
 
