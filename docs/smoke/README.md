@@ -33,3 +33,10 @@ The script writes a new `postgres-local-<timestamp>` folder containing:
 - endpoint captures (`01-*.txt` through `14-*.txt`)
 - request payloads (`telemetry-cold.json`, `telemetry-mild.json`)
 - `run-meta.txt` and `summary.md`
+
+## CI Manual Run
+
+You can trigger the same smoke flow in GitHub Actions:
+- Workflow: `Postgres Smoke (Manual)`
+- Trigger: `workflow_dispatch` (optional input: `keep_backend_log`)
+- Artifact: `postgres-smoke-<run_number>` containing the generated run folder

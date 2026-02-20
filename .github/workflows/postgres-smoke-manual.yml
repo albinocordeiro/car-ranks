@@ -1,0 +1,99 @@
+name: Postgres Smoke (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      keep_backend_log:
+        description: "Include backend.log in the uploaded artifact"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: car_ranks_ci
+          POSTGRES_PASSWORD: car_ranks_ci
+          POSTGRES_DB: car_ranks_smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U car_ranks_ci -d car_ranks_smoke"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            backend -> backend/target
+
+      - name: Install smoke-runner dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Write staging env for CI smoke run
+        run: |
+          cat > "$RUNNER_TEMP/.env.staging" <<'EOF'
+          DATABASE_URL=postgres://car_ranks_ci:car_ranks_ci@127.0.0.1:5432/car_ranks_smoke
+          POSTGRES_TEST_DATABASE_URL=postgres://car_ranks_ci:car_ranks_ci@127.0.0.1:5432/car_ranks_smoke
+          BIND_ADDR=127.0.0.1:18080
+          RUST_LOG=info,sqlx=warn,tower_http=info
+          DEFAULT_USABLE_BATTERY_KWH=75
+          CAR_RANKS_TEMP_GATE_MIN_COLD_DISTANCE_KM=20
+          CAR_RANKS_TEMP_GATE_MIN_MILD_DISTANCE_KM=20
+          CAR_RANKS_TEMP_GATE_MIN_COLD_CHARGE_SESSIONS=1
+          CAR_RANKS_TEMP_GATE_MIN_MILD_CHARGE_SESSIONS=1
+          CAR_RANKS_TEMP_GATE_MIN_SENSITIVITY_POINTS=6
+          EOF
+
+      - name: Execute local Postgres smoke runner
+        id: smoke
+        env:
+          KEEP_BACKEND_LOG: ${{ inputs.keep_backend_log }}
+        run: |
+          set -euo pipefail
+
+          args=()
+          if [ "$KEEP_BACKEND_LOG" = "true" ]; then
+            args+=(--keep-backend-log)
+          fi
+
+          "$GITHUB_WORKSPACE/docs/smoke/scripts/run_local_postgres_smoke.sh" \
+            --env-file "$RUNNER_TEMP/.env.staging" \
+            --output-root "$RUNNER_TEMP/smoke-runs" \
+            "${args[@]}"
+
+          latest_dir="$(ls -1d "$RUNNER_TEMP"/smoke-runs/postgres-local-* | sort | tail -n 1)"
+          echo "latest_dir=$latest_dir" >> "$GITHUB_OUTPUT"
+
+      - name: Add smoke summary to job output
+        run: |
+          {
+            echo "## Postgres Smoke Baseline"
+            echo
+            echo "Artifact source:"
+            echo "- \`${{ steps.smoke.outputs.latest_dir }}\`"
+            echo
+            cat "${{ steps.smoke.outputs.latest_dir }}/summary.md"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload smoke artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-smoke-${{ github.run_number }}
+          path: ${{ steps.smoke.outputs.latest_dir }}
+          if-no-files-found: error
