@@ -17,6 +17,7 @@ mod range_efficiency_series;
 mod temperature_impact;
 mod temperature_impact_scoring;
 mod temperature_impact_series;
+mod temperature_regression;
 
 #[allow(unused_imports)]
 pub(crate) use core::TemperatureSampleGates;

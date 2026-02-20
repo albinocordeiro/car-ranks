@@ -4,7 +4,8 @@ use sqlx::sqlite::SqliteRow;
 
 use crate::MetricCalc;
 
-use super::temperature_impact_series::{TemperatureImpactDriveSeries, linear_regression_slope};
+use super::temperature_impact_series::TemperatureImpactDriveSeries;
+use super::temperature_regression::linear_regression_slope;
 
 /// Scores driving-derived temperature KPIs from a normalized series.
 ///
