@@ -20,6 +20,7 @@ mod range_efficiency_scoring;
 mod range_efficiency_series;
 mod range_efficiency_snapshots;
 mod temperature_charge_retention;
+mod temperature_drive_metrics;
 mod temperature_impact;
 mod temperature_impact_scoring;
 mod temperature_impact_series;
