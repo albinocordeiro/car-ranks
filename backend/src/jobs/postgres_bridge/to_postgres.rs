@@ -3,6 +3,11 @@ use sqlx::{PgPool, Row, SqlitePool};
 
 use crate::ApiError;
 
+/// Controls which SQLite outputs should overwrite Postgres tables.
+pub(super) struct OutputSyncOptions {
+    pub(super) sync_charging_sessions: bool,
+}
+
 macro_rules! get_col {
     ($row:expr, $ty:ty, $column:literal) => {
         $row.try_get::<$ty, _>($column).with_context(|| {
@@ -18,14 +23,17 @@ macro_rules! get_col {
 pub(super) async fn sync_job_outputs_to_postgres(
     sqlite_pool: &SqlitePool,
     pg_pool: &PgPool,
+    options: &OutputSyncOptions,
 ) -> Result<(), ApiError> {
     let mut pg_tx = pg_pool
         .begin()
         .await
         .context("failed to open postgres output sync transaction")?;
 
-    clear_postgres_output_tables(&mut pg_tx).await?;
-    export_charging_sessions(sqlite_pool, &mut pg_tx).await?;
+    clear_postgres_output_tables(&mut pg_tx, options).await?;
+    if options.sync_charging_sessions {
+        export_charging_sessions(sqlite_pool, &mut pg_tx).await?;
+    }
     export_kpi_snapshots(sqlite_pool, &mut pg_tx).await?;
     export_ranking_snapshots(sqlite_pool, &mut pg_tx).await?;
 
@@ -38,12 +46,17 @@ pub(super) async fn sync_job_outputs_to_postgres(
 
 async fn clear_postgres_output_tables(
     pg_tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    options: &OutputSyncOptions,
 ) -> Result<(), ApiError> {
-    for sql in [
+    let mut statements = vec![
         "DELETE FROM cohort_ranking_snapshot",
         "DELETE FROM vehicle_kpi_snapshot",
-        "DELETE FROM vehicle_charging_session",
-    ] {
+    ];
+    if options.sync_charging_sessions {
+        statements.push("DELETE FROM vehicle_charging_session");
+    }
+
+    for sql in statements {
         sqlx::query(sql)
             .execute(&mut **pg_tx)
             .await

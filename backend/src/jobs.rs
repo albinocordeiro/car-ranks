@@ -8,6 +8,7 @@ use crate::{ApiError, AppState, DatabaseBackend, JobResponse};
 mod charging_sessions;
 mod kpi_recompute;
 mod postgres_bridge;
+mod postgres_native;
 mod ranking_snapshots;
 
 pub(crate) async fn run_kpi_job(pool: &SqlitePool) -> Result<JobResponse, ApiError> {

@@ -1003,6 +1003,10 @@ async fn postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set()
         .await
         .context("failed to count postgres charging-session outputs")?;
         assert!(charging_count >= 1);
+        assert_eq!(
+            job_response.charging_sessions_upserted as i64,
+            charging_count
+        );
 
         Ok(())
     }

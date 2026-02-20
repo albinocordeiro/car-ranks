@@ -9,6 +9,7 @@ Completed backend milestones:
 - Priority 1 delivered: `GET /v1/kpis/readiness` now returns per-family readiness, confidence, and gate diagnostics.
 - Priority 2 partially delivered: internal job runs are now persisted in `internal_job_run`, and `GET /internal/jobs/latest` exposes latest run status.
 - Priority 4 partially delivered: internal job endpoints now enforce per-job-kind lease locks to reject overlapping runs.
+- Priority 3 started: Postgres charging-session rebuild now runs natively before bridge-based KPI/ranking stages.
 
 Current runtime status:
 - SQLite mode: full MVP API surface available.
@@ -18,7 +19,7 @@ Current runtime status:
 ## Risks and Gaps
 
 - Postgres KPI/ranking jobs are bridge-based and perform full-table syncs, which is acceptable for MVP but not scalable.
-- Postgres runtime still computes KPI/ranking jobs through a SQLite bridge rather than native Postgres stages.
+- Postgres runtime still computes KPI/ranking snapshot stages through a SQLite bridge rather than native Postgres stages.
 
 ## Next Product Development Plan
 
