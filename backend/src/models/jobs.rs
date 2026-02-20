@@ -32,4 +32,6 @@ pub(crate) struct JobRunStatusResponse {
     pub(crate) kpi_rows_upserted: Option<i64>,
     pub(crate) ranking_rows_upserted: Option<i64>,
     pub(crate) recomputed_vehicles: Option<i64>,
+    pub(crate) active_lock_owner_token: Option<String>,
+    pub(crate) active_lock_expires_at: Option<String>,
 }

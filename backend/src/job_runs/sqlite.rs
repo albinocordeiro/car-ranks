@@ -166,5 +166,7 @@ pub(super) async fn fetch_latest(
         recomputed_vehicles: row
             .try_get("recomputed_vehicles")
             .context("failed to parse sqlite recomputed_vehicles")?,
+        active_lock_owner_token: None,
+        active_lock_expires_at: None,
     }))
 }

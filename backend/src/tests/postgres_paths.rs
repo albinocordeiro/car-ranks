@@ -990,6 +990,8 @@ async fn postgres_internal_job_handler_bridges_inputs_and_outputs_when_env_set()
             status_response.response_job_id.as_deref(),
             Some(job_response.job_id.as_str())
         );
+        assert!(status_response.active_lock_owner_token.is_none());
+        assert!(status_response.active_lock_expires_at.is_none());
 
         let charging_count: i64 = sqlx::query_scalar(
             r#"

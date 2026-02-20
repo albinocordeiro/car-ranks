@@ -22,11 +22,16 @@ pub(crate) async fn get_latest_job_status(
 ) -> Result<Json<JobRunStatusResponse>, ApiError> {
     let job_kind = crate::job_runs::normalize_job_kind(params.job_kind)?;
     let latest = crate::job_runs::fetch_latest_job_run_status(&state, &job_kind).await?;
-    let Some(latest) = latest else {
+    let Some(mut latest) = latest else {
         return Err(ApiError::not_found(
             "no internal job run found for requested job_kind",
         ));
     };
+
+    if let Some(lock) = crate::job_locks::fetch_active_job_lock(&state, &job_kind).await? {
+        latest.active_lock_owner_token = Some(lock.owner_token);
+        latest.active_lock_expires_at = Some(lock.expires_at);
+    }
 
     Ok(Json(latest))
 }

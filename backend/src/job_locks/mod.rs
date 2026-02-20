@@ -7,6 +7,12 @@ mod sqlite;
 
 const JOB_LOCK_TTL_MINUTES: i64 = 10;
 
+/// Active lock metadata surfaced by job status APIs.
+pub(crate) struct ActiveJobLock {
+    pub(crate) owner_token: String,
+    pub(crate) expires_at: String,
+}
+
 /// Acquires a short-lived lease for one internal job kind.
 pub(crate) async fn acquire_job_lock(
     state: &AppState,
@@ -51,6 +57,26 @@ pub(crate) async fn acquire_job_lock(
         Err(ApiError::conflict(
             "internal job already running for requested job_kind",
         ))
+    }
+}
+
+/// Fetches active lock metadata for one job kind (if any).
+pub(crate) async fn fetch_active_job_lock(
+    state: &AppState,
+    job_kind: &str,
+) -> Result<Option<ActiveJobLock>, ApiError> {
+    let now_ts = Utc::now().to_rfc3339();
+    match state.backend {
+        DatabaseBackend::Sqlite => {
+            sqlite::fetch_active(&state.sqlite_pool, job_kind, &now_ts).await
+        }
+        DatabaseBackend::Postgres => {
+            let pg_pool = state
+                .pg_pool
+                .as_ref()
+                .ok_or_else(|| ApiError::internal("postgres pool is not configured"))?;
+            postgres::fetch_active(pg_pool, job_kind, &now_ts).await
+        }
     }
 }
 
