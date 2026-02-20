@@ -1,9 +1,7 @@
-use std::collections::BTreeMap;
-
 use anyhow::Result;
-use chrono::{DateTime, Utc};
-use sqlx::Row;
 use sqlx::sqlite::SqliteRow;
+
+use super::range_efficiency_snapshots::normalize_range_efficiency_snapshots;
 
 /// Intermediate series derived from raw observations before KPI scoring.
 pub(super) struct RangeEfficiencySeries {
@@ -20,33 +18,7 @@ pub(super) fn build_range_efficiency_series(
     obs_rows: Vec<SqliteRow>,
     default_usable_battery_kwh: f64,
 ) -> Result<RangeEfficiencySeries> {
-    #[derive(Default)]
-    struct Snapshot {
-        odo: Option<f64>,
-        soc: Option<f64>,
-        speed: Option<f64>,
-        regen_power_kw: Option<f64>,
-        traction_power_kw: Option<f64>,
-    }
-
-    let mut by_ts: BTreeMap<DateTime<Utc>, Snapshot> = BTreeMap::new();
-    for row in obs_rows {
-        let signal_key: String = row.try_get("signal_key")?;
-        let value: Option<f64> = row.try_get("value_number")?;
-        let observed_at: String = row.try_get("observed_at")?;
-        let Some(ts) = crate::parse_ts(&observed_at) else {
-            continue;
-        };
-        let entry = by_ts.entry(ts).or_default();
-        match (signal_key.as_str(), value) {
-            ("distance.odometer", Some(v)) => entry.odo = Some(v),
-            ("ev.soc_pct", Some(v)) => entry.soc = Some(v),
-            ("speed.vehicle", Some(v)) => entry.speed = Some(v),
-            ("ev.regen_power_kw", Some(v)) => entry.regen_power_kw = Some(v),
-            ("ev.traction_power_kw", Some(v)) => entry.traction_power_kw = Some(v),
-            _ => {}
-        }
-    }
+    let by_ts = normalize_range_efficiency_snapshots(obs_rows)?;
 
     let mut current_odo: Option<f64> = None;
     let mut current_soc: Option<f64> = None;
