@@ -4,6 +4,9 @@ use anyhow::Context;
 use axum::Json;
 use sqlx::Row;
 
+use super::temperature_impact_queries::{
+    fetch_cohort_kpi_values, fetch_temperature_kpi_rows, fetch_vehicle_make_model,
+};
 use crate::{
     ApiError, AppState, CohortBenchmark, DatabaseBackend, KpiMetric, KpiTempQuery,
     TemperatureImpactResponse, now_str, percentile_rank,
@@ -26,42 +29,17 @@ pub(super) async fn get_kpis_temperature_impact_inner(
     let compare_bin = params
         .compare_temperature_bin
         .unwrap_or_else(|| "cold".to_string());
-    let temperature_bin = "cold";
 
     let vehicle_uid = params.vehicle_uid.to_string();
 
-    let rows = sqlx::query(
-        r#"
-        SELECT kpi_key, kpi_value, kpi_unit, direction, confidence_level, sample_count
-        FROM vehicle_kpi_snapshot ks
-        WHERE vehicle_uid = ?
-          AND ranking_type = 'ev_temperature_impact'
-          AND timeframe = ?
-          AND temperature_bin = ?
-          AND baseline_temperature_bin = ?
-          AND compare_temperature_bin = ?
-          AND computed_at = (
-              SELECT MAX(ks2.computed_at)
-              FROM vehicle_kpi_snapshot ks2
-              WHERE ks2.vehicle_uid = ks.vehicle_uid
-                AND ks2.ranking_type = ks.ranking_type
-                AND ks2.timeframe = ks.timeframe
-                AND ks2.temperature_bin = ks.temperature_bin
-                AND ks2.baseline_temperature_bin = ks.baseline_temperature_bin
-                AND ks2.compare_temperature_bin = ks.compare_temperature_bin
-                AND ks2.kpi_key = ks.kpi_key
-          )
-        ORDER BY kpi_key ASC
-        "#,
+    let rows = fetch_temperature_kpi_rows(
+        &state.sqlite_pool,
+        &vehicle_uid,
+        &timeframe,
+        &baseline_bin,
+        &compare_bin,
     )
-    .bind(&vehicle_uid)
-    .bind(&timeframe)
-    .bind(temperature_bin)
-    .bind(&baseline_bin)
-    .bind(&compare_bin)
-    .fetch_all(&state.sqlite_pool)
-    .await
-    .context("failed to fetch KPI rows")?;
+    .await?;
 
     if rows.is_empty() {
         return Err(ApiError::not_found(
@@ -70,20 +48,7 @@ pub(super) async fn get_kpis_temperature_impact_inner(
     }
 
     // Use make/model to define the peer cohort for percentile comparisons.
-    let vehicle_row = sqlx::query("SELECT make, model FROM vehicle WHERE vehicle_uid = ?")
-        .bind(&vehicle_uid)
-        .fetch_one(&state.sqlite_pool)
-        .await
-        .context("failed to fetch vehicle metadata")?;
-
-    let make = vehicle_row
-        .try_get::<Option<String>, _>("make")
-        .context("failed to parse vehicle.make")?
-        .unwrap_or_else(|| "unknown".to_string());
-    let model = vehicle_row
-        .try_get::<Option<String>, _>("model")
-        .context("failed to parse vehicle.model")?
-        .unwrap_or_else(|| "unknown".to_string());
+    let (make, model) = fetch_vehicle_make_model(&state.sqlite_pool, &vehicle_uid).await?;
 
     let mut metrics = Vec::new();
     let mut percentiles = BTreeMap::new();
@@ -117,47 +82,16 @@ pub(super) async fn get_kpis_temperature_impact_inner(
             sample_count,
         });
 
-        let cohort_values = sqlx::query(
-            r#"
-            SELECT ks.kpi_value
-            FROM vehicle_kpi_snapshot ks
-            JOIN vehicle v ON v.vehicle_uid = ks.vehicle_uid
-            WHERE ks.kpi_key = ?
-              AND ks.ranking_type = 'ev_temperature_impact'
-              AND ks.timeframe = ?
-              AND ks.temperature_bin = ?
-              AND ks.baseline_temperature_bin = ?
-              AND ks.compare_temperature_bin = ?
-              AND ks.computed_at = (
-                  SELECT MAX(ks2.computed_at)
-                  FROM vehicle_kpi_snapshot ks2
-                  WHERE ks2.vehicle_uid = ks.vehicle_uid
-                    AND ks2.ranking_type = ks.ranking_type
-                    AND ks2.timeframe = ks.timeframe
-                    AND ks2.temperature_bin = ks.temperature_bin
-                    AND ks2.baseline_temperature_bin = ks.baseline_temperature_bin
-                    AND ks2.compare_temperature_bin = ks.compare_temperature_bin
-                    AND ks2.kpi_key = ks.kpi_key
-              )
-              AND COALESCE(v.make, 'unknown') = ?
-              AND COALESCE(v.model, 'unknown') = ?
-            "#,
+        let values = fetch_cohort_kpi_values(
+            &state.sqlite_pool,
+            &kpi_key,
+            &timeframe,
+            &baseline_bin,
+            &compare_bin,
+            &make,
+            &model,
         )
-        .bind(&kpi_key)
-        .bind(&timeframe)
-        .bind(temperature_bin)
-        .bind(&baseline_bin)
-        .bind(&compare_bin)
-        .bind(&make)
-        .bind(&model)
-        .fetch_all(&state.sqlite_pool)
-        .await
-        .context("failed to fetch cohort values for percentile")?;
-
-        let values: Vec<f64> = cohort_values
-            .into_iter()
-            .filter_map(|row| row.try_get::<Option<f64>, _>("kpi_value").ok().flatten())
-            .collect();
+        .await?;
 
         cohort_size = cohort_size.max(values.len());
         let percentile = percentile_rank(&values, value, direction == "higher_is_better");
