@@ -3,35 +3,14 @@ use sqlx::{Sqlite, Transaction};
 
 use crate::{ApiError, TelemetryBatchRequest};
 
-/// Ensures canonical vehicle/batch rows exist before observation writes.
-pub(in crate::ingest) async fn ensure_vehicle_and_batch_rows(
+/// Persists one ingest-batch envelope row for idempotency and provenance.
+pub(super) async fn insert_ingest_batch_row(
     tx: &mut Transaction<'_, Sqlite>,
     payload: &TelemetryBatchRequest,
     vehicle_uid: &str,
-    source_account_id: &str,
     source_upper: &str,
     now: &str,
 ) -> Result<(), ApiError> {
-    sqlx::query(
-        r#"
-        INSERT OR IGNORE INTO vehicle (
-            vehicle_uid,
-            source_account_id,
-            powertrain_class,
-            created_at,
-            updated_at
-        ) VALUES (?, ?, ?, ?, ?)
-        "#,
-    )
-    .bind(vehicle_uid)
-    .bind(source_account_id)
-    .bind("bev")
-    .bind(now)
-    .bind(now)
-    .execute(&mut **tx)
-    .await
-    .context("failed to ensure vehicle")?;
-
     sqlx::query(
         r#"
         INSERT INTO ingest_batch (
