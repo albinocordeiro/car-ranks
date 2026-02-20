@@ -13,7 +13,7 @@ Completed backend milestones:
 
 Current runtime status:
 - Postgres mode: full MVP API surface available and is the MVP runtime target.
-- SQLite mode remains available for dev/test and bridge-internal support only during the release window.
+- Runtime bootstrap now rejects SQLite `DATABASE_URL`; SQLite remains only for dev/test and bridge-internal support during the release window.
 - Internal KPI/ranking recompute in Postgres mode now uses a hybrid path (native charging pre-bridge -> SQLite bridge for range KPI + temperature -> native range/composite post-bridge stages).
 
 ## Risks and Gaps

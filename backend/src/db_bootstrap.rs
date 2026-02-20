@@ -1,8 +1,6 @@
-use std::str::FromStr;
-
 use anyhow::{Context, Result};
 use sqlx::postgres::PgPoolOptions;
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
+use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::{PgPool, SqlitePool};
 
 /// Initialize runtime database resources and decide the active backend.
@@ -11,19 +9,21 @@ use sqlx::{PgPool, SqlitePool};
 /// so startup orchestration can stay focused on app assembly/serving.
 pub(crate) async fn initialize_database()
 -> Result<(crate::DatabaseBackend, SqlitePool, Option<PgPool>)> {
-    let database_url =
-        std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://car_ranks.db".to_string());
-    let backend = determine_backend(&database_url);
+    let database_url = std::env::var("DATABASE_URL")
+        .context("DATABASE_URL is required and must point to Postgres")?;
+    let backend = determine_backend(&database_url)?;
     let (sqlite_pool, pg_pool) = initialize_pools(backend, &database_url).await?;
     Ok((backend, sqlite_pool, pg_pool))
 }
 
 /// Pick runtime backend based on the configured URL scheme.
-fn determine_backend(database_url: &str) -> crate::DatabaseBackend {
+fn determine_backend(database_url: &str) -> Result<crate::DatabaseBackend> {
     if database_url.starts_with("postgres://") || database_url.starts_with("postgresql://") {
-        crate::DatabaseBackend::Postgres
+        Ok(crate::DatabaseBackend::Postgres)
     } else {
-        crate::DatabaseBackend::Sqlite
+        Err(anyhow::anyhow!(
+            "DATABASE_URL must use a Postgres scheme (postgres:// or postgresql://)"
+        ))
     }
 }
 
@@ -33,20 +33,6 @@ async fn initialize_pools(
     database_url: &str,
 ) -> Result<(SqlitePool, Option<PgPool>)> {
     match backend {
-        crate::DatabaseBackend::Sqlite => {
-            let connect_options = SqliteConnectOptions::from_str(database_url)
-                .context("invalid sqlite DATABASE_URL")?
-                .create_if_missing(true)
-                .foreign_keys(true);
-
-            let sqlite_pool = SqlitePoolOptions::new()
-                .max_connections(10)
-                .connect_with(connect_options)
-                .await
-                .context("failed to connect sqlite")?;
-            crate::migrations::apply_schema(&sqlite_pool).await?;
-            Ok((sqlite_pool, None))
-        }
         crate::DatabaseBackend::Postgres => {
             let pg_pool = PgPoolOptions::new()
                 .max_connections(10)
@@ -55,7 +41,8 @@ async fn initialize_pools(
                 .context("failed to connect postgres")?;
             crate::migrations::apply_postgres_schema(&pg_pool).await?;
 
-            // Keep sqlite-only code paths available while postgres rollout is incremental.
+            // Keep an internal SQLite bridge pool until all remaining compute stages
+            // are fully native in Postgres. SQLite is not supported as a runtime backend.
             let sqlite_pool = SqlitePoolOptions::new()
                 .max_connections(1)
                 .connect("sqlite::memory:")
@@ -64,5 +51,8 @@ async fn initialize_pools(
             crate::migrations::apply_schema(&sqlite_pool).await?;
             Ok((sqlite_pool, Some(pg_pool)))
         }
+        crate::DatabaseBackend::Sqlite => Err(anyhow::anyhow!(
+            "SQLite runtime backend is no longer supported"
+        )),
     }
 }

@@ -20,7 +20,7 @@ Auth scope (MVP):
 ## Stack
 - Rust
 - `axum` HTTP server
-- `sqlx` with SQLite and Postgres
+- `sqlx` with Postgres (SQLite remains internal for bridge/dev support while migration completes)
 
 ## Run
 
@@ -31,7 +31,7 @@ cargo run
 
 Defaults:
 - `BIND_ADDR=127.0.0.1:8080`
-- `DATABASE_URL=sqlite://car_ranks.db`
+- `DATABASE_URL` must be set to a Postgres URL
 - `RUST_LOG=info,sqlx=warn,tower_http=info`
 - `DEFAULT_USABLE_BATTERY_KWH=75`
 - `CAR_RANKS_TEMP_GATE_MIN_COLD_DISTANCE_KM=20`
@@ -44,7 +44,7 @@ Optional overrides:
 
 ```bash
 export BIND_ADDR=127.0.0.1:8080
-export DATABASE_URL=sqlite:///tmp/car_ranks.db
+export DATABASE_URL=postgres://<user>:<pass>@<host>:5432/<db>
 export RUST_LOG=info,sqlx=warn,tower_http=info
 export DEFAULT_USABLE_BATTERY_KWH=75
 export CAR_RANKS_TEMP_GATE_MIN_COLD_DISTANCE_KM=20
@@ -129,8 +129,9 @@ curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type
 - In Postgres mode, charging-session/KPI/ranking recompute runs natively before bridge sync; range ranking + composite KPI/ranking recompute run natively after bridge sync; range KPI and temperature KPI/ranking recompute still use the SQLite bridge path.
 
 ## Migrations
-- Startup applies SQLite migrations from `/Users/albinocordeiro/Code/car_ranks/backend/migrations/sqlite/`.
-- Startup applies Postgres migrations from `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/` when `DATABASE_URL` is Postgres.
+- Startup requires `DATABASE_URL` with a Postgres scheme (`postgres://` or `postgresql://`).
+- Startup applies Postgres migrations from `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/`.
+- SQLite migrations remain for internal bridge/dev-test support only and are not a supported runtime backend.
 - Applied migration ids are tracked in `schema_migration` to prevent duplicate execution.
 - Postgres-ready bootstrap schema lives in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/postgres/0001_init.sql`.
 - Ownership/auth additive migrations live in `/Users/albinocordeiro/Code/car_ranks/backend/migrations/*/0002_auth_ownership.sql`.
