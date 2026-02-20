@@ -1,7 +1,9 @@
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Value;
 use uuid::Uuid;
+
+use super::{DiagnosticInput, SessionEventInput};
 
 /// Top-level telemetry upload envelope for `/v1/telemetry/batches`.
 #[derive(Debug, Deserialize)]
@@ -51,38 +53,4 @@ pub(crate) struct TelemetryRecord {
     pub(crate) is_temperature_estimated: Option<bool>,
     pub(crate) session_id: Option<Uuid>,
     pub(crate) raw_payload_ref: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub(crate) struct SessionEventInput {
-    pub(crate) event_type: String,
-    pub(crate) observed_at: DateTime<Utc>,
-    pub(crate) session_id: Uuid,
-}
-
-#[derive(Debug, Deserialize)]
-pub(crate) struct DiagnosticInput {
-    pub(crate) observed_at: DateTime<Utc>,
-    pub(crate) mil_on: Option<bool>,
-    pub(crate) dtcs_active: Option<Vec<String>>,
-}
-
-#[derive(Debug, Serialize)]
-pub(crate) struct IngestRecordError {
-    pub(crate) record_index: usize,
-    pub(crate) code: String,
-    pub(crate) message: String,
-}
-
-#[derive(Debug, Serialize)]
-pub(crate) struct IngestResponse {
-    pub(crate) accepted: bool,
-    pub(crate) batch_id: Uuid,
-    pub(crate) ingest_id: Uuid,
-    pub(crate) duplicate: bool,
-    pub(crate) records_received: usize,
-    pub(crate) records_accepted: usize,
-    pub(crate) records_rejected: usize,
-    pub(crate) errors: Vec<IngestRecordError>,
-    pub(crate) next_upload_after_seconds: i64,
 }
