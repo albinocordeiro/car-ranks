@@ -17,8 +17,13 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
     private var captureWindowStartedAt: Date?
     private var currentSampleIntervalSeconds = 5
     private var pendingRecords: [OBDSignalRecord] = []
+    private var pendingDiagnostics: [OBDDiagnosticSnapshot] = []
     private var pendingSessionEvents: [TelemetryBatchRequest.SessionEvent] = []
     private var activeSessionID: UUID?
+    private var lastDiagnosticPollAt: Date?
+    private var lastDiagnosticStateSignature: String?
+
+    private let diagnosticPollIntervalSeconds = 30.0
 
     init(
         commandExecutor: OBDCommandExecutor,
@@ -34,6 +39,8 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
         currentSampleIntervalSeconds = max(1, sampleIntervalSeconds)
         let startedAt = now()
         captureWindowStartedAt = startedAt
+        lastDiagnosticPollAt = nil
+        lastDiagnosticStateSignature = nil
         activeSessionID = UUID()
         if let activeSessionID {
             pendingSessionEvents.append(
@@ -80,7 +87,7 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
         adapterFingerprint: String?
     ) -> (request: TelemetryBatchRequest, windowEndedAt: Date)? {
         guard let captureWindowStartedAt,
-              !pendingRecords.isEmpty || !pendingSessionEvents.isEmpty
+              !pendingRecords.isEmpty || !pendingSessionEvents.isEmpty || !pendingDiagnostics.isEmpty
         else {
             return nil
         }
@@ -101,7 +108,7 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
             ),
             records: pendingRecords.map(TelemetryBatchRequest.SignalRecord.from),
             sessionEvents: pendingSessionEvents,
-            diagnostics: []
+            diagnostics: pendingDiagnostics.map(TelemetryBatchRequest.DiagnosticEvent.from)
         )
 
         return (batch, endedAt)
@@ -109,6 +116,7 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
 
     func clearPendingData(afterWindowEndedAt endedAt: Date) {
         pendingRecords.removeAll()
+        pendingDiagnostics.removeAll()
         pendingSessionEvents.removeAll()
         pendingRecordCount = 0
         captureWindowStartedAt = endedAt
@@ -136,6 +144,12 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
                 append(record: record)
             }
 
+            if shouldPollDiagnostics(at: observedAt),
+               let diagnosticSnapshot = await commandExecutor.pollDiagnostics(observedAt: observedAt)
+            {
+                appendDiagnostic(snapshot: diagnosticSnapshot)
+            }
+
             let sleepNanoseconds = UInt64(currentSampleIntervalSeconds) * 1_000_000_000
             try? await Task.sleep(nanoseconds: sleepNanoseconds)
         }
@@ -154,5 +168,24 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
         if record.status == .error {
             lastCaptureError = "Last adapter read failed for \(record.signalKey)."
         }
+    }
+
+    private func shouldPollDiagnostics(at observedAt: Date) -> Bool {
+        guard let lastDiagnosticPollAt else {
+            return true
+        }
+        return observedAt.timeIntervalSince(lastDiagnosticPollAt) >= diagnosticPollIntervalSeconds
+    }
+
+    private func appendDiagnostic(snapshot: OBDDiagnosticSnapshot) {
+        lastDiagnosticPollAt = snapshot.observedAt
+
+        // Keep only state changes so telemetry remains compact but still debuggable.
+        guard snapshot.stateSignature != lastDiagnosticStateSignature else {
+            return
+        }
+
+        lastDiagnosticStateSignature = snapshot.stateSignature
+        pendingDiagnostics.append(snapshot)
     }
 }

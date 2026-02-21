@@ -178,3 +178,13 @@ extension TelemetryBatchRequest.SignalRecord {
         )
     }
 }
+
+extension TelemetryBatchRequest.DiagnosticEvent {
+    static func from(snapshot: OBDDiagnosticSnapshot) -> Self {
+        Self(
+            observedAt: TelemetryTimestampFormatter.string(from: snapshot.observedAt),
+            milOn: snapshot.milOn,
+            dtcsActive: snapshot.dtcsActive
+        )
+    }
+}

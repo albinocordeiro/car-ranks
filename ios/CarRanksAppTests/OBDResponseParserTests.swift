@@ -24,4 +24,22 @@ final class OBDResponseParserTests: XCTestCase {
         let raw = "NO DATA\r>"
         XCTAssertNil(OBDResponseParser.decodeSpeedKmh(rawResponse: raw))
     }
+
+    func testDecodeReadinessStatus() {
+        let raw = "41 01 82 00 00 00\r>"
+        let status = OBDResponseParser.decodeReadinessStatus(rawResponse: raw)
+        XCTAssertEqual(status?.milOn, true)
+        XCTAssertEqual(status?.storedDTCCount, 2)
+    }
+
+    func testDecodeStoredDiagnosticTroubleCodes() {
+        let raw = "43 01 0A C1 23 00 00\r>"
+        let codes = OBDResponseParser.decodeStoredDiagnosticTroubleCodes(rawResponse: raw)
+        XCTAssertEqual(codes, ["P010A", "U0123"])
+    }
+
+    func testDecodeStoredDiagnosticTroubleCodesReturnsEmptyWhenMissingModeHeader() {
+        let raw = "NO DATA\r>"
+        XCTAssertTrue(OBDResponseParser.decodeStoredDiagnosticTroubleCodes(rawResponse: raw).isEmpty)
+    }
 }

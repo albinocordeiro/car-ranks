@@ -78,6 +78,35 @@ final class OBDCommandExecutor {
         }
     }
 
+    func pollDiagnostics(observedAt: Date = Date()) async -> OBDDiagnosticSnapshot? {
+        do {
+            let readinessResponse = try await transport.sendRawCommand("0101")
+            guard let readiness = OBDResponseParser.decodeReadinessStatus(rawResponse: readinessResponse) else {
+                return nil
+            }
+
+            // Mode 03 can fail on some ECUs/adapters even when Mode 01 succeeds, so keep it best-effort.
+            let dtcResponse = try? await transport.sendRawCommand("03")
+            let parsedCodes = dtcResponse.map { raw in
+                OBDResponseParser.decodeStoredDiagnosticTroubleCodes(rawResponse: raw)
+            } ?? []
+            let normalizedCodes: [String]
+            if readiness.storedDTCCount > 0 {
+                normalizedCodes = Array(parsedCodes.prefix(readiness.storedDTCCount))
+            } else {
+                normalizedCodes = []
+            }
+
+            return OBDDiagnosticSnapshot(
+                observedAt: observedAt,
+                milOn: readiness.milOn,
+                dtcsActive: normalizedCodes
+            )
+        } catch {
+            return nil
+        }
+    }
+
     private func probeAdapterIdentity() async throws -> OBDAdapterIdentity {
         let response = try await transport.sendRawCommand("ATI")
         return OBDAdapterIdentity.fromATIResponse(response)

@@ -148,6 +148,48 @@ final class OBDCommandExecutorTests: XCTestCase {
         XCTAssertEqual(record.status, .error)
         XCTAssertNil(record.valueNumber)
     }
+
+    func testPollDiagnosticsReturnsMilAndStoredCodes() async {
+        let transport = FakeOBDTransport(
+            responses: [
+                "0101": "41 01 82 00 00 00",
+                "03": "43 01 0A C1 23 00 00",
+            ]
+        )
+        let executor = OBDCommandExecutor(transport: transport)
+
+        let snapshot = await executor.pollDiagnostics(observedAt: .distantPast)
+
+        XCTAssertEqual(snapshot?.milOn, true)
+        XCTAssertEqual(snapshot?.dtcsActive, ["P010A", "U0123"])
+    }
+
+    func testPollDiagnosticsReturnsMilOnlyWhenDtcQueryFails() async {
+        let transport = FakeOBDTransport(
+            responses: [
+                "0101": "41 01 80 00 00 00",
+            ],
+            failingCommands: ["03"]
+        )
+        let executor = OBDCommandExecutor(transport: transport)
+
+        let snapshot = await executor.pollDiagnostics(observedAt: .distantPast)
+
+        XCTAssertEqual(snapshot?.milOn, true)
+        XCTAssertEqual(snapshot?.dtcsActive, [])
+    }
+
+    func testPollDiagnosticsReturnsNilWhenReadinessCannotBeDecoded() async {
+        let transport = FakeOBDTransport(
+            responses: [
+                "0101": "NO DATA",
+            ]
+        )
+        let executor = OBDCommandExecutor(transport: transport)
+
+        let snapshot = await executor.pollDiagnostics(observedAt: .distantPast)
+        XCTAssertNil(snapshot)
+    }
 }
 
 @MainActor

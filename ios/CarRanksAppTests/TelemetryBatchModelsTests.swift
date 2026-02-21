@@ -62,4 +62,18 @@ final class TelemetryBatchModelsTests: XCTestCase {
         XCTAssertNotNil(payload["capture_window"])
         XCTAssertNotNil(payload["records"])
     }
+
+    func testDiagnosticEventMapsFromDiagnosticSnapshot() {
+        let snapshot = OBDDiagnosticSnapshot(
+            observedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            milOn: true,
+            dtcsActive: ["p010a", "U0123", "U0123"]
+        )
+
+        let mapped = TelemetryBatchRequest.DiagnosticEvent.from(snapshot: snapshot)
+
+        XCTAssertEqual(mapped.milOn, true)
+        XCTAssertEqual(mapped.dtcsActive, ["P010A", "U0123"])
+        XCTAssertFalse(mapped.observedAt.isEmpty)
+    }
 }
