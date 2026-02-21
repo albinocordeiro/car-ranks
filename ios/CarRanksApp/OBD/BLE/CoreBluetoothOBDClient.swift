@@ -23,6 +23,7 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
     private var reconnectAttemptCount = 0
     private var reconnectTask: Task<Void, Never>?
     private var userInitiatedDisconnect = false
+    private var pendingScanWhenPoweredOn = false
 
     override init() {
         commandTimeoutNanoseconds = 5_000_000_000
@@ -43,9 +44,17 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
 
     func startScanning() {
         guard centralManager.state == .poweredOn else {
-            connectionState = .error("Bluetooth is unavailable.")
+            pendingScanWhenPoweredOn = true
+            connectionState = .error(
+                OBDBluetoothStateMessage.forState(centralManager.state) ?? "Bluetooth is unavailable."
+            )
             return
         }
+        pendingScanWhenPoweredOn = false
+        performScan()
+    }
+
+    private func performScan() {
 
         // A new scan indicates a fresh user intent, so any pending reconnect loop is canceled.
         cancelReconnectTask()
@@ -63,6 +72,7 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
     }
 
     func stopScanning() {
+        pendingScanWhenPoweredOn = false
         centralManager.stopScan()
         if case .scanning = connectionState {
             connectionState = .disconnected
@@ -254,10 +264,34 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
 extension CoreBluetoothOBDClient: CBCentralManagerDelegate {
     nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
         Task { @MainActor in
-            if central.state != .poweredOn {
+            if let message = OBDBluetoothStateMessage.forState(central.state) {
+                let hadActiveBluetoothFlow = pendingScanWhenPoweredOn || connectedPeripheral != nil || {
+                    switch connectionState {
+                    case .scanning, .connecting, .reconnecting, .connected, .error:
+                        return true
+                    case .disconnected:
+                        return false
+                    }
+                }()
+
                 cancelReconnectTask()
-                connectionState = .error("Bluetooth is not powered on.")
-                stopScanning()
+                centralManager.stopScan()
+                if hadActiveBluetoothFlow {
+                    connectionState = .error(message)
+                } else {
+                    connectionState = .disconnected
+                }
+                return
+            }
+
+            if pendingScanWhenPoweredOn {
+                pendingScanWhenPoweredOn = false
+                performScan()
+                return
+            }
+
+            if case .error = connectionState {
+                connectionState = .disconnected
             }
         }
     }

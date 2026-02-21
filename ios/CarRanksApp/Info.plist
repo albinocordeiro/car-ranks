@@ -33,5 +33,9 @@
   <string>$(DEFAULT_X_USER_ID)</string>
   <key>DEFAULT_VEHICLE_UID</key>
   <string>$(DEFAULT_VEHICLE_UID)</string>
+  <key>NSBluetoothAlwaysUsageDescription</key>
+  <string>Car Ranks needs Bluetooth access to discover and connect to your OBD-II adapter.</string>
+  <key>NSBluetoothPeripheralUsageDescription</key>
+  <string>Car Ranks uses Bluetooth to read telemetry from your OBD-II adapter.</string>
 </dict>
 </plist>
