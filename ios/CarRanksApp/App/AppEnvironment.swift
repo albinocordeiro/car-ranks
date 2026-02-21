@@ -10,6 +10,9 @@ final class AppEnvironment: ObservableObject {
     private let baseURL: URL
     private let captureScenario: CaptureScenario
     private lazy var obdBLEClientInstance = CoreBluetoothOBDClient()
+    private lazy var telemetryUploadQueueInstance: TelemetryUploadQueueCoordinator = {
+        TelemetryUploadQueueCoordinator(uploader: makeTelemetryIngestClient())
+    }()
 
     init(
         sessionStore: SessionContextStore = SessionContextStore(),
@@ -77,6 +80,10 @@ final class AppEnvironment: ObservableObject {
 
     var obdBLEClient: CoreBluetoothOBDClient {
         obdBLEClientInstance
+    }
+
+    var telemetryUploadQueue: TelemetryUploadQueueCoordinator {
+        telemetryUploadQueueInstance
     }
 
     var activeCaptureScenario: CaptureScenario {

@@ -13,7 +13,7 @@ struct OBDCaptureScreen: View {
             wrappedValue: OBDCaptureViewModel(
                 bleClient: bleClient,
                 captureCoordinator: captureCoordinator,
-                telemetryIngestClient: environment.makeTelemetryIngestClient(),
+                uploadQueueCoordinator: environment.telemetryUploadQueue,
                 sessionProvider: { environment.sessionContext },
                 appVersionProvider: {
                     Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
@@ -158,6 +158,17 @@ struct OBDCaptureView: View {
             }
             .buttonStyle(.borderedProminent)
             .accessibilityIdentifier("obd-upload-button")
+
+            Button("Retry Queued Uploads") {
+                viewModel.retryQueuedUploads()
+            }
+            .buttonStyle(.bordered)
+            .accessibilityIdentifier("obd-retry-queued-button")
+
+            Text("Queued batches: \(viewModel.queuedBatchCount)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("obd-queued-batch-count")
 
             switch viewModel.uploadState {
             case .idle:

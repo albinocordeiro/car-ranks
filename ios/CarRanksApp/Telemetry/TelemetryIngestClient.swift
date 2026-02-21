@@ -2,7 +2,7 @@ import Foundation
 
 /// Dedicated client for telemetry ingestion so KPI APIs remain isolated and reviewer-friendly.
 @MainActor
-final class TelemetryIngestClient {
+final class TelemetryIngestClient: TelemetryBatchUploader {
     private let baseURL: URL
     private let sessionProvider: () -> SessionContext
     private let networkSession: NetworkSession

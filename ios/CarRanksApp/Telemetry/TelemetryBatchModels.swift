@@ -1,6 +1,6 @@
 import Foundation
 
-struct TelemetryBatchRequest: Encodable, Equatable {
+struct TelemetryBatchRequest: Codable, Equatable {
     let batchID: UUID
     let schemaVersion: String
     let vehicleUID: UUID
@@ -33,7 +33,7 @@ struct TelemetryBatchRequest: Encodable, Equatable {
         self.diagnostics = diagnostics
     }
 
-    struct Client: Encodable, Equatable {
+    struct Client: Codable, Equatable {
         let platform: String
         let appVersion: String
         let adapterFingerprint: String
@@ -51,7 +51,7 @@ struct TelemetryBatchRequest: Encodable, Equatable {
         }
     }
 
-    struct CaptureWindow: Encodable, Equatable {
+    struct CaptureWindow: Codable, Equatable {
         let startedAt: String
         let endedAt: String
         let sampleIntervalSeconds: Int
@@ -63,7 +63,7 @@ struct TelemetryBatchRequest: Encodable, Equatable {
         }
     }
 
-    struct SignalRecord: Encodable, Equatable {
+    struct SignalRecord: Codable, Equatable {
         let observedAt: String
         let signalKey: String
         let valueNumber: Double?
@@ -89,7 +89,7 @@ struct TelemetryBatchRequest: Encodable, Equatable {
         }
     }
 
-    struct SessionEvent: Encodable, Equatable {
+    struct SessionEvent: Codable, Equatable {
         let eventType: String
         let observedAt: String
         let sessionID: UUID
@@ -101,7 +101,7 @@ struct TelemetryBatchRequest: Encodable, Equatable {
         }
     }
 
-    struct DiagnosticEvent: Encodable, Equatable {
+    struct DiagnosticEvent: Codable, Equatable {
         let observedAt: String
         let milOn: Bool
         let dtcsActive: [String]

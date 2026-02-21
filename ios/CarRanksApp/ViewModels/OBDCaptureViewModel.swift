@@ -18,12 +18,13 @@ final class OBDCaptureViewModel: ObservableObject {
     @Published private(set) var statusMessage = "Connect an adapter to start capture."
     @Published private(set) var adapterIdentitySummary = "Unknown"
     @Published private(set) var initializationProfileSummary = "Not initialized"
+    @Published private(set) var queuedBatchCount = 0
     @Published private(set) var uploadState: UploadState = .idle
     @Published var sampleIntervalSecondsText = "5"
 
     private let bleClient: CoreBluetoothOBDClient
     private let captureCoordinator: OBDTelemetryCaptureCoordinator
-    private let telemetryIngestClient: TelemetryIngestClient
+    private let uploadQueueCoordinator: TelemetryUploadQueueCoordinator
     private let sessionProvider: () -> SessionContext
     private let appVersionProvider: () -> String
     private var shouldResumeCaptureAfterReconnect = false
@@ -32,13 +33,13 @@ final class OBDCaptureViewModel: ObservableObject {
     init(
         bleClient: CoreBluetoothOBDClient,
         captureCoordinator: OBDTelemetryCaptureCoordinator,
-        telemetryIngestClient: TelemetryIngestClient,
+        uploadQueueCoordinator: TelemetryUploadQueueCoordinator,
         sessionProvider: @escaping () -> SessionContext,
         appVersionProvider: @escaping () -> String
     ) {
         self.bleClient = bleClient
         self.captureCoordinator = captureCoordinator
-        self.telemetryIngestClient = telemetryIngestClient
+        self.uploadQueueCoordinator = uploadQueueCoordinator
         self.sessionProvider = sessionProvider
         self.appVersionProvider = appVersionProvider
         bind()
@@ -105,29 +106,18 @@ final class OBDCaptureViewModel: ObservableObject {
             return
         }
 
-        uploadState = .uploading
-        statusMessage = "Uploading telemetry batch..."
+        uploadQueueCoordinator.enqueue(
+            batch: batchBundle.request,
+            captureWindowEndedAt: batchBundle.windowEndedAt
+        )
+        captureCoordinator.clearPendingData(afterWindowEndedAt: batchBundle.windowEndedAt)
+        uploadState = .success("Queued telemetry batch for upload.")
+        statusMessage = "Queued telemetry batch. Upload will retry automatically."
+    }
 
-        Task {
-            do {
-                let response = try await telemetryIngestClient.upload(batch: batchBundle.request)
-                captureCoordinator.clearPendingData(afterWindowEndedAt: batchBundle.windowEndedAt)
-
-                let summary = "Accepted \(response.recordsAccepted)/\(response.recordsReceived) records."
-                uploadState = .success(summary)
-                if response.duplicate {
-                    statusMessage = "\(summary) Server marked batch as duplicate."
-                } else {
-                    statusMessage = summary
-                }
-            } catch let backendError as BackendError {
-                uploadState = .error(backendError.displayMessage)
-                statusMessage = backendError.displayMessage
-            } catch {
-                uploadState = .error(error.localizedDescription)
-                statusMessage = error.localizedDescription
-            }
-        }
+    func retryQueuedUploads() {
+        uploadQueueCoordinator.triggerUpload()
+        statusMessage = "Retrying queued uploads..."
     }
 
     private var parsedSampleInterval: Int {
@@ -219,6 +209,36 @@ final class OBDCaptureViewModel: ObservableObject {
         captureCoordinator.$initializationProfileSummary
             .sink { [weak self] summary in
                 self?.initializationProfileSummary = summary ?? "Not initialized"
+            }
+            .store(in: &cancellables)
+
+        uploadQueueCoordinator.$pendingBatchCount
+            .sink { [weak self] count in
+                self?.queuedBatchCount = count
+            }
+            .store(in: &cancellables)
+
+        uploadQueueCoordinator.$isUploading
+            .sink { [weak self] isUploading in
+                guard let self else { return }
+                if isUploading {
+                    uploadState = .uploading
+                } else if case .uploading = uploadState {
+                    uploadState = .idle
+                }
+            }
+            .store(in: &cancellables)
+
+        uploadQueueCoordinator.$lastUploadMessage
+            .compactMap { $0 }
+            .sink { [weak self] message in
+                guard let self else { return }
+                statusMessage = message
+                if message.hasPrefix("Dropped queued telemetry batch") {
+                    uploadState = .error(message)
+                } else if message.hasPrefix("Uploaded queued telemetry batch") {
+                    uploadState = .success(message)
+                }
             }
             .store(in: &cancellables)
     }
