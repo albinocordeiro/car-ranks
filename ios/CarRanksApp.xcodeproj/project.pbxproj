@@ -8,14 +8,17 @@
 
 /* Begin PBXBuildFile section */
 		01F70614D3FD347D909061B6 /* kpis-charging-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = E46117508BCE4515CBF7E1E8 /* kpis-charging-empty.json */; };
+		04CAE8C00C6696887181AA70 /* LiveCaptureOverrideMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD1BABBCCD402BB9E098447C /* LiveCaptureOverrideMode.swift */; };
 		085B23810C86B535D728059D /* rankings-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = 7DE2ADAB0AB96812EDC0D1F0 /* rankings-empty.json */; };
 		1126DD89554BD0205578910A /* KpiReadinessViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 238666A2301CE1D16F642581 /* KpiReadinessViewModel.swift */; };
 		13B19FF773CB96FA0A2C771C /* DevSessionPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F18C7F890AFAE6A06A73775 /* DevSessionPanelView.swift */; };
 		17D39BB206D8519319D3B702 /* RankingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5AE8B5DFED756592D49232A /* RankingsViewModel.swift */; };
+		1D46E9FFB5F079FAF279B317 /* LiveCaptureOverrideBackendClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A3AF7011EABDFBC5EB4BE98 /* LiveCaptureOverrideBackendClient.swift */; };
 		1D75C7FAD9F10F47B9593158 /* KpiMeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C2B3E60CABEE8B28A2F24DB /* KpiMeView.swift */; };
 		1FF4BF9A9A3D07AF650B1D48 /* kpis-me-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = 4E26D30A74AA5C5A39391902 /* kpis-me-empty.json */; };
 		20FDA0B5A9BD54EE8F86DED7 /* LiveBackendClientHeaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D172718EFFD6FC9F1EC9C25 /* LiveBackendClientHeaderTests.swift */; };
 		216AD3269352834B2E7BAA20 /* kpis-readiness-response.json in Resources */ = {isa = PBXBuildFile; fileRef = 90D8CFDB080CA3200A5A4E9A /* kpis-readiness-response.json */; };
+		2D51CE553DD9A1ED521998B6 /* LiveCaptureOverrideBackendClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6906F8F9716EFF318D853430 /* LiveCaptureOverrideBackendClientTests.swift */; };
 		31AFCDA6EC3CCED5C57EB3E3 /* rankings-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = 7DE2ADAB0AB96812EDC0D1F0 /* rankings-empty.json */; };
 		3944E05CC49643133BE1B873 /* rankings-response.json in Resources */ = {isa = PBXBuildFile; fileRef = 45F3EAE3AAE1A8B6B71DA01E /* rankings-response.json */; };
 		422DC230B34C2A836EA66EDD /* KpiTemperatureImpactViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09279CB05824C08332794C1C /* KpiTemperatureImpactViewModel.swift */; };
@@ -37,6 +40,7 @@
 		8200D87318CA7D3D3C4DBCE7 /* SessionContextStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFB3CCD750FDE595C80D4CD9 /* SessionContextStoreTests.swift */; };
 		8B2A1EDC5608AD8C9317EB27 /* kpis-me-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = 4E26D30A74AA5C5A39391902 /* kpis-me-empty.json */; };
 		94478229F7C95C4ED96412F6 /* rankings-response.json in Resources */ = {isa = PBXBuildFile; fileRef = 45F3EAE3AAE1A8B6B71DA01E /* rankings-response.json */; };
+		975B2E89B6CEE4E9471B6026 /* AppEnvironmentConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DFF22A4C2B1B24CBFE7BAC /* AppEnvironmentConfigTests.swift */; };
 		97B0C0C99C79193B6E994109 /* FixtureLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 530F8B26D96393327BE4F19D /* FixtureLoader.swift */; };
 		A03AAD1EFD0419F36FB348B4 /* BackendError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B6E8B51E1A6A33922E4C78F /* BackendError.swift */; };
 		A075006C538EA8C386A348FA /* MockBackendClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA57DB51C3768BB64B85A51 /* MockBackendClient.swift */; };
@@ -92,6 +96,7 @@
 		29EC8C44F43987FEE3978FC8 /* kpis-me-response.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-me-response.json"; sourceTree = "<group>"; };
 		2C2B3E60CABEE8B28A2F24DB /* KpiMeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiMeView.swift; sourceTree = "<group>"; };
 		30AAA2E3D52205F9C268C7C4 /* KpiReadinessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiReadinessView.swift; sourceTree = "<group>"; };
+		3A3AF7011EABDFBC5EB4BE98 /* LiveCaptureOverrideBackendClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveCaptureOverrideBackendClient.swift; sourceTree = "<group>"; };
 		41143BF9856329BC2C7C0374 /* SessionContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionContext.swift; sourceTree = "<group>"; };
 		41C017F1F2CE0EC6F57389DF /* KpiChargingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiChargingView.swift; sourceTree = "<group>"; };
 		433DF34CA9F2C17E51A85AAA /* CarRanksApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarRanksApp.swift; sourceTree = "<group>"; };
@@ -101,6 +106,7 @@
 		5988E2DD73BB50E3A4A2491E /* KpiTemperatureImpactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiTemperatureImpactView.swift; sourceTree = "<group>"; };
 		5C0EAEB57B489A67699227CF /* CarRanksApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CarRanksApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F18C7F890AFAE6A06A73775 /* DevSessionPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionPanelView.swift; sourceTree = "<group>"; };
+		6906F8F9716EFF318D853430 /* LiveCaptureOverrideBackendClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveCaptureOverrideBackendClientTests.swift; sourceTree = "<group>"; };
 		6EA116FE25276016DE951160 /* BackendClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendClient.swift; sourceTree = "<group>"; };
 		7DE2ADAB0AB96812EDC0D1F0 /* rankings-empty.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "rankings-empty.json"; sourceTree = "<group>"; };
 		84C4FD6B23CCB200CBF286EA /* RankingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingsView.swift; sourceTree = "<group>"; };
@@ -116,6 +122,7 @@
 		B7C80C90D92A726A32B1A65A /* KpiMeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiMeViewModel.swift; sourceTree = "<group>"; };
 		BAB384DA4A3358FC01ABA4DE /* kpis-temperature-impact-empty.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-temperature-impact-empty.json"; sourceTree = "<group>"; };
 		BE79D0DB8B8AC37C7932F026 /* TestFixtureLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestFixtureLoader.swift; sourceTree = "<group>"; };
+		CD1BABBCCD402BB9E098447C /* LiveCaptureOverrideMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveCaptureOverrideMode.swift; sourceTree = "<group>"; };
 		CDED33C6C1298C5680B1D574 /* DebugShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugShellView.swift; sourceTree = "<group>"; };
 		CE72E983B720ECFFA436AED8 /* DataSourceMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourceMode.swift; sourceTree = "<group>"; };
 		CFB3CCD750FDE595C80D4CD9 /* SessionContextStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionContextStoreTests.swift; sourceTree = "<group>"; };
@@ -124,6 +131,7 @@
 		DFA57DB51C3768BB64B85A51 /* MockBackendClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockBackendClient.swift; sourceTree = "<group>"; };
 		E39D689F72F27A24ABC07639 /* SessionContextStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionContextStore.swift; sourceTree = "<group>"; };
 		E46117508BCE4515CBF7E1E8 /* kpis-charging-empty.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-charging-empty.json"; sourceTree = "<group>"; };
+		E8DFF22A4C2B1B24CBFE7BAC /* AppEnvironmentConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironmentConfigTests.swift; sourceTree = "<group>"; };
 		EF2046D7BF57D84AD01CEBC5 /* kpis-charging-response.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-charging-response.json"; sourceTree = "<group>"; };
 		F313D7B781ECEEC59EF9E5F4 /* KpiMetricRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiMetricRowView.swift; sourceTree = "<group>"; };
 		F5AE8B5DFED756592D49232A /* RankingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingsViewModel.swift; sourceTree = "<group>"; };
@@ -206,8 +214,10 @@
 		6F88295D8925D9ADD31636CA /* CarRanksAppTests */ = {
 			isa = PBXGroup;
 			children = (
+				E8DFF22A4C2B1B24CBFE7BAC /* AppEnvironmentConfigTests.swift */,
 				1864B6653A2718562FAD9F65 /* ContractDecodingTests.swift */,
 				0D172718EFFD6FC9F1EC9C25 /* LiveBackendClientHeaderTests.swift */,
+				6906F8F9716EFF318D853430 /* LiveCaptureOverrideBackendClientTests.swift */,
 				CFB3CCD750FDE595C80D4CD9 /* SessionContextStoreTests.swift */,
 				BE79D0DB8B8AC37C7932F026 /* TestFixtureLoader.swift */,
 			);
@@ -247,6 +257,7 @@
 				0B6E8B51E1A6A33922E4C78F /* BackendError.swift */,
 				530F8B26D96393327BE4F19D /* FixtureLoader.swift */,
 				DEEA0234A24E089178FF728F /* LiveBackendClient.swift */,
+				3A3AF7011EABDFBC5EB4BE98 /* LiveCaptureOverrideBackendClient.swift */,
 				DFA57DB51C3768BB64B85A51 /* MockBackendClient.swift */,
 			);
 			path = Networking;
@@ -257,6 +268,7 @@
 			children = (
 				ABEB3029FC614E1FC3B7042D /* APIModels.swift */,
 				CE72E983B720ECFFA436AED8 /* DataSourceMode.swift */,
+				CD1BABBCCD402BB9E098447C /* LiveCaptureOverrideMode.swift */,
 				41143BF9856329BC2C7C0374 /* SessionContext.swift */,
 				E39D689F72F27A24ABC07639 /* SessionContextStore.swift */,
 			);
@@ -406,8 +418,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				975B2E89B6CEE4E9471B6026 /* AppEnvironmentConfigTests.swift in Sources */,
 				A2EF9A256FB8FF964757AE1F /* ContractDecodingTests.swift in Sources */,
 				20FDA0B5A9BD54EE8F86DED7 /* LiveBackendClientHeaderTests.swift in Sources */,
+				2D51CE553DD9A1ED521998B6 /* LiveCaptureOverrideBackendClientTests.swift in Sources */,
 				8200D87318CA7D3D3C4DBCE7 /* SessionContextStoreTests.swift in Sources */,
 				7C9B38C6FED3C884378FA2CF /* TestFixtureLoader.swift in Sources */,
 			);
@@ -439,6 +453,8 @@
 				5C9CC376F1B4C5BA903F3D79 /* KpiTemperatureImpactView.swift in Sources */,
 				422DC230B34C2A836EA66EDD /* KpiTemperatureImpactViewModel.swift in Sources */,
 				EC85E8A2C56669FDF0AA0175 /* LiveBackendClient.swift in Sources */,
+				1D46E9FFB5F079FAF279B317 /* LiveCaptureOverrideBackendClient.swift in Sources */,
+				04CAE8C00C6696887181AA70 /* LiveCaptureOverrideMode.swift in Sources */,
 				A075006C538EA8C386A348FA /* MockBackendClient.swift in Sources */,
 				4CE241F142426BD7B41FFBA9 /* RankingsView.swift in Sources */,
 				17D39BB206D8519319D3B702 /* RankingsViewModel.swift in Sources */,

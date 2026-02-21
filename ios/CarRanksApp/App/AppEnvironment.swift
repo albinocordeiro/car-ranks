@@ -46,7 +46,7 @@ final class AppEnvironment: ObservableObject {
         case .mock:
             return MockBackendClient(captureScenario: captureScenario)
         case .live:
-            return LiveBackendClient(
+            let liveClient = LiveBackendClient(
                 baseURL: baseURL,
                 sessionProvider: { [weak self] in
                     guard let self else {
@@ -55,6 +55,10 @@ final class AppEnvironment: ObservableObject {
                     return self.sessionContext
                 }
             )
+            if AppEnvironmentConfig.liveCaptureOverrideMode == .forceStates {
+                return LiveCaptureOverrideBackendClient(liveClient: liveClient, captureScenario: captureScenario)
+            }
+            return liveClient
         }
     }
 

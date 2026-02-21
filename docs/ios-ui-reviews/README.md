@@ -59,3 +59,7 @@ ios/scripts/capture_checkpoint.sh --checkpoint batch-a-initial --device "iPhone 
 ```
 
 Use `--mode live` at batch boundaries for staging validation passes.
+
+In live mode, the capture script enables `LIVE_CAPTURE_OVERRIDE_MODE=force-states`.
+This keeps `*-empty` and `*-error` checkpoints deterministic while still letting
+`*-success` states come from the real backend.

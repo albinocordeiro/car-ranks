@@ -16,6 +16,7 @@ USAGE
 CHECKPOINT=""
 DEVICE="iPhone 16 Pro"
 MODE="mock"
+LIVE_CAPTURE_OVERRIDE_MODE="none"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -52,6 +53,10 @@ fi
 if [[ "$MODE" != "mock" && "$MODE" != "live" ]]; then
   echo "Invalid --mode '$MODE'. Use mock or live." >&2
   exit 1
+fi
+
+if [[ "$MODE" == "live" ]]; then
+  LIVE_CAPTURE_OVERRIDE_MODE="force-states"
 fi
 
 if ! command -v xcodegen >/dev/null 2>&1; then
@@ -133,12 +138,14 @@ capture_screen() {
 
   SIMCTL_CHILD_CAPTURE_SCENARIO="$scenario" \
   SIMCTL_CHILD_DATA_SOURCE_MODE="$MODE" \
+  SIMCTL_CHILD_LIVE_CAPTURE_OVERRIDE_MODE="$LIVE_CAPTURE_OVERRIDE_MODE" \
   xcrun simctl launch \
     --terminate-running-process \
     "$UDID" \
     "$BUNDLE_ID" \
     --capture-scenario "$scenario" \
-    --data-source-mode "$MODE" >/dev/null
+    --data-source-mode "$MODE" \
+    --live-capture-override "$LIVE_CAPTURE_OVERRIDE_MODE" >/dev/null
 
   sleep "$settle_seconds"
   xcrun simctl io "$UDID" screenshot "$OUTPUT_DIR/$output_name" >/dev/null
@@ -199,6 +206,7 @@ cat <<MANIFEST
 - Checkpoint: $CHECKPOINT
 - Device: $DEVICE
 - Mode: $MODE
+- Live Capture Override: $LIVE_CAPTURE_OVERRIDE_MODE
 
 ## Screen List
 MANIFEST

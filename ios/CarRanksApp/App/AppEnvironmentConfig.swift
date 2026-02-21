@@ -49,4 +49,19 @@ enum AppEnvironmentConfig {
         }
         return DataSourceMode(rawValue: args[index + 1].lowercased())
     }
+
+    /// Optional override that forces deterministic empty/error states for live capture checkpoints.
+    static var liveCaptureOverrideMode: LiveCaptureOverrideMode {
+        if let envMode = ProcessInfo.processInfo.environment["LIVE_CAPTURE_OVERRIDE_MODE"]?.lowercased(),
+           let parsed = LiveCaptureOverrideMode(rawValue: envMode)
+        {
+            return parsed
+        }
+
+        let args = ProcessInfo.processInfo.arguments
+        guard let index = args.firstIndex(of: "--live-capture-override"), args.indices.contains(index + 1) else {
+            return .none
+        }
+        return LiveCaptureOverrideMode(rawValue: args[index + 1].lowercased()) ?? .none
+    }
 }
