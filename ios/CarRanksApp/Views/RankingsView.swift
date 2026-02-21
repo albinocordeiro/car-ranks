@@ -93,12 +93,14 @@ private struct SuccessRankingsView: View {
                 Text("Temperature: \(response.temperatureBin)")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                Text("Cohort: \(response.cohort.cohortKey)")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
                 Text("Cohort Size: \(response.cohort.cohortSize)")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                Text("Sample Gate: \(response.cohort.sampleGatePassed ? "passed" : "not ready")")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                CohortKeyRowView(cohortKey: response.cohort.cohortKey)
+                CohortFiltersSummaryView(filters: response.filters)
             }
 
             Section("Ranked Vehicles") {
@@ -115,18 +117,25 @@ private struct RankingRowView: View {
     let row: RankingsResponse.Row
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("#\(row.rank)")
                     .font(.headline.weight(.bold))
                 Spacer()
                 Text("Score \(row.score.formattedScore)")
                     .font(.subheadline.weight(.semibold))
+                    .monospacedDigit()
             }
 
-            Text("Vehicle: \(row.vehicleUID.uuidString.lowercased())")
-                .font(.system(.footnote, design: .monospaced))
-                .textSelection(.enabled)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Vehicle UID")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text(row.vehicleUID.uuidString.lowercased())
+                    .font(.system(.footnote, design: .monospaced))
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             Text("Confidence: \(row.confidenceLevel.readableIdentifier)")
                 .font(.caption)
@@ -137,18 +146,89 @@ private struct RankingRowView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("KPI Breakdown")
                         .font(.caption.weight(.semibold))
                     ForEach(row.sortedKpis, id: \.key) { item in
-                        Text("• \(item.key.readableIdentifier): \(item.value.formattedScore)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text(item.key.readableIdentifier)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Text(item.value.formattedScore)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
                     }
                 }
             }
         }
         .padding(.vertical, 6)
+    }
+}
+
+private struct CohortKeyRowView: View {
+    let cohortKey: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Cohort Key")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(cohortKey)
+                .font(.system(.footnote, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 2)
+    }
+}
+
+private struct CohortFiltersSummaryView: View {
+    let filters: RankingsResponse.Filters
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Cohort Filters")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            ForEach(Array(filterRows.enumerated()), id: \.offset) { _, row in
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(row.label)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(row.value)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.trailing)
+                }
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    private var filterRows: [(label: String, value: String)] {
+        [
+            ("Powertrain", normalizedFilterValue(filters.powertrainClass)?.uppercased() ?? "Any"),
+            ("Make", normalizedFilterValue(filters.make) ?? "Any"),
+            ("Model", normalizedFilterValue(filters.model) ?? "Any"),
+            ("Trim", normalizedFilterValue(filters.trim) ?? "Any"),
+            ("Year Band", normalizedFilterValue(filters.yearBand) ?? "Any"),
+            ("Region", normalizedFilterValue(filters.region) ?? "Any"),
+        ]
+    }
+
+    private func normalizedFilterValue(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed.lowercased() != "unknown" else {
+            return nil
+        }
+        return trimmed
     }
 }
 
