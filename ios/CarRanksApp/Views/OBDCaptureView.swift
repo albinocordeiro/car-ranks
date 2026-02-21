@@ -39,6 +39,7 @@ struct OBDCaptureView: View {
             connectionSection
             adaptersSection
             captureSection
+            diagnosticsSection
             uploadSection
             recentRecordsSection
         }
@@ -190,6 +191,44 @@ struct OBDCaptureView: View {
         }
     }
 
+    private var diagnosticsSection: some View {
+        Section("Diagnostics") {
+            LabeledContent("MIL") {
+                Text(viewModel.diagnosticPresentation.milStatusText)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(milStatusColor)
+            }
+            .accessibilityIdentifier("obd-diagnostics-mil")
+
+            LabeledContent("Active DTCs", value: viewModel.diagnosticPresentation.activeDTCsSummary)
+                .font(.caption)
+                .accessibilityIdentifier("obd-diagnostics-dtc-summary")
+
+            LabeledContent("Last Observed", value: viewModel.diagnosticPresentation.lastObservedText)
+                .font(.caption)
+                .accessibilityIdentifier("obd-diagnostics-last-observed")
+
+            Label(
+                viewModel.diagnosticPresentation.changeMarkerText,
+                systemImage: viewModel.diagnosticPresentation.isChangeMarkerHighlighted
+                    ? "dot.radiowaves.left.and.right"
+                    : "dot.radiowaves.left.and.right.slash"
+            )
+            .font(.caption)
+            .foregroundStyle(viewModel.diagnosticPresentation.isChangeMarkerHighlighted ? .orange : .secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityIdentifier("obd-diagnostics-change-marker")
+
+            if !viewModel.diagnosticPresentation.activeDTCs.isEmpty {
+                ForEach(viewModel.diagnosticPresentation.activeDTCs, id: \.self) { code in
+                    Text(code)
+                        .font(.caption.monospaced())
+                        .accessibilityIdentifier("obd-diagnostics-dtc-\(code)")
+                }
+            }
+        }
+    }
+
     private var recentRecordsSection: some View {
         Section("Recent Records") {
             if viewModel.recentRecords.isEmpty {
@@ -230,6 +269,17 @@ struct OBDCaptureView: View {
             return .red
         default:
             return .primary
+        }
+    }
+
+    private var milStatusColor: Color {
+        switch viewModel.diagnosticPresentation.milIsOn {
+        case true:
+            return .red
+        case false:
+            return .green
+        case nil:
+            return .secondary
         }
     }
 }

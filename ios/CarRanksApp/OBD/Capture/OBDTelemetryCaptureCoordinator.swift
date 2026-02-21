@@ -9,6 +9,8 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
     @Published private(set) var lastCaptureError: String?
     @Published private(set) var adapterIdentitySummary: String?
     @Published private(set) var initializationProfileSummary: String?
+    @Published private(set) var latestDiagnosticSnapshot: OBDDiagnosticSnapshot?
+    @Published private(set) var lastDiagnosticStateChangedAt: Date?
 
     private let commandExecutor: OBDCommandExecutor
     private let now: () -> Date
@@ -39,6 +41,8 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
         currentSampleIntervalSeconds = max(1, sampleIntervalSeconds)
         let startedAt = now()
         captureWindowStartedAt = startedAt
+        latestDiagnosticSnapshot = nil
+        lastDiagnosticStateChangedAt = nil
         lastDiagnosticPollAt = nil
         lastDiagnosticStateSignature = nil
         activeSessionID = UUID()
@@ -179,6 +183,7 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
 
     private func appendDiagnostic(snapshot: OBDDiagnosticSnapshot) {
         lastDiagnosticPollAt = snapshot.observedAt
+        latestDiagnosticSnapshot = snapshot
 
         // Keep only state changes so telemetry remains compact but still debuggable.
         guard snapshot.stateSignature != lastDiagnosticStateSignature else {
@@ -186,6 +191,7 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
         }
 
         lastDiagnosticStateSignature = snapshot.stateSignature
+        lastDiagnosticStateChangedAt = snapshot.observedAt
         pendingDiagnostics.append(snapshot)
     }
 }

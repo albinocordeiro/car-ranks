@@ -18,6 +18,10 @@ final class OBDCaptureViewModel: ObservableObject {
     @Published private(set) var statusMessage = "Connect an adapter to start capture."
     @Published private(set) var adapterIdentitySummary = "Unknown"
     @Published private(set) var initializationProfileSummary = "Not initialized"
+    @Published private(set) var diagnosticPresentation = OBDDiagnosticPresentation.from(
+        latestSnapshot: nil,
+        lastChangedAt: nil
+    )
     @Published private(set) var queuedBatchCount = 0
     @Published private(set) var uploadState: UploadState = .idle
     @Published var sampleIntervalSecondsText = "5"
@@ -211,6 +215,18 @@ final class OBDCaptureViewModel: ObservableObject {
                 self?.initializationProfileSummary = summary ?? "Not initialized"
             }
             .store(in: &cancellables)
+
+        Publishers.CombineLatest(
+            captureCoordinator.$latestDiagnosticSnapshot,
+            captureCoordinator.$lastDiagnosticStateChangedAt
+        )
+        .sink { [weak self] latestSnapshot, lastChangedAt in
+            self?.diagnosticPresentation = OBDDiagnosticPresentation.from(
+                latestSnapshot: latestSnapshot,
+                lastChangedAt: lastChangedAt
+            )
+        }
+        .store(in: &cancellables)
 
         uploadQueueCoordinator.$pendingBatchCount
             .sink { [weak self] count in
