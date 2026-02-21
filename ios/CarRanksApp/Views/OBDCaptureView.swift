@@ -143,11 +143,17 @@ struct OBDCaptureView: View {
                 .accessibilityIdentifier("obd-toggle-capture-button")
 
                 Spacer()
-                Text("Pending: \(viewModel.pendingRecordCount)")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-                    .accessibilityIdentifier("obd-pending-records")
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Signals: \(viewModel.pendingRecordCount)")
+                        .accessibilityIdentifier("obd-pending-records")
+                    Text("Diagnostics: \(viewModel.pendingDiagnosticCount)")
+                        .accessibilityIdentifier("obd-pending-diagnostics")
+                    Text("Session events: \(viewModel.pendingSessionEventCount)")
+                        .accessibilityIdentifier("obd-pending-session-events")
+                }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
             }
         }
     }
@@ -170,6 +176,12 @@ struct OBDCaptureView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .accessibilityIdentifier("obd-queued-batch-count")
+
+            Text("Pending payload: \(viewModel.pendingUploadSummary.inlineDescription)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("obd-pending-upload-summary")
 
             switch viewModel.uploadState {
             case .idle:

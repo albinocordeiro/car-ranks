@@ -44,6 +44,7 @@
 		5AC74B5D876A3B7BE4EA1009 /* CarRanksApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 433DF34CA9F2C17E51A85AAA /* CarRanksApp.swift */; };
 		5AF44ECD661EDE5DB99AB600 /* CoreBluetoothOBDClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 381206A91C90AF9A4895C5D7 /* CoreBluetoothOBDClient.swift */; };
 		5C9CC376F1B4C5BA903F3D79 /* KpiTemperatureImpactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5988E2DD73BB50E3A4A2491E /* KpiTemperatureImpactView.swift */; };
+		62D045E01D5A90D263C8194D /* OBDPendingUploadSummaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4532988EDAF11487A4C6C92 /* OBDPendingUploadSummaryTests.swift */; };
 		67C389F61F42485AA17F6788 /* OBDDiagnosticPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC40A4696A9C11A4BE53814A /* OBDDiagnosticPresentation.swift */; };
 		68038AAEFAD54526B61419E7 /* AppEnvironmentConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9073E2D2D29E5563942943DF /* AppEnvironmentConfig.swift */; };
 		6A8052257FB39E085AAD0460 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2995D54F2E98933219612D63 /* RootView.swift */; };
@@ -53,6 +54,7 @@
 		741C5C5296FCBE6DB15CC24F /* OBDReconnectPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3EC04AC2D7FA3B840E809F1 /* OBDReconnectPolicyTests.swift */; };
 		75160CF1C1003098E0D1B729 /* CaptureScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879597CCCA0017C9046D491C /* CaptureScenario.swift */; };
 		764489D93AB3FA080B7B9F78 /* KpiMeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C80C90D92A726A32B1A65A /* KpiMeViewModel.swift */; };
+		7881D2990DAABB01AB428D40 /* OBDPendingUploadSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C822C64F827D7E8E589C0D4 /* OBDPendingUploadSummary.swift */; };
 		79EA48C8EFE359BAEC7181F2 /* kpis-temperature-impact-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = BAB384DA4A3358FC01ABA4DE /* kpis-temperature-impact-empty.json */; };
 		7C9B38C6FED3C884378FA2CF /* TestFixtureLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE79D0DB8B8AC37C7932F026 /* TestFixtureLoader.swift */; };
 		7CB48FF31F2FE6E235D0F27E /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABEB3029FC614E1FC3B7042D /* APIModels.swift */; };
@@ -161,6 +163,7 @@
 		604B41FAA67C6BD3D3117741 /* OBDResponseParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OBDResponseParser.swift; sourceTree = "<group>"; };
 		6906F8F9716EFF318D853430 /* LiveCaptureOverrideBackendClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveCaptureOverrideBackendClientTests.swift; sourceTree = "<group>"; };
 		697FC66BDFDBF43E395E514E /* TelemetryUploadRetryPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryUploadRetryPolicy.swift; sourceTree = "<group>"; };
+		6C822C64F827D7E8E589C0D4 /* OBDPendingUploadSummary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OBDPendingUploadSummary.swift; sourceTree = "<group>"; };
 		6E846369E93275AB62650594 /* FileTelemetryUploadQueueStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTelemetryUploadQueueStoreTests.swift; sourceTree = "<group>"; };
 		6EA116FE25276016DE951160 /* BackendClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendClient.swift; sourceTree = "<group>"; };
 		711AD3CB82661EE8DFEAB3BF /* OBDBLEConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OBDBLEConstants.swift; sourceTree = "<group>"; };
@@ -181,6 +184,7 @@
 		9EF6383F20F155B4CF3A5890 /* CarRanksAppUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CarRanksAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A09A643822D63A656E3DA844 /* KpiChargingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiChargingViewModel.swift; sourceTree = "<group>"; };
 		A1B27759354CDD04406DB452 /* OBDResponseParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OBDResponseParserTests.swift; sourceTree = "<group>"; };
+		A4532988EDAF11487A4C6C92 /* OBDPendingUploadSummaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OBDPendingUploadSummaryTests.swift; sourceTree = "<group>"; };
 		AACE6CAB5FA4831598F074F1 /* OBDDiagnosticSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OBDDiagnosticSnapshotTests.swift; sourceTree = "<group>"; };
 		ABEB3029FC614E1FC3B7042D /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		ADA341C0875C7C2D0F0C24E7 /* kpis-temperature-impact-response.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-temperature-impact-response.json"; sourceTree = "<group>"; };
@@ -326,6 +330,7 @@
 				983E8E48130A1502DF4C3E84 /* OBDConnectionStateTests.swift */,
 				45C4C0D296EA9B9D0A4A2298 /* OBDDiagnosticPresentationTests.swift */,
 				AACE6CAB5FA4831598F074F1 /* OBDDiagnosticSnapshotTests.swift */,
+				A4532988EDAF11487A4C6C92 /* OBDPendingUploadSummaryTests.swift */,
 				B3EC04AC2D7FA3B840E809F1 /* OBDReconnectPolicyTests.swift */,
 				A1B27759354CDD04406DB452 /* OBDResponseParserTests.swift */,
 				CFB3CCD750FDE595C80D4CD9 /* SessionContextStoreTests.swift */,
@@ -365,6 +370,7 @@
 			children = (
 				FC40A4696A9C11A4BE53814A /* OBDDiagnosticPresentation.swift */,
 				9C644137148658D92C75FF4D /* OBDDiagnosticSnapshot.swift */,
+				6C822C64F827D7E8E589C0D4 /* OBDPendingUploadSummary.swift */,
 				FDFB325BB48FC79C56713E1F /* OBDSignalRecord.swift */,
 				FE6D0F2FFEFD511FD3E70F84 /* OBDStandardSignal.swift */,
 				BFFE5C0E1978C1438EF0B5A4 /* OBDTelemetryCaptureCoordinator.swift */,
@@ -590,6 +596,7 @@
 				F2707F571BBA9625C0C5BABA /* OBDConnectionStateTests.swift in Sources */,
 				89ABF120C66B1345E8149773 /* OBDDiagnosticPresentationTests.swift in Sources */,
 				6B97CC556E02218B7671897B /* OBDDiagnosticSnapshotTests.swift in Sources */,
+				62D045E01D5A90D263C8194D /* OBDPendingUploadSummaryTests.swift in Sources */,
 				741C5C5296FCBE6DB15CC24F /* OBDReconnectPolicyTests.swift in Sources */,
 				EFC36547FF3F08417196F537 /* OBDResponseParserTests.swift in Sources */,
 				8200D87318CA7D3D3C4DBCE7 /* SessionContextStoreTests.swift in Sources */,
@@ -643,6 +650,7 @@
 				67C389F61F42485AA17F6788 /* OBDDiagnosticPresentation.swift in Sources */,
 				0975CFD4DE587552AB883DB7 /* OBDDiagnosticSnapshot.swift in Sources */,
 				1A3AE2F1AD0752DB2E599D75 /* OBDInitializationPlan.swift in Sources */,
+				7881D2990DAABB01AB428D40 /* OBDPendingUploadSummary.swift in Sources */,
 				BB3E18AE947B1489D0207A00 /* OBDReconnectPolicy.swift in Sources */,
 				E77A7BC4988A8F609CD3793F /* OBDResponseParser.swift in Sources */,
 				864B2932FCED3963A531FA4A /* OBDSignalRecord.swift in Sources */,

@@ -14,6 +14,9 @@ final class OBDCaptureViewModel: ObservableObject {
     @Published private(set) var connectionState: OBDConnectionState = .disconnected
     @Published private(set) var isCapturing = false
     @Published private(set) var pendingRecordCount = 0
+    @Published private(set) var pendingDiagnosticCount = 0
+    @Published private(set) var pendingSessionEventCount = 0
+    @Published private(set) var pendingUploadSummary: OBDPendingUploadSummary = .empty
     @Published private(set) var recentRecords: [OBDSignalRecord] = []
     @Published private(set) var statusMessage = "Connect an adapter to start capture."
     @Published private(set) var adapterIdentitySummary = "Unknown"
@@ -78,7 +81,7 @@ final class OBDCaptureViewModel: ObservableObject {
         if isCapturing {
             shouldResumeCaptureAfterReconnect = false
             captureCoordinator.stopCapture()
-            statusMessage = "Capture stopped with \(pendingRecordCount) pending records."
+            statusMessage = "Capture stopped. Pending payload: \(pendingUploadSummary.inlineDescription)."
             return
         }
 
@@ -115,8 +118,9 @@ final class OBDCaptureViewModel: ObservableObject {
             captureWindowEndedAt: batchBundle.windowEndedAt
         )
         captureCoordinator.clearPendingData(afterWindowEndedAt: batchBundle.windowEndedAt)
-        uploadState = .success("Queued telemetry batch for upload.")
-        statusMessage = "Queued telemetry batch. Upload will retry automatically."
+        let queuedSummary = OBDPendingUploadSummary.from(batch: batchBundle.request)
+        uploadState = .success("Queued telemetry batch (\(queuedSummary.inlineDescription)).")
+        statusMessage = "Queued telemetry batch (\(queuedSummary.inlineDescription)). Upload will retry automatically."
     }
 
     func retryQueuedUploads() {
@@ -191,6 +195,18 @@ final class OBDCaptureViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        captureCoordinator.$pendingDiagnosticCount
+            .sink { [weak self] in
+                self?.pendingDiagnosticCount = $0
+            }
+            .store(in: &cancellables)
+
+        captureCoordinator.$pendingSessionEventCount
+            .sink { [weak self] in
+                self?.pendingSessionEventCount = $0
+            }
+            .store(in: &cancellables)
+
         captureCoordinator.$recentRecords
             .sink { [weak self] in
                 self?.recentRecords = Array($0.prefix(40))
@@ -224,6 +240,20 @@ final class OBDCaptureViewModel: ObservableObject {
             self?.diagnosticPresentation = OBDDiagnosticPresentation.from(
                 latestSnapshot: latestSnapshot,
                 lastChangedAt: lastChangedAt
+            )
+        }
+        .store(in: &cancellables)
+
+        Publishers.CombineLatest3(
+            captureCoordinator.$pendingRecordCount,
+            captureCoordinator.$pendingDiagnosticCount,
+            captureCoordinator.$pendingSessionEventCount
+        )
+        .sink { [weak self] recordCount, diagnosticCount, sessionEventCount in
+            self?.pendingUploadSummary = OBDPendingUploadSummary(
+                signalRecordCount: recordCount,
+                diagnosticEventCount: diagnosticCount,
+                sessionEventCount: sessionEventCount
             )
         }
         .store(in: &cancellables)

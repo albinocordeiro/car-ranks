@@ -6,6 +6,8 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
     @Published private(set) var isCapturing = false
     @Published private(set) var recentRecords: [OBDSignalRecord] = []
     @Published private(set) var pendingRecordCount = 0
+    @Published private(set) var pendingDiagnosticCount = 0
+    @Published private(set) var pendingSessionEventCount = 0
     @Published private(set) var lastCaptureError: String?
     @Published private(set) var adapterIdentitySummary: String?
     @Published private(set) var initializationProfileSummary: String?
@@ -55,6 +57,7 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
                 )
             )
         }
+        refreshPendingCounts()
 
         isCapturing = true
         lastCaptureError = nil
@@ -83,6 +86,7 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
             )
         }
         activeSessionID = nil
+        refreshPendingCounts()
     }
 
     func buildBatch(
@@ -122,7 +126,7 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
         pendingRecords.removeAll()
         pendingDiagnostics.removeAll()
         pendingSessionEvents.removeAll()
-        pendingRecordCount = 0
+        refreshPendingCounts()
         captureWindowStartedAt = endedAt
     }
 
@@ -161,7 +165,7 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
 
     private func append(record: OBDSignalRecord) {
         pendingRecords.append(record)
-        pendingRecordCount = pendingRecords.count
+        refreshPendingCounts()
 
         // Keep UI rendering bounded while preserving enough history for visual troubleshooting.
         recentRecords.insert(record, at: 0)
@@ -193,5 +197,12 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
         lastDiagnosticStateSignature = snapshot.stateSignature
         lastDiagnosticStateChangedAt = snapshot.observedAt
         pendingDiagnostics.append(snapshot)
+        refreshPendingCounts()
+    }
+
+    private func refreshPendingCounts() {
+        pendingRecordCount = pendingRecords.count
+        pendingDiagnosticCount = pendingDiagnostics.count
+        pendingSessionEventCount = pendingSessionEvents.count
     }
 }
