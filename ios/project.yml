@@ -9,6 +9,7 @@ settings:
     SWIFT_VERSION: 6.0
     MARKETING_VERSION: 1.0.0
     CURRENT_PROJECT_VERSION: 1
+    APP_BUNDLE_IDENTIFIER_BASE: com.albinocordeiro.carranks.dev
 targets:
   CarRanksApp:
     type: application
@@ -18,7 +19,7 @@ targets:
       - path: CarRanksApp
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.albinocordeiro.carranks
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_IDENTIFIER_BASE)
         INFOPLIST_FILE: CarRanksApp/Info.plist
         API_BASE_URL: http://127.0.0.1:8080
         DEFAULT_X_USER_ID: 06b3fff1-bfcc-4cda-840b-d512963bc239
@@ -35,7 +36,7 @@ targets:
       - target: CarRanksApp
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.albinocordeiro.carranks.tests
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_IDENTIFIER_BASE).tests
         GENERATE_INFOPLIST_FILE: YES
   CarRanksAppUITests:
     type: bundle.ui-testing
@@ -47,5 +48,5 @@ targets:
       - target: CarRanksApp
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.albinocordeiro.carranks.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_IDENTIFIER_BASE).uitests
         GENERATE_INFOPLIST_FILE: YES
