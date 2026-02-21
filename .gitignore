@@ -15,5 +15,9 @@
 *.log
 /tmp/
 
+# Xcode user-local artifacts
+**/*.xcodeproj/xcuserdata/
+**/*.xcodeproj/project.xcworkspace/xcuserdata/
+
 # Preserve but do not track old nested git metadata
 .repo-metadata-backup/

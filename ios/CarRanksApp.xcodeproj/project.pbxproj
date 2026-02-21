@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -160,7 +160,7 @@
 		530F8B26D96393327BE4F19D /* FixtureLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixtureLoader.swift; sourceTree = "<group>"; };
 		5988E2DD73BB50E3A4A2491E /* KpiTemperatureImpactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiTemperatureImpactView.swift; sourceTree = "<group>"; };
 		5AA5043CF556A1B3852CE38A /* OBDInitializationPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OBDInitializationPlan.swift; sourceTree = "<group>"; };
-		5C0EAEB57B489A67699227CF /* CarRanksApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CarRanksApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C0EAEB57B489A67699227CF /* CarRanksApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CarRanksApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E0447E09685380DBE696923 /* TelemetryBatchPreviewFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryBatchPreviewFormatterTests.swift; sourceTree = "<group>"; };
 		5F18C7F890AFAE6A06A73775 /* DevSessionPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionPanelView.swift; sourceTree = "<group>"; };
 		60240F5AE9F24164BEBF044B /* OBDAdapterIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OBDAdapterIdentity.swift; sourceTree = "<group>"; };
@@ -531,7 +531,6 @@
 			);
 			mainGroup = 2533C988649C86DCD1754736;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -722,6 +721,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEFAULT_VEHICLE_UID = "e11889bf-504c-4238-9583-bc8840f20e19";
 				DEFAULT_X_USER_ID = "06b3fff1-bfcc-4cda-840b-d512963bc239";
+				DEVELOPMENT_TEAM = 5SNS5GL9LZ;
 				INFOPLIST_FILE = CarRanksApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -860,6 +860,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEFAULT_VEHICLE_UID = "e11889bf-504c-4238-9583-bc8840f20e19";
 				DEFAULT_X_USER_ID = "06b3fff1-bfcc-4cda-840b-d512963bc239";
+				DEVELOPMENT_TEAM = 5SNS5GL9LZ;
 				INFOPLIST_FILE = CarRanksApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
