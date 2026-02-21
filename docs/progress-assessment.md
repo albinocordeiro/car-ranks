@@ -26,6 +26,7 @@ Recent verification evidence:
 
 - Main MVP risk shifted from backend runtime parity to mobile/release readiness and cross-surface stability.
 - Backend still needs ongoing P0/P1 defect triage until submission freeze.
+- New blocking reality check: no iOS app project exists yet in the repository, so mobile and App Store execution work cannot complete until iOS bootstrap starts.
 
 ## Next Product Development Plan
 
@@ -42,17 +43,21 @@ Priority 2: Reviewer-friendly implementation gate
   - small commits with matching tests/docs.
 - Avoid opportunistic refactors outside MVP scope.
 
-Priority 3: Release operations package
-- Prepare App Store metadata/screenshots/privacy/support URLs and keep them aligned with current MVP behavior.
-- Draft App Review notes with deterministic smoke path and known constraints.
+Priority 3: iOS app bootstrap (new primary blocker)
+- Create an iOS project baseline and wire backend contracts before further App Store execution work.
+- iOS bootstrap execution plan: `/Users/albinocordeiro/Code/car_ranks/docs/ios-mvp-bootstrap-plan.md`.
 
-Priority 4: Defect burn-down
+Priority 4: Release operations package
+- Metadata/privacy/review-note drafts are prepared and should be finalized in parallel with iOS implementation.
+
+Priority 5: Defect burn-down
 - Track and close backend/mobile P0/P1 issues daily.
 - Keep smoke baseline current after blocker fixes using the one-command runner and manual CI workflow.
 
 ## Suggested Execution Order
 
-1. Complete mobile must-have flows (auth, vehicle linkage, KPI/ranking screens, and core empty/loading/error states).
-2. Run device-level crash-free smoke on iOS targets and fix blocker defects.
-3. Finalize App Store operations package (metadata, screenshots, privacy/support URLs, review notes, TestFlight QA sign-off).
-4. Maintain daily P0/P1 triage plus smoke re-validation through submission.
+1. Bootstrap iOS app project and establish backend API client integration.
+2. Implement mobile must-have flows (auth, vehicle linkage, KPI/ranking screens, and core empty/loading/error states).
+3. Run device-level crash-free smoke on iOS targets and fix blocker defects.
+4. Finalize App Store operations package (metadata, screenshots, privacy/support URLs, review notes, TestFlight QA sign-off).
+5. Maintain daily P0/P1 triage plus smoke re-validation through submission.
