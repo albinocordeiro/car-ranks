@@ -3,7 +3,60 @@ import XCTest
 
 @MainActor
 final class OBDCommandExecutorTests: XCTestCase {
-    func testBootstrapSendsInitializationCommandsOnlyOnce() async throws {
+    func testBootstrapDetectsOBDLinkProfileFromATI() async throws {
+        let transport = FakeOBDTransport(
+            responses: [
+                "ATI": "OBDLink CX v2.5",
+                "ATWS": "OBDLink reset",
+                "ATE0": "OK",
+                "ATL0": "OK",
+                "ATS0": "OK",
+                "ATH0": "OK",
+                "ATSP0": "OK",
+                "ATAT1": "OK",
+                "ATAL": "OK",
+            ]
+        )
+        let executor = OBDCommandExecutor(transport: transport)
+
+        try await executor.bootstrapAdapterIfNeeded()
+
+        XCTAssertEqual(executor.detectedIdentity?.profile, .obdLink)
+        XCTAssertEqual(executor.activeInitializationProfile, .obdLink)
+        XCTAssertEqual(
+            transport.sentCommands,
+            ["ATI", "ATWS", "ATE0", "ATL0", "ATS0", "ATH0", "ATSP0", "ATAT1", "ATAL"]
+        )
+    }
+
+    func testBootstrapFallsBackWhenPreferredProfileFailsValidation() async throws {
+        let transport = FakeOBDTransport(
+            responses: [
+                "ATI": "OBDLink CX v2.5",
+                "ATWS": "?", // this should fail required-response validation
+                "ATZ": "ELM327 v1.5",
+                "ATE0": "OK",
+                "ATL0": "OK",
+                "ATS0": "OK",
+                "ATH0": "OK",
+                "ATSP0": "OK",
+                "ATAT1": "OK",
+                "ATAL": "OK",
+            ]
+        )
+        let executor = OBDCommandExecutor(transport: transport)
+
+        try await executor.bootstrapAdapterIfNeeded()
+
+        XCTAssertEqual(executor.detectedIdentity?.profile, .obdLink)
+        XCTAssertEqual(executor.activeInitializationProfile, .elm327)
+        XCTAssertEqual(
+            transport.sentCommands,
+            ["ATI", "ATWS", "ATZ", "ATE0", "ATL0", "ATS0", "ATH0", "ATSP0", "ATAT1", "ATAL"]
+        )
+    }
+
+    func testBootstrapToleratesIdentityProbeFailure() async throws {
         let transport = FakeOBDTransport(
             responses: [
                 "ATZ": "ELM327 v1.5",
@@ -12,17 +65,60 @@ final class OBDCommandExecutorTests: XCTestCase {
                 "ATS0": "OK",
                 "ATH0": "OK",
                 "ATSP0": "OK",
+                "ATAT1": "OK",
+            ],
+            failingCommands: ["ATI"]
+        )
+        let executor = OBDCommandExecutor(transport: transport)
+
+        try await executor.bootstrapAdapterIfNeeded()
+
+        XCTAssertNil(executor.detectedIdentity)
+        XCTAssertEqual(executor.activeInitializationProfile, .generic)
+        XCTAssertEqual(transport.sentCommands.first, "ATI")
+    }
+
+    func testBootstrapIgnoresOptionalCommandFailures() async throws {
+        let transport = FakeOBDTransport(
+            responses: [
+                "ATI": "ELM327 v1.5",
+                "ATZ": "ELM327 v1.5",
+                "ATE0": "OK",
+                "ATL0": "OK",
+                "ATS0": "OK",
+                "ATH0": "OK",
+                "ATSP0": "OK",
+            ],
+            failingCommands: ["ATAT1", "ATAL"]
+        )
+        let executor = OBDCommandExecutor(transport: transport)
+
+        try await executor.bootstrapAdapterIfNeeded()
+
+        XCTAssertEqual(executor.activeInitializationProfile, .elm327)
+    }
+
+    func testBootstrapSendsInitializationCommandsOnlyOnce() async throws {
+        let transport = FakeOBDTransport(
+            responses: [
+                "ATI": "ELM327 v1.5",
+                "ATZ": "ELM327 v1.5",
+                "ATE0": "OK",
+                "ATL0": "OK",
+                "ATS0": "OK",
+                "ATH0": "OK",
+                "ATSP0": "OK",
+                "ATAT1": "OK",
+                "ATAL": "OK",
             ]
         )
         let executor = OBDCommandExecutor(transport: transport)
 
         try await executor.bootstrapAdapterIfNeeded()
+        let commandCountAfterFirstBootstrap = transport.sentCommands.count
         try await executor.bootstrapAdapterIfNeeded()
 
-        XCTAssertEqual(
-            transport.sentCommands,
-            ["ATZ", "ATE0", "ATL0", "ATS0", "ATH0", "ATSP0"]
-        )
+        XCTAssertEqual(transport.sentCommands.count, commandCountAfterFirstBootstrap)
     }
 
     func testPollReturnsOkWhenSignalCanBeDecoded() async {
@@ -43,7 +139,7 @@ final class OBDCommandExecutorTests: XCTestCase {
     func testPollReturnsErrorWhenTransportThrows() async {
         let transport = FakeOBDTransport(
             responses: [:],
-            errorMessage: "timeout"
+            failingCommands: ["010D"]
         )
         let executor = OBDCommandExecutor(transport: transport)
 
@@ -61,13 +157,16 @@ private final class FakeOBDTransport: OBDBLETransport {
     var adapterFingerprint: String? = "fake-fingerprint"
 
     private let responses: [String: String]
-    private let errorMessage: String?
+    private let failingCommands: Set<String>
 
     private(set) var sentCommands: [String] = []
 
-    init(responses: [String: String], errorMessage: String? = nil) {
+    init(
+        responses: [String: String],
+        failingCommands: Set<String> = []
+    ) {
         self.responses = responses
-        self.errorMessage = errorMessage
+        self.failingCommands = failingCommands
     }
 
     func startScanning() {}
@@ -78,12 +177,12 @@ private final class FakeOBDTransport: OBDBLETransport {
     func sendRawCommand(_ command: String) async throws -> String {
         sentCommands.append(command)
 
-        if let errorMessage {
-            throw BackendError.transport(errorMessage)
+        if failingCommands.contains(command) {
+            throw BackendError.transport("forced failure for \(command)")
         }
 
         guard let response = responses[command] else {
-            throw BackendError.transport("missing fake response")
+            throw BackendError.transport("missing fake response for \(command)")
         }
         return response
     }

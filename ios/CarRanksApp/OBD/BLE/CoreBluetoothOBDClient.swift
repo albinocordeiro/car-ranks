@@ -19,15 +19,24 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
     private var pendingCommandBuffer = ""
     private var pendingCommandTimeoutTask: Task<Void, Never>?
     private let commandTimeoutNanoseconds: UInt64
+    private let reconnectPolicy: OBDReconnectPolicy
+    private var reconnectAttemptCount = 0
+    private var reconnectTask: Task<Void, Never>?
+    private var userInitiatedDisconnect = false
 
     override init() {
         commandTimeoutNanoseconds = 5_000_000_000
+        reconnectPolicy = .standard
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: nil)
     }
 
-    init(commandTimeoutNanoseconds: UInt64) {
+    init(
+        commandTimeoutNanoseconds: UInt64,
+        reconnectPolicy: OBDReconnectPolicy = .standard
+    ) {
         self.commandTimeoutNanoseconds = commandTimeoutNanoseconds
+        self.reconnectPolicy = reconnectPolicy
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: nil)
     }
@@ -37,6 +46,11 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
             connectionState = .error("Bluetooth is unavailable.")
             return
         }
+
+        // A new scan indicates a fresh user intent, so any pending reconnect loop is canceled.
+        cancelReconnectTask()
+        reconnectAttemptCount = 0
+        userInitiatedDisconnect = false
 
         // We intentionally scan broadly because OBD vendors often use custom service UUIDs.
         discoveredDevices = []
@@ -61,17 +75,25 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
             return
         }
 
+        cancelReconnectTask()
+        reconnectAttemptCount = 0
+        userInitiatedDisconnect = false
         stopScanning()
         connectionState = .connecting(peripheral.readableName)
         centralManager.connect(peripheral, options: nil)
     }
 
     func disconnect() {
+        userInitiatedDisconnect = true
+        cancelReconnectTask()
+        reconnectAttemptCount = 0
+
         guard let connectedPeripheral else {
             connectionState = .disconnected
             return
         }
 
+        finishPendingCommand(with: .failure(BackendError.transport("Adapter disconnected by user.")))
         centralManager.cancelPeripheralConnection(connectedPeripheral)
     }
 
@@ -185,12 +207,55 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
             continuation.resume(throwing: error)
         }
     }
+
+    private func cancelReconnectTask() {
+        reconnectTask?.cancel()
+        reconnectTask = nil
+    }
+
+    private func scheduleReconnect(for peripheral: CBPeripheral) -> Bool {
+        guard centralManager.state == .poweredOn, !userInitiatedDisconnect else {
+            return false
+        }
+
+        let attempt = reconnectAttemptCount + 1
+        guard reconnectPolicy.shouldRetry(attempt: attempt) else {
+            return false
+        }
+
+        reconnectAttemptCount = attempt
+        let delaySeconds = reconnectPolicy.delaySeconds(forAttempt: attempt)
+        let delayNanoseconds = UInt64(max(0, delaySeconds) * 1_000_000_000)
+        connectionState = .reconnecting(
+            name: peripheral.readableName,
+            attempt: attempt,
+            maxAttempts: reconnectPolicy.maxAttempts
+        )
+
+        cancelReconnectTask()
+        reconnectTask = Task { [weak self] in
+            if delayNanoseconds > 0 {
+                try? await Task.sleep(nanoseconds: delayNanoseconds)
+            }
+            await MainActor.run {
+                guard let self, !self.userInitiatedDisconnect else { return }
+                guard self.centralManager.state == .poweredOn else {
+                    self.connectionState = .error("Bluetooth is not powered on.")
+                    return
+                }
+                self.connectionState = .connecting(peripheral.readableName)
+                self.centralManager.connect(peripheral, options: nil)
+            }
+        }
+        return true
+    }
 }
 
 extension CoreBluetoothOBDClient: CBCentralManagerDelegate {
     nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
         Task { @MainActor in
             if central.state != .poweredOn {
+                cancelReconnectTask()
                 connectionState = .error("Bluetooth is not powered on.")
                 stopScanning()
             }
@@ -219,6 +284,9 @@ extension CoreBluetoothOBDClient: CBCentralManagerDelegate {
 
     nonisolated func centralManager(_: CBCentralManager, didConnect peripheral: CBPeripheral) {
         Task { @MainActor in
+            cancelReconnectTask()
+            reconnectAttemptCount = 0
+            userInitiatedDisconnect = false
             connectedPeripheral = peripheral
             peripheral.delegate = self
             writeCharacteristic = nil
@@ -237,6 +305,9 @@ extension CoreBluetoothOBDClient: CBCentralManagerDelegate {
             writeCharacteristic = nil
             notifyCharacteristic = nil
             let message = error?.localizedDescription ?? "Unknown connection failure."
+            if scheduleReconnect(for: peripheral) {
+                return
+            }
             connectionState = .error("Failed to connect to \(peripheral.readableName): \(message)")
         }
     }
@@ -250,12 +321,22 @@ extension CoreBluetoothOBDClient: CBCentralManagerDelegate {
             connectedPeripheral = nil
             writeCharacteristic = nil
             notifyCharacteristic = nil
+            finishPendingCommand(with: .failure(BackendError.transport("Adapter disconnected before command completed.")))
+
+            if userInitiatedDisconnect {
+                connectionState = .disconnected
+                return
+            }
+
+            if scheduleReconnect(for: peripheral) {
+                return
+            }
+
             if let error {
                 connectionState = .error("Adapter disconnected: \(error.localizedDescription)")
             } else {
-                connectionState = .disconnected
+                connectionState = .error("Adapter disconnected unexpectedly.")
             }
-            finishPendingCommand(with: .failure(BackendError.transport("Adapter disconnected before command completed.")))
         }
     }
 }

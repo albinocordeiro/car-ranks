@@ -5,6 +5,7 @@ enum OBDConnectionState: Equatable {
     case disconnected
     case scanning
     case connecting(String)
+    case reconnecting(name: String, attempt: Int, maxAttempts: Int)
     case connected(String)
     case error(String)
 
@@ -23,6 +24,8 @@ enum OBDConnectionState: Equatable {
             return "Scanning for adapters"
         case let .connecting(name):
             return "Connecting to \(name)"
+        case let .reconnecting(name, attempt, maxAttempts):
+            return "Reconnecting to \(name) (\(attempt)/\(maxAttempts))"
         case let .connected(name):
             return "Connected to \(name)"
         case let .error(message):

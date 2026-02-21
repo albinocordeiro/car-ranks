@@ -1,10 +1,14 @@
 import Foundation
 
-/// Serial command workflow for ELM-compatible adapters.
+/// Serial command workflow that initializes adapters and polls standard OBD signals.
 @MainActor
 final class OBDCommandExecutor {
     private let transport: OBDBLETransport
     private var didBootstrapAdapter = false
+
+    /// Captured for debugging and telemetry diagnostics when adapter compatibility issues arise.
+    private(set) var detectedIdentity: OBDAdapterIdentity?
+    private(set) var activeInitializationProfile: OBDAdapterInitializationProfile?
 
     init(transport: OBDBLETransport) {
         self.transport = transport
@@ -13,24 +17,28 @@ final class OBDCommandExecutor {
     func bootstrapAdapterIfNeeded() async throws {
         guard !didBootstrapAdapter else { return }
 
-        // Keep initialization explicit to make adapter compatibility issues easy to debug.
-        let initCommands = [
-            "ATZ", // reset adapter
-            "ATE0", // echo off
-            "ATL0", // linefeeds off
-            "ATS0", // spaces off
-            "ATH0", // headers off
-            "ATSP0", // auto protocol detection
-        ]
+        detectedIdentity = try? await probeAdapterIdentity()
+        let plans = OBDAdapterInitializationProfile.fallbackOrder(preferred: detectedIdentity?.profile)
 
-        for command in initCommands {
-            _ = try await transport.sendRawCommand(command)
+        var lastError: Error = BackendError.transport("OBD adapter initialization failed before commands were sent.")
+        for profile in plans {
+            do {
+                try await runInitializationPlan(for: profile)
+                activeInitializationProfile = profile
+                didBootstrapAdapter = true
+                return
+            } catch {
+                lastError = error
+            }
         }
-        didBootstrapAdapter = true
+
+        throw lastError
     }
 
     func resetBootstrapState() {
         didBootstrapAdapter = false
+        detectedIdentity = nil
+        activeInitializationProfile = nil
     }
 
     func poll(signal: OBDStandardSignal, observedAt: Date = Date()) async -> OBDSignalRecord {
@@ -68,5 +76,54 @@ final class OBDCommandExecutor {
                 sourceSignal: signal.sourceSignal
             )
         }
+    }
+
+    private func probeAdapterIdentity() async throws -> OBDAdapterIdentity {
+        let response = try await transport.sendRawCommand("ATI")
+        return OBDAdapterIdentity.fromATIResponse(response)
+    }
+
+    private func runInitializationPlan(for profile: OBDAdapterInitializationProfile) async throws {
+        let steps = OBDInitializationPlan.steps(for: profile)
+        for step in steps {
+            do {
+                let rawResponse = try await transport.sendRawCommand(step.command)
+                if step.isRequired {
+                    try validateRequiredResponse(rawResponse, forCommand: step.command)
+                }
+            } catch {
+                if step.isRequired {
+                    throw error
+                }
+            }
+        }
+    }
+
+    private func validateRequiredResponse(_ rawResponse: String, forCommand command: String) throws {
+        let normalized = normalize(rawResponse)
+        guard !normalized.isEmpty else {
+            throw BackendError.transport("Adapter command \(command) returned an empty response.")
+        }
+
+        let uppercased = normalized.uppercased()
+        let knownFailureTokens = [
+            "UNABLE TO CONNECT",
+            "NO CARRIER",
+            "ERROR",
+            "STOPPED",
+            "?",
+        ]
+        if knownFailureTokens.contains(where: { uppercased.contains($0) }) {
+            throw BackendError.transport("Adapter command \(command) failed with '\(normalized)'.")
+        }
+    }
+
+    private func normalize(_ rawResponse: String) -> String {
+        rawResponse
+            .replacingOccurrences(of: ">", with: " ")
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
     }
 }

@@ -24,6 +24,7 @@ final class OBDCaptureViewModel: ObservableObject {
     private let telemetryIngestClient: TelemetryIngestClient
     private let sessionProvider: () -> SessionContext
     private let appVersionProvider: () -> String
+    private var shouldResumeCaptureAfterReconnect = false
     private var cancellables: Set<AnyCancellable> = []
 
     init(
@@ -57,6 +58,7 @@ final class OBDCaptureViewModel: ObservableObject {
     }
 
     func disconnect() {
+        shouldResumeCaptureAfterReconnect = false
         if isCapturing {
             captureCoordinator.stopCapture()
         }
@@ -67,6 +69,7 @@ final class OBDCaptureViewModel: ObservableObject {
 
     func toggleCapture() {
         if isCapturing {
+            shouldResumeCaptureAfterReconnect = false
             captureCoordinator.stopCapture()
             statusMessage = "Capture stopped with \(pendingRecordCount) pending records."
             return
@@ -146,13 +149,36 @@ final class OBDCaptureViewModel: ObservableObject {
                 guard let self else { return }
                 connectionState = state
 
-                if !state.isConnected, isCapturing {
-                    captureCoordinator.stopCapture()
-                    statusMessage = "Capture stopped because adapter disconnected."
-                }
-
-                if case let .error(message) = state {
-                    statusMessage = message
+                switch state {
+                case .connected:
+                    if shouldResumeCaptureAfterReconnect {
+                        shouldResumeCaptureAfterReconnect = false
+                        let interval = parsedSampleInterval
+                        captureCoordinator.startCapture(sampleIntervalSeconds: interval)
+                        statusMessage = "Adapter reconnected. Capture resumed every \(interval)s."
+                    }
+                case .reconnecting:
+                    if isCapturing {
+                        shouldResumeCaptureAfterReconnect = true
+                        captureCoordinator.stopCapture()
+                        statusMessage = "Adapter link dropped. Waiting to reconnect..."
+                    }
+                case .error:
+                    shouldResumeCaptureAfterReconnect = false
+                    if isCapturing {
+                        captureCoordinator.stopCapture()
+                    }
+                    if case let .error(message) = state {
+                        statusMessage = message
+                    }
+                case .disconnected:
+                    shouldResumeCaptureAfterReconnect = false
+                    if isCapturing {
+                        captureCoordinator.stopCapture()
+                        statusMessage = "Capture stopped because adapter disconnected."
+                    }
+                case .scanning, .connecting:
+                    break
                 }
             }
             .store(in: &cancellables)

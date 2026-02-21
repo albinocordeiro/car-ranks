@@ -205,6 +205,8 @@ struct OBDCaptureView: View {
         switch viewModel.connectionState {
         case .connected:
             return .green
+        case .reconnecting:
+            return .orange
         case .error:
             return .red
         default:
