@@ -1,0 +1,8 @@
+{
+  "vehicle_uid": "1df2e819-c57e-4fd6-9808-65fcb5f613b0",
+  "generated_at": "2026-02-20T11:00:00Z",
+  "timeframe": "90d",
+  "temperature_bin": "all",
+  "ranking_type": "ev_range_efficiency",
+  "kpis": []
+}

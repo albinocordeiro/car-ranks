@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-02-20T11:05:00Z",
+  "ranking_type": "ev_temperature_impact",
+  "timeframe": "90d",
+  "temperature_bin": "cold",
+  "filters": {
+    "powertrain_class": "bev",
+    "make": null,
+    "model": null,
+    "trim": null,
+    "year_band": null,
+    "region": null
+  },
+  "cohort": {
+    "cohort_key": "bev|unknown|unknown|unknown|unknown",
+    "cohort_size": 0,
+    "sample_gate_passed": false
+  },
+  "rows": [],
+  "page": {
+    "limit": 10,
+    "offset": 0,
+    "has_more": false
+  }
+}

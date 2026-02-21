@@ -1,0 +1,742 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		01F70614D3FD347D909061B6 /* kpis-charging-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = E46117508BCE4515CBF7E1E8 /* kpis-charging-empty.json */; };
+		085B23810C86B535D728059D /* rankings-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = 7DE2ADAB0AB96812EDC0D1F0 /* rankings-empty.json */; };
+		1126DD89554BD0205578910A /* KpiReadinessViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 238666A2301CE1D16F642581 /* KpiReadinessViewModel.swift */; };
+		13B19FF773CB96FA0A2C771C /* DevSessionPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F18C7F890AFAE6A06A73775 /* DevSessionPanelView.swift */; };
+		17D39BB206D8519319D3B702 /* RankingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5AE8B5DFED756592D49232A /* RankingsViewModel.swift */; };
+		1D75C7FAD9F10F47B9593158 /* KpiMeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C2B3E60CABEE8B28A2F24DB /* KpiMeView.swift */; };
+		1FF4BF9A9A3D07AF650B1D48 /* kpis-me-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = 4E26D30A74AA5C5A39391902 /* kpis-me-empty.json */; };
+		20FDA0B5A9BD54EE8F86DED7 /* LiveBackendClientHeaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D172718EFFD6FC9F1EC9C25 /* LiveBackendClientHeaderTests.swift */; };
+		216AD3269352834B2E7BAA20 /* kpis-readiness-response.json in Resources */ = {isa = PBXBuildFile; fileRef = 90D8CFDB080CA3200A5A4E9A /* kpis-readiness-response.json */; };
+		31AFCDA6EC3CCED5C57EB3E3 /* rankings-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = 7DE2ADAB0AB96812EDC0D1F0 /* rankings-empty.json */; };
+		3944E05CC49643133BE1B873 /* rankings-response.json in Resources */ = {isa = PBXBuildFile; fileRef = 45F3EAE3AAE1A8B6B71DA01E /* rankings-response.json */; };
+		422DC230B34C2A836EA66EDD /* KpiTemperatureImpactViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09279CB05824C08332794C1C /* KpiTemperatureImpactViewModel.swift */; };
+		4CE241F142426BD7B41FFBA9 /* RankingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C4FD6B23CCB200CBF286EA /* RankingsView.swift */; };
+		4D31072B6754824DDEDAE6C0 /* KpiMetricRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F313D7B781ECEEC59EF9E5F4 /* KpiMetricRowView.swift */; };
+		5330C59433CB3CF1080CC6FC /* kpis-readiness-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = D6F67ACB7E1BFB193B2798A1 /* kpis-readiness-empty.json */; };
+		5923D24E8015AE05A09CE460 /* DevSessionPanelViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B731A327FD0F19117A614138 /* DevSessionPanelViewModel.swift */; };
+		5AC74B5D876A3B7BE4EA1009 /* CarRanksApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 433DF34CA9F2C17E51A85AAA /* CarRanksApp.swift */; };
+		5C9CC376F1B4C5BA903F3D79 /* KpiTemperatureImpactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5988E2DD73BB50E3A4A2491E /* KpiTemperatureImpactView.swift */; };
+		68038AAEFAD54526B61419E7 /* AppEnvironmentConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9073E2D2D29E5563942943DF /* AppEnvironmentConfig.swift */; };
+		6A8052257FB39E085AAD0460 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2995D54F2E98933219612D63 /* RootView.swift */; };
+		6C855381FE30DF5C9C78F886 /* DebugShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDED33C6C1298C5680B1D574 /* DebugShellView.swift */; };
+		6EE0FDD6F6BCEC4D0A6CB691 /* BackendClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EA116FE25276016DE951160 /* BackendClient.swift */; };
+		75160CF1C1003098E0D1B729 /* CaptureScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879597CCCA0017C9046D491C /* CaptureScenario.swift */; };
+		764489D93AB3FA080B7B9F78 /* KpiMeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C80C90D92A726A32B1A65A /* KpiMeViewModel.swift */; };
+		79EA48C8EFE359BAEC7181F2 /* kpis-temperature-impact-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = BAB384DA4A3358FC01ABA4DE /* kpis-temperature-impact-empty.json */; };
+		7C9B38C6FED3C884378FA2CF /* TestFixtureLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE79D0DB8B8AC37C7932F026 /* TestFixtureLoader.swift */; };
+		7CB48FF31F2FE6E235D0F27E /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABEB3029FC614E1FC3B7042D /* APIModels.swift */; };
+		8200D87318CA7D3D3C4DBCE7 /* SessionContextStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFB3CCD750FDE595C80D4CD9 /* SessionContextStoreTests.swift */; };
+		8B2A1EDC5608AD8C9317EB27 /* kpis-me-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = 4E26D30A74AA5C5A39391902 /* kpis-me-empty.json */; };
+		94478229F7C95C4ED96412F6 /* rankings-response.json in Resources */ = {isa = PBXBuildFile; fileRef = 45F3EAE3AAE1A8B6B71DA01E /* rankings-response.json */; };
+		97B0C0C99C79193B6E994109 /* FixtureLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 530F8B26D96393327BE4F19D /* FixtureLoader.swift */; };
+		A03AAD1EFD0419F36FB348B4 /* BackendError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B6E8B51E1A6A33922E4C78F /* BackendError.swift */; };
+		A075006C538EA8C386A348FA /* MockBackendClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA57DB51C3768BB64B85A51 /* MockBackendClient.swift */; };
+		A2EF9A256FB8FF964757AE1F /* ContractDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1864B6653A2718562FAD9F65 /* ContractDecodingTests.swift */; };
+		A4F2FAC7626A0633065ABF44 /* kpis-me-response.json in Resources */ = {isa = PBXBuildFile; fileRef = 29EC8C44F43987FEE3978FC8 /* kpis-me-response.json */; };
+		A89AB5769441A517D78A6D42 /* kpis-temperature-impact-response.json in Resources */ = {isa = PBXBuildFile; fileRef = ADA341C0875C7C2D0F0C24E7 /* kpis-temperature-impact-response.json */; };
+		AC6AA7A9A0764CA08B2EB4CB /* KpiChargingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41C017F1F2CE0EC6F57389DF /* KpiChargingView.swift */; };
+		AE8E348A3612E077F2E983D2 /* SessionContextStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39D689F72F27A24ABC07639 /* SessionContextStore.swift */; };
+		B02D9B722A55900F593D521E /* kpis-temperature-impact-response.json in Resources */ = {isa = PBXBuildFile; fileRef = ADA341C0875C7C2D0F0C24E7 /* kpis-temperature-impact-response.json */; };
+		B57461ECF2CAB39D40E00750 /* kpis-charging-response.json in Resources */ = {isa = PBXBuildFile; fileRef = EF2046D7BF57D84AD01CEBC5 /* kpis-charging-response.json */; };
+		B6303D1DD787BAF073F982EF /* kpis-readiness-response.json in Resources */ = {isa = PBXBuildFile; fileRef = 90D8CFDB080CA3200A5A4E9A /* kpis-readiness-response.json */; };
+		BB6B141FB1DD3508DE5059C8 /* DataSourceMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE72E983B720ECFFA436AED8 /* DataSourceMode.swift */; };
+		C5655BCECD5F0AB4566827A5 /* CarRanksAppUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CE8A33A4E407C6109F27D9A /* CarRanksAppUITests.swift */; };
+		D3F2C960F7234730169BB986 /* KpiReadinessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30AAA2E3D52205F9C268C7C4 /* KpiReadinessView.swift */; };
+		E3A95947B2166A654671685A /* kpis-readiness-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = D6F67ACB7E1BFB193B2798A1 /* kpis-readiness-empty.json */; };
+		E64B105022A4167F463FBB99 /* kpis-temperature-impact-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = BAB384DA4A3358FC01ABA4DE /* kpis-temperature-impact-empty.json */; };
+		E811D0E2F723C2EE41B74D1A /* kpis-me-response.json in Resources */ = {isa = PBXBuildFile; fileRef = 29EC8C44F43987FEE3978FC8 /* kpis-me-response.json */; };
+		EB17790EC681C65678F0DDA5 /* KpiChargingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A09A643822D63A656E3DA844 /* KpiChargingViewModel.swift */; };
+		EB203A46621442A2CF38FB1A /* kpis-charging-response.json in Resources */ = {isa = PBXBuildFile; fileRef = EF2046D7BF57D84AD01CEBC5 /* kpis-charging-response.json */; };
+		EC85E8A2C56669FDF0AA0175 /* LiveBackendClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEEA0234A24E089178FF728F /* LiveBackendClient.swift */; };
+		F1F0C97A35B8AF476262E9C8 /* kpis-charging-empty.json in Resources */ = {isa = PBXBuildFile; fileRef = E46117508BCE4515CBF7E1E8 /* kpis-charging-empty.json */; };
+		FD8214133C7248CA44B080F5 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BFC2E68E147485FD2E4F1F6 /* AppEnvironment.swift */; };
+		FF8C2A12B71CD5363C1D25E7 /* SessionContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41143BF9856329BC2C7C0374 /* SessionContext.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B3FC95CBF5C6195DC91B26FD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6080E7452FE590ADCC753121 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ACFCED0EBC2DA4F5D1927735;
+			remoteInfo = CarRanksApp;
+		};
+		F94A64AAD5DC61198379D7FB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6080E7452FE590ADCC753121 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ACFCED0EBC2DA4F5D1927735;
+			remoteInfo = CarRanksApp;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0006B95D077B34E4CC3D4395 /* CarRanksAppTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CarRanksAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		09279CB05824C08332794C1C /* KpiTemperatureImpactViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiTemperatureImpactViewModel.swift; sourceTree = "<group>"; };
+		0B6E8B51E1A6A33922E4C78F /* BackendError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendError.swift; sourceTree = "<group>"; };
+		0CE8A33A4E407C6109F27D9A /* CarRanksAppUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarRanksAppUITests.swift; sourceTree = "<group>"; };
+		0D172718EFFD6FC9F1EC9C25 /* LiveBackendClientHeaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveBackendClientHeaderTests.swift; sourceTree = "<group>"; };
+		1864B6653A2718562FAD9F65 /* ContractDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContractDecodingTests.swift; sourceTree = "<group>"; };
+		238666A2301CE1D16F642581 /* KpiReadinessViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiReadinessViewModel.swift; sourceTree = "<group>"; };
+		25B6ED06ABC6C124F324C2CB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		2995D54F2E98933219612D63 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		29EC8C44F43987FEE3978FC8 /* kpis-me-response.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-me-response.json"; sourceTree = "<group>"; };
+		2C2B3E60CABEE8B28A2F24DB /* KpiMeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiMeView.swift; sourceTree = "<group>"; };
+		30AAA2E3D52205F9C268C7C4 /* KpiReadinessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiReadinessView.swift; sourceTree = "<group>"; };
+		41143BF9856329BC2C7C0374 /* SessionContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionContext.swift; sourceTree = "<group>"; };
+		41C017F1F2CE0EC6F57389DF /* KpiChargingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiChargingView.swift; sourceTree = "<group>"; };
+		433DF34CA9F2C17E51A85AAA /* CarRanksApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarRanksApp.swift; sourceTree = "<group>"; };
+		45F3EAE3AAE1A8B6B71DA01E /* rankings-response.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "rankings-response.json"; sourceTree = "<group>"; };
+		4E26D30A74AA5C5A39391902 /* kpis-me-empty.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-me-empty.json"; sourceTree = "<group>"; };
+		530F8B26D96393327BE4F19D /* FixtureLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixtureLoader.swift; sourceTree = "<group>"; };
+		5988E2DD73BB50E3A4A2491E /* KpiTemperatureImpactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiTemperatureImpactView.swift; sourceTree = "<group>"; };
+		5C0EAEB57B489A67699227CF /* CarRanksApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CarRanksApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5F18C7F890AFAE6A06A73775 /* DevSessionPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionPanelView.swift; sourceTree = "<group>"; };
+		6EA116FE25276016DE951160 /* BackendClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendClient.swift; sourceTree = "<group>"; };
+		7DE2ADAB0AB96812EDC0D1F0 /* rankings-empty.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "rankings-empty.json"; sourceTree = "<group>"; };
+		84C4FD6B23CCB200CBF286EA /* RankingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingsView.swift; sourceTree = "<group>"; };
+		879597CCCA0017C9046D491C /* CaptureScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureScenario.swift; sourceTree = "<group>"; };
+		8BFC2E68E147485FD2E4F1F6 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		9073E2D2D29E5563942943DF /* AppEnvironmentConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironmentConfig.swift; sourceTree = "<group>"; };
+		90D8CFDB080CA3200A5A4E9A /* kpis-readiness-response.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-readiness-response.json"; sourceTree = "<group>"; };
+		9EF6383F20F155B4CF3A5890 /* CarRanksAppUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = CarRanksAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A09A643822D63A656E3DA844 /* KpiChargingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiChargingViewModel.swift; sourceTree = "<group>"; };
+		ABEB3029FC614E1FC3B7042D /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
+		ADA341C0875C7C2D0F0C24E7 /* kpis-temperature-impact-response.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-temperature-impact-response.json"; sourceTree = "<group>"; };
+		B731A327FD0F19117A614138 /* DevSessionPanelViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionPanelViewModel.swift; sourceTree = "<group>"; };
+		B7C80C90D92A726A32B1A65A /* KpiMeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiMeViewModel.swift; sourceTree = "<group>"; };
+		BAB384DA4A3358FC01ABA4DE /* kpis-temperature-impact-empty.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-temperature-impact-empty.json"; sourceTree = "<group>"; };
+		BE79D0DB8B8AC37C7932F026 /* TestFixtureLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestFixtureLoader.swift; sourceTree = "<group>"; };
+		CDED33C6C1298C5680B1D574 /* DebugShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugShellView.swift; sourceTree = "<group>"; };
+		CE72E983B720ECFFA436AED8 /* DataSourceMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourceMode.swift; sourceTree = "<group>"; };
+		CFB3CCD750FDE595C80D4CD9 /* SessionContextStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionContextStoreTests.swift; sourceTree = "<group>"; };
+		D6F67ACB7E1BFB193B2798A1 /* kpis-readiness-empty.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-readiness-empty.json"; sourceTree = "<group>"; };
+		DEEA0234A24E089178FF728F /* LiveBackendClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveBackendClient.swift; sourceTree = "<group>"; };
+		DFA57DB51C3768BB64B85A51 /* MockBackendClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockBackendClient.swift; sourceTree = "<group>"; };
+		E39D689F72F27A24ABC07639 /* SessionContextStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionContextStore.swift; sourceTree = "<group>"; };
+		E46117508BCE4515CBF7E1E8 /* kpis-charging-empty.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-charging-empty.json"; sourceTree = "<group>"; };
+		EF2046D7BF57D84AD01CEBC5 /* kpis-charging-response.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "kpis-charging-response.json"; sourceTree = "<group>"; };
+		F313D7B781ECEEC59EF9E5F4 /* KpiMetricRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KpiMetricRowView.swift; sourceTree = "<group>"; };
+		F5AE8B5DFED756592D49232A /* RankingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingsViewModel.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		007026E935D8858D69B034C3 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				8BFC2E68E147485FD2E4F1F6 /* AppEnvironment.swift */,
+				9073E2D2D29E5563942943DF /* AppEnvironmentConfig.swift */,
+				879597CCCA0017C9046D491C /* CaptureScenario.swift */,
+				433DF34CA9F2C17E51A85AAA /* CarRanksApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		2533C988649C86DCD1754736 = {
+			isa = PBXGroup;
+			children = (
+				5D853A3133878A09D1A34114 /* CarRanksApp */,
+				6F88295D8925D9ADD31636CA /* CarRanksAppTests */,
+				57AE70E61AED7C2A81A02696 /* CarRanksAppUITests */,
+				8B2E38F18E5A3F62FF6E359F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		398F0D77BAA22CEB33C8D026 /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				E46117508BCE4515CBF7E1E8 /* kpis-charging-empty.json */,
+				EF2046D7BF57D84AD01CEBC5 /* kpis-charging-response.json */,
+				4E26D30A74AA5C5A39391902 /* kpis-me-empty.json */,
+				29EC8C44F43987FEE3978FC8 /* kpis-me-response.json */,
+				D6F67ACB7E1BFB193B2798A1 /* kpis-readiness-empty.json */,
+				90D8CFDB080CA3200A5A4E9A /* kpis-readiness-response.json */,
+				BAB384DA4A3358FC01ABA4DE /* kpis-temperature-impact-empty.json */,
+				ADA341C0875C7C2D0F0C24E7 /* kpis-temperature-impact-response.json */,
+				7DE2ADAB0AB96812EDC0D1F0 /* rankings-empty.json */,
+				45F3EAE3AAE1A8B6B71DA01E /* rankings-response.json */,
+			);
+			path = Fixtures;
+			sourceTree = "<group>";
+		};
+		46529A4C202C29D657EBB7BD /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				B731A327FD0F19117A614138 /* DevSessionPanelViewModel.swift */,
+				A09A643822D63A656E3DA844 /* KpiChargingViewModel.swift */,
+				B7C80C90D92A726A32B1A65A /* KpiMeViewModel.swift */,
+				238666A2301CE1D16F642581 /* KpiReadinessViewModel.swift */,
+				09279CB05824C08332794C1C /* KpiTemperatureImpactViewModel.swift */,
+				F5AE8B5DFED756592D49232A /* RankingsViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		57AE70E61AED7C2A81A02696 /* CarRanksAppUITests */ = {
+			isa = PBXGroup;
+			children = (
+				0CE8A33A4E407C6109F27D9A /* CarRanksAppUITests.swift */,
+			);
+			path = CarRanksAppUITests;
+			sourceTree = "<group>";
+		};
+		5D853A3133878A09D1A34114 /* CarRanksApp */ = {
+			isa = PBXGroup;
+			children = (
+				25B6ED06ABC6C124F324C2CB /* Info.plist */,
+				007026E935D8858D69B034C3 /* App */,
+				398F0D77BAA22CEB33C8D026 /* Fixtures */,
+				F34C082B2197BACAF00BBCDE /* Models */,
+				E4F65EE4210D8E7D4F97132E /* Networking */,
+				46529A4C202C29D657EBB7BD /* ViewModels */,
+				A87A09ECB4390D7175D73810 /* Views */,
+			);
+			path = CarRanksApp;
+			sourceTree = "<group>";
+		};
+		6F88295D8925D9ADD31636CA /* CarRanksAppTests */ = {
+			isa = PBXGroup;
+			children = (
+				1864B6653A2718562FAD9F65 /* ContractDecodingTests.swift */,
+				0D172718EFFD6FC9F1EC9C25 /* LiveBackendClientHeaderTests.swift */,
+				CFB3CCD750FDE595C80D4CD9 /* SessionContextStoreTests.swift */,
+				BE79D0DB8B8AC37C7932F026 /* TestFixtureLoader.swift */,
+			);
+			path = CarRanksAppTests;
+			sourceTree = "<group>";
+		};
+		8B2E38F18E5A3F62FF6E359F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5C0EAEB57B489A67699227CF /* CarRanksApp.app */,
+				0006B95D077B34E4CC3D4395 /* CarRanksAppTests.xctest */,
+				9EF6383F20F155B4CF3A5890 /* CarRanksAppUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A87A09ECB4390D7175D73810 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				CDED33C6C1298C5680B1D574 /* DebugShellView.swift */,
+				5F18C7F890AFAE6A06A73775 /* DevSessionPanelView.swift */,
+				41C017F1F2CE0EC6F57389DF /* KpiChargingView.swift */,
+				F313D7B781ECEEC59EF9E5F4 /* KpiMetricRowView.swift */,
+				2C2B3E60CABEE8B28A2F24DB /* KpiMeView.swift */,
+				30AAA2E3D52205F9C268C7C4 /* KpiReadinessView.swift */,
+				5988E2DD73BB50E3A4A2491E /* KpiTemperatureImpactView.swift */,
+				84C4FD6B23CCB200CBF286EA /* RankingsView.swift */,
+				2995D54F2E98933219612D63 /* RootView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E4F65EE4210D8E7D4F97132E /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				6EA116FE25276016DE951160 /* BackendClient.swift */,
+				0B6E8B51E1A6A33922E4C78F /* BackendError.swift */,
+				530F8B26D96393327BE4F19D /* FixtureLoader.swift */,
+				DEEA0234A24E089178FF728F /* LiveBackendClient.swift */,
+				DFA57DB51C3768BB64B85A51 /* MockBackendClient.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		F34C082B2197BACAF00BBCDE /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				ABEB3029FC614E1FC3B7042D /* APIModels.swift */,
+				CE72E983B720ECFFA436AED8 /* DataSourceMode.swift */,
+				41143BF9856329BC2C7C0374 /* SessionContext.swift */,
+				E39D689F72F27A24ABC07639 /* SessionContextStore.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4F317D3A3E4971DB3711E2D7 /* CarRanksAppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E1B84322B8914DB9B9A9EED4 /* Build configuration list for PBXNativeTarget "CarRanksAppUITests" */;
+			buildPhases = (
+				1A7CC30824CFB880DC412145 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4EC813723B8202B5B31F58E0 /* PBXTargetDependency */,
+			);
+			name = CarRanksAppUITests;
+			packageProductDependencies = (
+			);
+			productName = CarRanksAppUITests;
+			productReference = 9EF6383F20F155B4CF3A5890 /* CarRanksAppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		852CB0224C5C349EA9C69EEB /* CarRanksAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1D66243F23A50FDB73F32B2B /* Build configuration list for PBXNativeTarget "CarRanksAppTests" */;
+			buildPhases = (
+				6DAFA87B0F9CC8CBBE455F34 /* Sources */,
+				F60C5EF9D2BA35168A607D47 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E71325FA32977B7C72D8F5E0 /* PBXTargetDependency */,
+			);
+			name = CarRanksAppTests;
+			packageProductDependencies = (
+			);
+			productName = CarRanksAppTests;
+			productReference = 0006B95D077B34E4CC3D4395 /* CarRanksAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		ACFCED0EBC2DA4F5D1927735 /* CarRanksApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1E9CA178E442C71F3DB0F16 /* Build configuration list for PBXNativeTarget "CarRanksApp" */;
+			buildPhases = (
+				EC45A1A0F342C7A6EC213904 /* Sources */,
+				F2DA814104E0E5E82875F964 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CarRanksApp;
+			packageProductDependencies = (
+			);
+			productName = CarRanksApp;
+			productReference = 5C0EAEB57B489A67699227CF /* CarRanksApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		6080E7452FE590ADCC753121 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					4F317D3A3E4971DB3711E2D7 = {
+						TestTargetID = ACFCED0EBC2DA4F5D1927735;
+					};
+				};
+			};
+			buildConfigurationList = 3B80A331D10B30984FE5F484 /* Build configuration list for PBXProject "CarRanksApp" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 2533C988649C86DCD1754736;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				ACFCED0EBC2DA4F5D1927735 /* CarRanksApp */,
+				852CB0224C5C349EA9C69EEB /* CarRanksAppTests */,
+				4F317D3A3E4971DB3711E2D7 /* CarRanksAppUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F2DA814104E0E5E82875F964 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1F0C97A35B8AF476262E9C8 /* kpis-charging-empty.json in Resources */,
+				EB203A46621442A2CF38FB1A /* kpis-charging-response.json in Resources */,
+				8B2A1EDC5608AD8C9317EB27 /* kpis-me-empty.json in Resources */,
+				A4F2FAC7626A0633065ABF44 /* kpis-me-response.json in Resources */,
+				5330C59433CB3CF1080CC6FC /* kpis-readiness-empty.json in Resources */,
+				B6303D1DD787BAF073F982EF /* kpis-readiness-response.json in Resources */,
+				E64B105022A4167F463FBB99 /* kpis-temperature-impact-empty.json in Resources */,
+				B02D9B722A55900F593D521E /* kpis-temperature-impact-response.json in Resources */,
+				31AFCDA6EC3CCED5C57EB3E3 /* rankings-empty.json in Resources */,
+				94478229F7C95C4ED96412F6 /* rankings-response.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F60C5EF9D2BA35168A607D47 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01F70614D3FD347D909061B6 /* kpis-charging-empty.json in Resources */,
+				B57461ECF2CAB39D40E00750 /* kpis-charging-response.json in Resources */,
+				1FF4BF9A9A3D07AF650B1D48 /* kpis-me-empty.json in Resources */,
+				E811D0E2F723C2EE41B74D1A /* kpis-me-response.json in Resources */,
+				E3A95947B2166A654671685A /* kpis-readiness-empty.json in Resources */,
+				216AD3269352834B2E7BAA20 /* kpis-readiness-response.json in Resources */,
+				79EA48C8EFE359BAEC7181F2 /* kpis-temperature-impact-empty.json in Resources */,
+				A89AB5769441A517D78A6D42 /* kpis-temperature-impact-response.json in Resources */,
+				085B23810C86B535D728059D /* rankings-empty.json in Resources */,
+				3944E05CC49643133BE1B873 /* rankings-response.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1A7CC30824CFB880DC412145 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C5655BCECD5F0AB4566827A5 /* CarRanksAppUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6DAFA87B0F9CC8CBBE455F34 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A2EF9A256FB8FF964757AE1F /* ContractDecodingTests.swift in Sources */,
+				20FDA0B5A9BD54EE8F86DED7 /* LiveBackendClientHeaderTests.swift in Sources */,
+				8200D87318CA7D3D3C4DBCE7 /* SessionContextStoreTests.swift in Sources */,
+				7C9B38C6FED3C884378FA2CF /* TestFixtureLoader.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EC45A1A0F342C7A6EC213904 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7CB48FF31F2FE6E235D0F27E /* APIModels.swift in Sources */,
+				FD8214133C7248CA44B080F5 /* AppEnvironment.swift in Sources */,
+				68038AAEFAD54526B61419E7 /* AppEnvironmentConfig.swift in Sources */,
+				6EE0FDD6F6BCEC4D0A6CB691 /* BackendClient.swift in Sources */,
+				A03AAD1EFD0419F36FB348B4 /* BackendError.swift in Sources */,
+				75160CF1C1003098E0D1B729 /* CaptureScenario.swift in Sources */,
+				5AC74B5D876A3B7BE4EA1009 /* CarRanksApp.swift in Sources */,
+				BB6B141FB1DD3508DE5059C8 /* DataSourceMode.swift in Sources */,
+				6C855381FE30DF5C9C78F886 /* DebugShellView.swift in Sources */,
+				13B19FF773CB96FA0A2C771C /* DevSessionPanelView.swift in Sources */,
+				5923D24E8015AE05A09CE460 /* DevSessionPanelViewModel.swift in Sources */,
+				97B0C0C99C79193B6E994109 /* FixtureLoader.swift in Sources */,
+				AC6AA7A9A0764CA08B2EB4CB /* KpiChargingView.swift in Sources */,
+				EB17790EC681C65678F0DDA5 /* KpiChargingViewModel.swift in Sources */,
+				1D75C7FAD9F10F47B9593158 /* KpiMeView.swift in Sources */,
+				764489D93AB3FA080B7B9F78 /* KpiMeViewModel.swift in Sources */,
+				4D31072B6754824DDEDAE6C0 /* KpiMetricRowView.swift in Sources */,
+				D3F2C960F7234730169BB986 /* KpiReadinessView.swift in Sources */,
+				1126DD89554BD0205578910A /* KpiReadinessViewModel.swift in Sources */,
+				5C9CC376F1B4C5BA903F3D79 /* KpiTemperatureImpactView.swift in Sources */,
+				422DC230B34C2A836EA66EDD /* KpiTemperatureImpactViewModel.swift in Sources */,
+				EC85E8A2C56669FDF0AA0175 /* LiveBackendClient.swift in Sources */,
+				A075006C538EA8C386A348FA /* MockBackendClient.swift in Sources */,
+				4CE241F142426BD7B41FFBA9 /* RankingsView.swift in Sources */,
+				17D39BB206D8519319D3B702 /* RankingsViewModel.swift in Sources */,
+				6A8052257FB39E085AAD0460 /* RootView.swift in Sources */,
+				FF8C2A12B71CD5363C1D25E7 /* SessionContext.swift in Sources */,
+				AE8E348A3612E077F2E983D2 /* SessionContextStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4EC813723B8202B5B31F58E0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = ACFCED0EBC2DA4F5D1927735 /* CarRanksApp */;
+			targetProxy = B3FC95CBF5C6195DC91B26FD /* PBXContainerItemProxy */;
+		};
+		E71325FA32977B7C72D8F5E0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = ACFCED0EBC2DA4F5D1927735 /* CarRanksApp */;
+			targetProxy = F94A64AAD5DC61198379D7FB /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		086C40D0F664881DBAE117D0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.albinocordeiro.carranks.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = CarRanksApp;
+			};
+			name = Release;
+		};
+		09D9797F55F2735C2133944A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				API_BASE_URL = "http://127.0.0.1:8080";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEFAULT_VEHICLE_UID = "5bf1cb17-a0c6-404b-81f6-c407b80ea3b4";
+				DEFAULT_X_USER_ID = "54e9b082-226f-4b7b-b98b-703832c5dfb2";
+				INFOPLIST_FILE = CarRanksApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.albinocordeiro.carranks;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		10735D253BEA285D963C2A16 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		2BE7118FCADC41097515259E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.albinocordeiro.carranks.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CarRanksApp.app/CarRanksApp";
+			};
+			name = Release;
+		};
+		78EF7A978FF699F11367FD8F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.albinocordeiro.carranks.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = CarRanksApp;
+			};
+			name = Debug;
+		};
+		AEF6AFD36E2288E700C3C6DF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.albinocordeiro.carranks.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CarRanksApp.app/CarRanksApp";
+			};
+			name = Debug;
+		};
+		BA71B3989B164CB35D7716D7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				API_BASE_URL = "http://127.0.0.1:8080";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEFAULT_VEHICLE_UID = "5bf1cb17-a0c6-404b-81f6-c407b80ea3b4";
+				DEFAULT_X_USER_ID = "54e9b082-226f-4b7b-b98b-703832c5dfb2";
+				INFOPLIST_FILE = CarRanksApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.albinocordeiro.carranks;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		D21D8A8F707C75711766D1AD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1D66243F23A50FDB73F32B2B /* Build configuration list for PBXNativeTarget "CarRanksAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AEF6AFD36E2288E700C3C6DF /* Debug */,
+				2BE7118FCADC41097515259E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		3B80A331D10B30984FE5F484 /* Build configuration list for PBXProject "CarRanksApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				10735D253BEA285D963C2A16 /* Debug */,
+				D21D8A8F707C75711766D1AD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E1B84322B8914DB9B9A9EED4 /* Build configuration list for PBXNativeTarget "CarRanksAppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				78EF7A978FF699F11367FD8F /* Debug */,
+				086C40D0F664881DBAE117D0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F1E9CA178E442C71F3DB0F16 /* Build configuration list for PBXNativeTarget "CarRanksApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				09D9797F55F2735C2133944A /* Debug */,
+				BA71B3989B164CB35D7716D7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 6080E7452FE590ADCC753121 /* Project object */;
+}

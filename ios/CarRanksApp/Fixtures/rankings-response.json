@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-02-20T11:05:00Z",
+  "ranking_type": "ev_temperature_impact",
+  "timeframe": "90d",
+  "temperature_bin": "cold",
+  "filters": {
+    "powertrain_class": "bev",
+    "make": null,
+    "model": null,
+    "trim": null,
+    "year_band": null,
+    "region": null
+  },
+  "cohort": {
+    "cohort_key": "bev|unknown|unknown|unknown|unknown",
+    "cohort_size": 1,
+    "sample_gate_passed": false
+  },
+  "rows": [
+    {
+      "rank": 1,
+      "vehicle_uid": "1df2e819-c57e-4fd6-9808-65fcb5f613b0",
+      "score": 49.1,
+      "confidence_level": "medium",
+      "kpis": {
+        "cold_weather_range_retention": 60.0,
+        "range_temperature_sensitivity_index": 12.5,
+        "cold_weather_charge_speed_retention": 63.3
+      }
+    }
+  ],
+  "page": {
+    "limit": 10,
+    "offset": 0,
+    "has_more": false
+  }
+}

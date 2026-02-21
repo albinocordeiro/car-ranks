@@ -1,0 +1,15 @@
+{
+  "vehicle_uid": "1df2e819-c57e-4fd6-9808-65fcb5f613b0",
+  "generated_at": "2026-02-20T11:00:00Z",
+  "baseline_temperature_bin": "mild",
+  "compare_temperature_bin": "cold",
+  "metrics": [],
+  "cohort_benchmark": {
+    "cohort_size": 1,
+    "percentiles": {
+      "cold_weather_range_retention": 100,
+      "range_temperature_sensitivity_index": 100,
+      "cold_weather_charge_speed_retention": 100
+    }
+  }
+}

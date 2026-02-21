@@ -1,0 +1,51 @@
+name: CarRanksApp
+options:
+  minimumXcodeGenVersion: 2.44.0
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: 6.0
+    MARKETING_VERSION: 1.0.0
+    CURRENT_PROJECT_VERSION: 1
+targets:
+  CarRanksApp:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: CarRanksApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.albinocordeiro.carranks
+        INFOPLIST_FILE: CarRanksApp/Info.plist
+        API_BASE_URL: http://127.0.0.1:8080
+        DEFAULT_X_USER_ID: 54e9b082-226f-4b7b-b98b-703832c5dfb2
+        DEFAULT_VEHICLE_UID: 5bf1cb17-a0c6-404b-81f6-c407b80ea3b4
+  CarRanksAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - CarRanksAppTests
+      - path: CarRanksApp/Fixtures
+        buildPhase: resources
+    dependencies:
+      - target: CarRanksApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.albinocordeiro.carranks.tests
+        GENERATE_INFOPLIST_FILE: YES
+  CarRanksAppUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - CarRanksAppUITests
+    dependencies:
+      - target: CarRanksApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.albinocordeiro.carranks.uitests
+        GENERATE_INFOPLIST_FILE: YES

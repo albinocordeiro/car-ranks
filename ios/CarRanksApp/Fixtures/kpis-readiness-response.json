@@ -1,0 +1,42 @@
+{
+  "vehicle_uid": "dfc0ef20-5f3e-4f7f-bec6-627ec68466cb",
+  "generated_at": "2026-02-20T15:00:00Z",
+  "timeframe": "90d",
+  "families": [
+    {
+      "ranking_type": "ev_range_efficiency",
+      "confidence_level": "preview",
+      "sample_count": 8,
+      "status": "preview",
+      "missing_requirements": []
+    },
+    {
+      "ranking_type": "ev_charging_performance",
+      "confidence_level": "preview",
+      "sample_count": 2,
+      "status": "preview",
+      "missing_requirements": []
+    },
+    {
+      "ranking_type": "ev_composite",
+      "confidence_level": "none",
+      "sample_count": 0,
+      "status": "not_ready",
+      "missing_requirements": [
+        "kpi_snapshots_missing"
+      ]
+    },
+    {
+      "ranking_type": "ev_temperature_impact",
+      "confidence_level": "none",
+      "sample_count": 0,
+      "status": "not_ready",
+      "missing_requirements": [
+        "cold_distance_km<20.0",
+        "cold_charging_sessions<1",
+        "mild_charging_sessions<1",
+        "temperature_kpis_missing"
+      ]
+    }
+  ]
+}

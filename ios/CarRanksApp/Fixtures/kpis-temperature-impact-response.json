@@ -1,0 +1,40 @@
+{
+  "vehicle_uid": "1df2e819-c57e-4fd6-9808-65fcb5f613b0",
+  "generated_at": "2026-02-20T11:00:00Z",
+  "baseline_temperature_bin": "mild",
+  "compare_temperature_bin": "cold",
+  "metrics": [
+    {
+      "kpi_key": "cold_weather_range_retention",
+      "value": 60.0,
+      "unit": "%",
+      "direction": "higher_is_better",
+      "confidence_level": "preview",
+      "sample_count": 2
+    },
+    {
+      "kpi_key": "range_temperature_sensitivity_index",
+      "value": 12.5,
+      "unit": "%_loss_per_10C_drop",
+      "direction": "lower_is_better",
+      "confidence_level": "preview",
+      "sample_count": 8
+    },
+    {
+      "kpi_key": "cold_weather_charge_speed_retention",
+      "value": 63.3,
+      "unit": "%",
+      "direction": "higher_is_better",
+      "confidence_level": "preview",
+      "sample_count": 1
+    }
+  ],
+  "cohort_benchmark": {
+    "cohort_size": 1,
+    "percentiles": {
+      "cold_weather_range_retention": 100,
+      "range_temperature_sensitivity_index": 100,
+      "cold_weather_charge_speed_retention": 100
+    }
+  }
+}

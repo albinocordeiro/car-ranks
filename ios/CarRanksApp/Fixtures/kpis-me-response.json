@@ -1,0 +1,65 @@
+{
+  "vehicle_uid": "1df2e819-c57e-4fd6-9808-65fcb5f613b0",
+  "generated_at": "2026-02-20T11:00:00Z",
+  "timeframe": "90d",
+  "temperature_bin": "all",
+  "ranking_type": "ev_range_efficiency",
+  "kpis": [
+    {
+      "kpi_key": "ev_net_energy_efficiency",
+      "value": 157.8,
+      "unit": "Wh_per_km",
+      "direction": "lower_is_better",
+      "confidence_level": "preview",
+      "sample_count": 8
+    },
+    {
+      "kpi_key": "ev_estimated_practical_range",
+      "value": 289.2,
+      "unit": "km",
+      "direction": "higher_is_better",
+      "confidence_level": "preview",
+      "sample_count": 8
+    },
+    {
+      "kpi_key": "ev_urban_efficiency",
+      "value": 151.3,
+      "unit": "Wh_per_km",
+      "direction": "lower_is_better",
+      "confidence_level": "preview",
+      "sample_count": 4
+    },
+    {
+      "kpi_key": "ev_highway_efficiency",
+      "value": 173.4,
+      "unit": "Wh_per_km",
+      "direction": "lower_is_better",
+      "confidence_level": "preview",
+      "sample_count": 3
+    },
+    {
+      "kpi_key": "regeneration_recovery_ratio",
+      "value": 14.9,
+      "unit": "%",
+      "direction": "higher_is_better",
+      "confidence_level": "preview",
+      "sample_count": 6
+    },
+    {
+      "kpi_key": "soc_depletion_rate_per_100km",
+      "value": 21.0,
+      "unit": "%_per_100km",
+      "direction": "lower_is_better",
+      "confidence_level": "preview",
+      "sample_count": 8
+    },
+    {
+      "kpi_key": "ev_range_efficiency_score",
+      "value": 58.2,
+      "unit": "score",
+      "direction": "higher_is_better",
+      "confidence_level": "preview",
+      "sample_count": 8
+    }
+  ]
+}
