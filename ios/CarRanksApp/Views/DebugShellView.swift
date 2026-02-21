@@ -53,6 +53,11 @@ struct DebugShellView: View {
                         RankingsScreen(environment: environment)
                     }
                     .accessibilityIdentifier("nav-rankings")
+
+                    NavigationLink("OBD Capture") {
+                        OBDCaptureScreen(environment: environment)
+                    }
+                    .accessibilityIdentifier("nav-obd-capture")
                 }
             }
             .navigationTitle("Car Ranks MVP")

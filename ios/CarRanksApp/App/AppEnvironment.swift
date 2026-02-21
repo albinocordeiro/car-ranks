@@ -9,6 +9,7 @@ final class AppEnvironment: ObservableObject {
     private let sessionStore: SessionContextStore
     private let baseURL: URL
     private let captureScenario: CaptureScenario
+    private lazy var obdBLEClientInstance = CoreBluetoothOBDClient()
 
     init(
         sessionStore: SessionContextStore = SessionContextStore(),
@@ -60,6 +61,22 @@ final class AppEnvironment: ObservableObject {
             }
             return liveClient
         }
+    }
+
+    func makeTelemetryIngestClient() -> TelemetryIngestClient {
+        TelemetryIngestClient(
+            baseURL: baseURL,
+            sessionProvider: { [weak self] in
+                guard let self else {
+                    return SessionContext(userID: AppEnvironmentConfig.defaultUserID, vehicleUID: AppEnvironmentConfig.defaultVehicleUID)
+                }
+                return self.sessionContext
+            }
+        )
+    }
+
+    var obdBLEClient: CoreBluetoothOBDClient {
+        obdBLEClientInstance
     }
 
     var activeCaptureScenario: CaptureScenario {
