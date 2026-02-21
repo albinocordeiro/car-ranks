@@ -59,6 +59,14 @@ struct OBDCaptureView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("obd-status-message")
 
+            LabeledContent("Adapter Identity", value: viewModel.adapterIdentitySummary)
+                .font(.caption)
+                .accessibilityIdentifier("obd-adapter-identity")
+
+            LabeledContent("Init Profile", value: viewModel.initializationProfileSummary)
+                .font(.caption)
+                .accessibilityIdentifier("obd-init-profile")
+
             HStack {
                 Button("Scan") {
                     viewModel.startScanning()

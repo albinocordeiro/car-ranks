@@ -7,6 +7,8 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
     @Published private(set) var recentRecords: [OBDSignalRecord] = []
     @Published private(set) var pendingRecordCount = 0
     @Published private(set) var lastCaptureError: String?
+    @Published private(set) var adapterIdentitySummary: String?
+    @Published private(set) var initializationProfileSummary: String?
 
     private let commandExecutor: OBDCommandExecutor
     private let now: () -> Date
@@ -115,6 +117,8 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
     private func runCaptureLoop() async {
         do {
             try await commandExecutor.bootstrapAdapterIfNeeded()
+            initializationProfileSummary = commandExecutor.activeInitializationProfile?.rawValue.uppercased()
+            adapterIdentitySummary = commandExecutor.detectedIdentity?.normalizedValue ?? "Unknown adapter identity"
         } catch {
             lastCaptureError = error.localizedDescription
             isCapturing = false

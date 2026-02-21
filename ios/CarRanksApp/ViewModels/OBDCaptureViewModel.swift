@@ -16,6 +16,8 @@ final class OBDCaptureViewModel: ObservableObject {
     @Published private(set) var pendingRecordCount = 0
     @Published private(set) var recentRecords: [OBDSignalRecord] = []
     @Published private(set) var statusMessage = "Connect an adapter to start capture."
+    @Published private(set) var adapterIdentitySummary = "Unknown"
+    @Published private(set) var initializationProfileSummary = "Not initialized"
     @Published private(set) var uploadState: UploadState = .idle
     @Published var sampleIntervalSecondsText = "5"
 
@@ -205,6 +207,18 @@ final class OBDCaptureViewModel: ObservableObject {
             .compactMap { $0 }
             .sink { [weak self] in
                 self?.statusMessage = $0
+            }
+            .store(in: &cancellables)
+
+        captureCoordinator.$adapterIdentitySummary
+            .sink { [weak self] summary in
+                self?.adapterIdentitySummary = summary ?? "Unknown"
+            }
+            .store(in: &cancellables)
+
+        captureCoordinator.$initializationProfileSummary
+            .sink { [weak self] summary in
+                self?.initializationProfileSummary = summary ?? "Not initialized"
             }
             .store(in: &cancellables)
     }
