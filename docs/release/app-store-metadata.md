@@ -8,15 +8,15 @@ Scope: MVP iOS submission metadata for Car Ranks.
 
 - App Name: `Car Ranks`
 - Subtitle candidate: `EV range and charging insights`
-- Bundle ID: `TODO`
-- SKU: `TODO`
+- Bundle ID: `com.albinocordeiro.carranks`
+- SKU: `car-ranks-ios-mvp-2026`
 - Primary Language: `English (U.S.)`
 
 ## 2. Categories
 
 - Primary Category candidate: `Utilities`
 - Secondary Category candidate: `Lifestyle`
-- Category confirmation owner: `TODO`
+- Category confirmation owner: `albinocordeiro`
 
 ## 3. Marketing Text (Optional)
 
@@ -48,21 +48,21 @@ Candidate:
 
 ## 6. URLs
 
-- Support URL: `TODO (must be live before submission)`
-- Privacy Policy URL: `TODO (must be live before submission)`
-- Marketing URL (optional): `TODO`
+- Support URL: `https://github.com/albinocordeiro/car-ranks/blob/main/docs/release/public/support.md`
+- Privacy Policy URL: `https://github.com/albinocordeiro/car-ranks/blob/main/docs/release/public/privacy-policy.md`
+- Marketing URL (optional): `https://github.com/albinocordeiro/car-ranks`
 
 ## 7. Version Metadata
 
-- Version Number: `TODO`
+- Version Number: `1.0.0`
 - What's New text:
   `First MVP release of Car Ranks with EV range, charging, and temperature-impact insights from OBD telemetry.`
 
 ## 8. Content Rights and Compliance
 
 - Third-party content rights required: `No` (verify)
-- Encryption usage export compliance: `TODO`
-- Ads identifier usage: `TODO`
+- Encryption usage export compliance: `Uses standard HTTPS/TLS transport encryption only; no custom cryptography planned for MVP release.`
+- Ads identifier usage: `No ads; no IDFA-based tracking planned for MVP release.`
 
 ## 9. Finalization Checklist
 

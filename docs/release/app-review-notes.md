@@ -11,8 +11,8 @@ Audience: Apple App Review.
 `Car Ranks is an EV analytics app that uses OBD telemetry to show read-only insights for EV range, charging, and temperature impact.`
 
 `Test account:`
-- `Email: TODO`
-- `Password: TODO`
+- `Email: apple-review@car-ranks.app`
+- `Password: CarRanks-AppReview-2026!`
 
 `Primary flow to test:`
 - `Sign in`
@@ -26,6 +26,8 @@ Audience: Apple App Review.
 - `iOS only`
 
 `If the account has limited telemetry, some cards may show preview/readiness states until enough samples are available.`
+
+`Note: provision the exact App Review account in the production auth system before submitting the build.`
 
 ## 2. Internal Reviewer Notes
 
