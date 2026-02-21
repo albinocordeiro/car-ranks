@@ -29,6 +29,7 @@ final class OBDCaptureViewModel: ObservableObject {
     @Published private(set) var uploadState: UploadState = .idle
     @Published private(set) var lastQueuedBatchSummary = "No batches queued yet."
     @Published private(set) var lastSuccessfulUploadSummary = "No successful uploads yet."
+    @Published private(set) var pendingBatchPreview = "Generate preview to inspect pending payload."
     @Published var sampleIntervalSecondsText = "5"
 
     private let bleClient: CoreBluetoothOBDClient
@@ -123,11 +124,33 @@ final class OBDCaptureViewModel: ObservableObject {
         let queuedSummary = OBDPendingUploadSummary.from(batch: batchBundle.request)
         uploadState = .success("Queued telemetry batch (\(queuedSummary.inlineDescription)).")
         statusMessage = "Queued telemetry batch (\(queuedSummary.inlineDescription)). Upload will retry automatically."
+        pendingBatchPreview = "Generate preview to inspect pending payload."
     }
 
     func retryQueuedUploads() {
         uploadQueueCoordinator.triggerUpload()
         statusMessage = "Retrying queued uploads..."
+    }
+
+    func refreshPendingBatchPreview() {
+        let session = sessionProvider()
+        guard let batchBundle = captureCoordinator.buildBatch(
+            vehicleUID: session.vehicleUID,
+            appVersion: appVersionProvider(),
+            adapterFingerprint: bleClient.adapterFingerprint
+        ) else {
+            pendingBatchPreview = "No pending payload to preview."
+            statusMessage = "No captured payload available for preview."
+            return
+        }
+
+        do {
+            pendingBatchPreview = try TelemetryBatchPreviewFormatter.prettyPrintedJSON(from: batchBundle.request)
+            statusMessage = "Generated pending payload preview."
+        } catch {
+            pendingBatchPreview = "Failed to encode pending payload: \(error.localizedDescription)"
+            statusMessage = "Pending payload preview failed."
+        }
     }
 
     private var parsedSampleInterval: Int {

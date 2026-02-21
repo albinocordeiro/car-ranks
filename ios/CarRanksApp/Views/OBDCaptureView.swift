@@ -172,6 +172,12 @@ struct OBDCaptureView: View {
             .buttonStyle(.bordered)
             .accessibilityIdentifier("obd-retry-queued-button")
 
+            Button("Preview Next Batch JSON") {
+                viewModel.refreshPendingBatchPreview()
+            }
+            .buttonStyle(.bordered)
+            .accessibilityIdentifier("obd-preview-batch-button")
+
             Text("Queued batches: \(viewModel.queuedBatchCount)")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
@@ -194,6 +200,13 @@ struct OBDCaptureView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("obd-last-uploaded-summary")
+
+            Text(viewModel.pendingBatchPreview)
+                .font(.caption2.monospaced())
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+                .lineLimit(16)
+                .accessibilityIdentifier("obd-pending-batch-preview")
 
             switch viewModel.uploadState {
             case .idle:
