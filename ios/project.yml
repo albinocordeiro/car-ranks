@@ -21,8 +21,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.albinocordeiro.carranks
         INFOPLIST_FILE: CarRanksApp/Info.plist
         API_BASE_URL: http://127.0.0.1:8080
-        DEFAULT_X_USER_ID: 54e9b082-226f-4b7b-b98b-703832c5dfb2
-        DEFAULT_VEHICLE_UID: 5bf1cb17-a0c6-404b-81f6-c407b80ea3b4
+        DEFAULT_X_USER_ID: 06b3fff1-bfcc-4cda-840b-d512963bc239
+        DEFAULT_VEHICLE_UID: e11889bf-504c-4238-9583-bc8840f20e19
   CarRanksAppTests:
     type: bundle.unit-test
     platform: iOS

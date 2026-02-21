@@ -24,7 +24,7 @@ enum AppEnvironmentConfig {
         let envValue = ProcessInfo.processInfo.environment["DEFAULT_X_USER_ID"]
         let plistValue = Bundle.main.object(forInfoDictionaryKey: "DEFAULT_X_USER_ID") as? String
         let raw = envValue ?? plistValue
-        return UUID(uuidString: raw ?? "") ?? UUID(uuidString: "54e9b082-226f-4b7b-b98b-703832c5dfb2")!
+        return UUID(uuidString: raw ?? "") ?? UUID(uuidString: "06b3fff1-bfcc-4cda-840b-d512963bc239")!
     }
 
     /// Dev bootstrap UUID for vehicle_uid when a session has not been saved yet.
@@ -32,7 +32,7 @@ enum AppEnvironmentConfig {
         let envValue = ProcessInfo.processInfo.environment["DEFAULT_VEHICLE_UID"]
         let plistValue = Bundle.main.object(forInfoDictionaryKey: "DEFAULT_VEHICLE_UID") as? String
         let raw = envValue ?? plistValue
-        return UUID(uuidString: raw ?? "") ?? UUID(uuidString: "5bf1cb17-a0c6-404b-81f6-c407b80ea3b4")!
+        return UUID(uuidString: raw ?? "") ?? UUID(uuidString: "e11889bf-504c-4238-9583-bc8840f20e19")!
     }
 
     /// Optional launch override used by UI tests and screenshot scripts.
