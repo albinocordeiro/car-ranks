@@ -34,12 +34,12 @@ Goal: submit the MVP iOS app to App Store review by **February 28, 2026**.
 
 ### Release Operations
 
-- [ ] App Store Connect app metadata complete (name, subtitle, description, keywords, category). (`Due: 2026-02-26`, `Status: TODO`)
-- [ ] Screenshots prepared for required device classes. (`Due: 2026-02-26`, `Status: TODO`)
+- [ ] App Store Connect app metadata complete (name, subtitle, description, keywords, category). (`Due: 2026-02-26`, `Status: IN_PROGRESS`)
+- [ ] Screenshots prepared for required device classes. (`Due: 2026-02-26`, `Status: IN_PROGRESS`)
 - [ ] App icon and launch assets finalized. (`Due: 2026-02-25`, `Status: TODO`)
 - [ ] Privacy policy URL and support URL published and verified. (`Due: 2026-02-25`, `Status: TODO`)
-- [ ] App Privacy questionnaire completed and consistent with implementation. (`Due: 2026-02-26`, `Status: TODO`)
-- [ ] Review notes drafted for App Review (test account, key flows, known constraints). (`Due: 2026-02-27`, `Status: TODO`)
+- [ ] App Privacy questionnaire completed and consistent with implementation. (`Due: 2026-02-26`, `Status: IN_PROGRESS`)
+- [x] Review notes drafted for App Review (test account, key flows, known constraints). (`Due: 2026-02-27`, `Completed: 2026-02-20`, `Status: DONE`)
 - [ ] TestFlight build signed, distributed, and accepted by internal QA. (`Due: 2026-02-26`, `Status: TODO`)
 
 ## Explicitly Deferred Until After Submission
@@ -73,6 +73,12 @@ Goal: submit the MVP iOS app to App Store review by **February 28, 2026**.
   - `postgres_recompute_job_conflict_includes_lock_diagnostics_when_env_set`
   - `postgres_internal_job_handler_runs_native_pipeline_when_env_set`
 - API contracts are updated in `/Users/albinocordeiro/Code/car_ranks/docs/contracts/` (`kpi-api.md`, `ranking-api.md`, `internal-jobs-api.md`, and matching `examples/*.json`).
+- Release package drafts created under `/Users/albinocordeiro/Code/car_ranks/docs/release/`:
+  - `app-store-metadata.md`
+  - `app-privacy-questionnaire.md`
+  - `app-review-notes.md`
+  - `screenshot-plan.md`
+  - `testflight-qa-checklist.md`
 
 ## Daily Exit Criteria
 
