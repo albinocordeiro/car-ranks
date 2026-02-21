@@ -183,6 +183,18 @@ struct OBDCaptureView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("obd-pending-upload-summary")
 
+            Text("Last queued: \(viewModel.lastQueuedBatchSummary)")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("obd-last-queued-summary")
+
+            Text("Last uploaded: \(viewModel.lastSuccessfulUploadSummary)")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("obd-last-uploaded-summary")
+
             switch viewModel.uploadState {
             case .idle:
                 EmptyView()

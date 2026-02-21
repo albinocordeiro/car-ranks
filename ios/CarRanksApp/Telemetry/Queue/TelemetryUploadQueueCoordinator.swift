@@ -7,6 +7,8 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
     @Published private(set) var pendingBatchCount = 0
     @Published private(set) var isUploading = false
     @Published private(set) var lastUploadMessage: String?
+    @Published private(set) var lastQueuedBatchSummary: String?
+    @Published private(set) var lastSuccessfulUploadSummary: String?
 
     private let uploader: TelemetryBatchUploader
     private let store: TelemetryUploadQueueStore
@@ -70,6 +72,7 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
         )
         persistQueue()
         pendingBatchCount = queue.count
+        lastQueuedBatchSummary = "Batch \(Self.shortBatchID(batch.batchID)): \(Self.payloadSummary(for: batch))"
         lastUploadMessage = "Queued telemetry batch for upload."
         scheduleFlush(force: false)
     }
@@ -123,6 +126,8 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
                 queue.removeFirst()
                 persistQueue()
                 pendingBatchCount = queue.count
+                let uploadedAt = now()
+                lastSuccessfulUploadSummary = "Batch \(Self.shortBatchID(head.request.batchID)) uploaded at \(TelemetryTimestampFormatter.string(from: uploadedAt))"
                 lastUploadMessage = "Uploaded queued telemetry batch."
             } catch let backendError as BackendError {
                 handleUploadFailure(error: backendError, head: head)
@@ -199,5 +204,25 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
         }
         monitor.start(queue: pathMonitorQueue)
         pathMonitor = monitor
+    }
+
+    private static func payloadSummary(for batch: TelemetryBatchRequest) -> String {
+        [
+            countText(batch.records.count, singular: "signal"),
+            countText(batch.diagnostics.count, singular: "diagnostic"),
+            countText(batch.sessionEvents.count, singular: "session event"),
+        ]
+        .joined(separator: ", ")
+    }
+
+    private static func shortBatchID(_ batchID: UUID) -> String {
+        String(batchID.uuidString.prefix(8))
+    }
+
+    private static func countText(_ count: Int, singular: String) -> String {
+        if count == 1 {
+            return "1 \(singular)"
+        }
+        return "\(count) \(singular)s"
     }
 }

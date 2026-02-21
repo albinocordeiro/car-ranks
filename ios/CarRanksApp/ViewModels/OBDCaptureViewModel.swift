@@ -27,6 +27,8 @@ final class OBDCaptureViewModel: ObservableObject {
     )
     @Published private(set) var queuedBatchCount = 0
     @Published private(set) var uploadState: UploadState = .idle
+    @Published private(set) var lastQueuedBatchSummary = "No batches queued yet."
+    @Published private(set) var lastSuccessfulUploadSummary = "No successful uploads yet."
     @Published var sampleIntervalSecondsText = "5"
 
     private let bleClient: CoreBluetoothOBDClient
@@ -261,6 +263,18 @@ final class OBDCaptureViewModel: ObservableObject {
         uploadQueueCoordinator.$pendingBatchCount
             .sink { [weak self] count in
                 self?.queuedBatchCount = count
+            }
+            .store(in: &cancellables)
+
+        uploadQueueCoordinator.$lastQueuedBatchSummary
+            .sink { [weak self] summary in
+                self?.lastQueuedBatchSummary = summary ?? "No batches queued yet."
+            }
+            .store(in: &cancellables)
+
+        uploadQueueCoordinator.$lastSuccessfulUploadSummary
+            .sink { [weak self] summary in
+                self?.lastSuccessfulUploadSummary = summary ?? "No successful uploads yet."
             }
             .store(in: &cancellables)
 
