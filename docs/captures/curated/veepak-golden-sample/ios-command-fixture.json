@@ -1,0 +1,218 @@
+{
+  "generated_at": "2026-02-22T06:51:58.847371+00:00",
+  "vehicle_uid": "e11889bf-504c-4238-9583-bc8840f20e19",
+  "batch_id": "3d9588c7-59e5-4800-9f28-9a2c43d0b10f",
+  "session_id": "8d393b3f-f96a-4b66-8fce-66b1a4da1c21",
+  "exchanges": [
+    {
+      "observation_id": "16d470d1-3d5f-4ed3-881b-2314f3ccfd0a",
+      "observed_at": "2026-02-22T06:12:18.100Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=ATI resp=ELM327 v1.5",
+      "command": "ATI",
+      "response": "ELM327 v1.5"
+    },
+    {
+      "observation_id": "5f9a2579-4ac2-4a8a-92d6-8eac3abed4c5",
+      "observed_at": "2026-02-22T06:12:18.120Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=ATZ resp=ELM327 v1.5",
+      "command": "ATZ",
+      "response": "ELM327 v1.5"
+    },
+    {
+      "observation_id": "82b695d9-9b8e-4545-b2fb-f3f7f0be4b7d",
+      "observed_at": "2026-02-22T06:12:18.140Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=ATE0 resp=OK",
+      "command": "ATE0",
+      "response": "OK"
+    },
+    {
+      "observation_id": "89c7f0aa-8f95-4cc8-9ec8-e8c42d4fbfc4",
+      "observed_at": "2026-02-22T06:12:18.160Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=ATL0 resp=OK",
+      "command": "ATL0",
+      "response": "OK"
+    },
+    {
+      "observation_id": "23ef96d7-31af-496e-8f9f-39640ccf4e1e",
+      "observed_at": "2026-02-22T06:12:18.180Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=ATS0 resp=OK",
+      "command": "ATS0",
+      "response": "OK"
+    },
+    {
+      "observation_id": "6a451730-65f2-4db8-9ad5-e02c6e4c97d8",
+      "observed_at": "2026-02-22T06:12:18.200Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=ATH0 resp=OK",
+      "command": "ATH0",
+      "response": "OK"
+    },
+    {
+      "observation_id": "54b11e4b-f29a-4238-85db-90ef5fe7f3f7",
+      "observed_at": "2026-02-22T06:12:18.220Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=ATSP0 resp=OK",
+      "command": "ATSP0",
+      "response": "OK"
+    },
+    {
+      "observation_id": "f58e6a7a-c7d1-4edf-adf2-d7cc73a9f66b",
+      "observed_at": "2026-02-22T06:12:18.240Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=ATAT1 resp=OK",
+      "command": "ATAT1",
+      "response": "OK"
+    },
+    {
+      "observation_id": "dd80f31d-77a6-43d4-b806-591143f89f88",
+      "observed_at": "2026-02-22T06:12:18.260Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=ATAL resp=OK",
+      "command": "ATAL",
+      "response": "OK"
+    },
+    {
+      "observation_id": "f4f00931-f2b9-4170-8c33-16f17936b3c8",
+      "observed_at": "2026-02-22T06:12:18.280Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=ATSP6 resp=OK",
+      "command": "ATSP6",
+      "response": "OK"
+    },
+    {
+      "observation_id": "3974d666-f63f-4ce7-a1be-6ce20f1b8f63",
+      "observed_at": "2026-02-22T06:12:18.300Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=0100 resp=41 00 00 08 00 00",
+      "command": "0100",
+      "response": "41 00 00 08 00 00"
+    },
+    {
+      "observation_id": "9d66de39-e081-4b29-b7d8-9c4d15aa0d14",
+      "observed_at": "2026-02-22T06:12:18.320Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=0140 resp=41 40 44 00 00 00",
+      "command": "0140",
+      "response": "41 40 44 00 00 00"
+    },
+    {
+      "observation_id": "de7c413a-ac4a-4c4c-afcb-1e71f1be66de",
+      "observed_at": "2026-02-22T06:12:18.340Z",
+      "signal_key": "session.drive.start",
+      "source_signal": null,
+      "status": "start",
+      "raw_payload_ref": "cmd=ATDP resp=AUTO, ISO 15765-4 (CAN 11/500)",
+      "command": "ATDP",
+      "response": "AUTO, ISO 15765-4 (CAN 11/500)"
+    },
+    {
+      "observation_id": "dce13a90-d393-4146-a3c8-6c53f8f4f9e8",
+      "observed_at": "2026-02-22T06:12:19.984Z",
+      "signal_key": "speed.vehicle",
+      "source_signal": "01_0D",
+      "status": "ok",
+      "raw_payload_ref": "cmd=010D resp=41 0D 14",
+      "command": "010D",
+      "response": "41 0D 14"
+    },
+    {
+      "observation_id": "be68ce6e-f62e-49d2-9146-e11d4a4e7b06",
+      "observed_at": "2026-02-22T06:12:19.984Z",
+      "signal_key": "power.battery_voltage",
+      "source_signal": "01_42",
+      "status": "unavailable",
+      "raw_payload_ref": "cmd=0142 resp=NO DATA",
+      "command": "0142",
+      "response": "NO DATA"
+    },
+    {
+      "observation_id": "43ae8f67-2c72-4f5f-a988-8d6ff2218a2e",
+      "observed_at": "2026-02-22T06:12:19.985Z",
+      "signal_key": "power.battery_voltage",
+      "source_signal": "AT_RV",
+      "status": "ok",
+      "raw_payload_ref": "cmd=ATRV resp=12.8V",
+      "command": "ATRV",
+      "response": "12.8V"
+    },
+    {
+      "observation_id": "d0abce8d-6199-44e2-9122-5f4ef1f1573a",
+      "observed_at": "2026-02-22T06:12:19.986Z",
+      "signal_key": "environment.ambient_temp_c",
+      "source_signal": "01_46",
+      "status": "ok",
+      "raw_payload_ref": "cmd=0146 resp=41 46 22",
+      "command": "0146",
+      "response": "41 46 22"
+    },
+    {
+      "observation_id": "fb223ae4-11d1-4f99-bd27-f6d243deea8f",
+      "observed_at": "2026-02-22T06:12:20.010Z",
+      "signal_key": "diag.readiness_summary",
+      "source_signal": "01_01",
+      "status": "ok",
+      "raw_payload_ref": "cmd=0101 resp=41 01 80 00 00 00",
+      "command": "0101",
+      "response": "41 01 80 00 00 00"
+    },
+    {
+      "observation_id": "22d5a4c5-913f-485d-bf39-1d1785a1aa76",
+      "observed_at": "2026-02-22T06:12:20.030Z",
+      "signal_key": "diag.stored_dtc_codes",
+      "source_signal": "03",
+      "status": "ok",
+      "raw_payload_ref": "cmd=03 resp=43 00 00 00 00",
+      "command": "03",
+      "response": "43 00 00 00 00"
+    },
+    {
+      "observation_id": "d189cc4c-f89d-41b7-b3c2-30fc5f5d64e5",
+      "observed_at": "2026-02-22T06:12:20.500Z",
+      "signal_key": "speed.vehicle",
+      "source_signal": "01_0D",
+      "status": "error",
+      "raw_payload_ref": "cmd=010D error=OBD adapter timeout while waiting for response to 010D.",
+      "command": "010D",
+      "response": null
+    },
+    {
+      "observation_id": "f5f36e2f-6bd0-4df0-b085-e2c36d7fc63f",
+      "observed_at": "2026-02-22T06:12:20.900Z",
+      "signal_key": "speed.vehicle",
+      "source_signal": "01_0D",
+      "status": "ok",
+      "raw_payload_ref": "cmd=010D resp=41 0D GG",
+      "command": "010D",
+      "response": "41 0D GG"
+    }
+  ]
+}

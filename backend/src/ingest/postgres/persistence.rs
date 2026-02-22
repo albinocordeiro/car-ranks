@@ -271,7 +271,7 @@ async fn insert_session_event_row_postgres(
     .bind(event.observed_at.to_rfc3339())
     .bind(now)
     .bind("OBD")
-    .bind(None::<String>)
+    .bind(&event.raw_payload_ref)
     .execute(&mut **tx)
     .await
     .context("failed to insert postgres session event")?;

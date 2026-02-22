@@ -1,5 +1,8 @@
 import Foundation
 import Combine
+#if canImport(UIKit)
+import UIKit
+#endif
 
 @MainActor
 final class OBDCaptureViewModel: ObservableObject {
@@ -13,6 +16,8 @@ final class OBDCaptureViewModel: ObservableObject {
     @Published private(set) var discoveredDevices: [OBDAdapterDevice] = []
     @Published private(set) var connectionState: OBDConnectionState = .disconnected
     @Published private(set) var isCapturing = false
+    @Published private(set) var isCaptureStarting = false
+    @Published private(set) var captureStatusMessage = "Connect and initialize an adapter to start capture."
     @Published private(set) var pendingRecordCount = 0
     @Published private(set) var pendingDiagnosticCount = 0
     @Published private(set) var pendingSessionEventCount = 0
@@ -29,14 +34,20 @@ final class OBDCaptureViewModel: ObservableObject {
     @Published private(set) var uploadState: UploadState = .idle
     @Published private(set) var lastQueuedBatchSummary = "No batches queued yet."
     @Published private(set) var lastSuccessfulUploadSummary = "No successful uploads yet."
+    @Published private(set) var lastUploadIdentifiersSummary = "No successful upload IDs yet."
+    @Published private(set) var uploadRetryCountdownText: String?
     @Published private(set) var pendingBatchPreview = "Generate preview to inspect pending payload."
+    @Published private(set) var lastRunPackExportSummary = "No run pack exported yet."
+    @Published private(set) var runPackShareURL: URL?
     @Published var sampleIntervalSecondsText = "5"
 
     private let bleClient: CoreBluetoothOBDClient
     private let captureCoordinator: OBDTelemetryCaptureCoordinator
     private let uploadQueueCoordinator: TelemetryUploadQueueCoordinator
+    private let runPackStore: OBDCaptureRunPackStore
     private let sessionProvider: () -> SessionContext
     private let appVersionProvider: () -> String
+    private var lastUploadReceipt: OBDRunPackUploadReceipt?
     private var shouldResumeCaptureAfterReconnect = false
     private var cancellables: Set<AnyCancellable> = []
 
@@ -44,12 +55,14 @@ final class OBDCaptureViewModel: ObservableObject {
         bleClient: CoreBluetoothOBDClient,
         captureCoordinator: OBDTelemetryCaptureCoordinator,
         uploadQueueCoordinator: TelemetryUploadQueueCoordinator,
+        runPackStore: OBDCaptureRunPackStore = OBDCaptureRunPackStore(),
         sessionProvider: @escaping () -> SessionContext,
         appVersionProvider: @escaping () -> String
     ) {
         self.bleClient = bleClient
         self.captureCoordinator = captureCoordinator
         self.uploadQueueCoordinator = uploadQueueCoordinator
+        self.runPackStore = runPackStore
         self.sessionProvider = sessionProvider
         self.appVersionProvider = appVersionProvider
         bind()
@@ -80,6 +93,7 @@ final class OBDCaptureViewModel: ObservableObject {
         bleClient.disconnect()
         uploadState = .idle
         statusMessage = "Adapter disconnected."
+        captureStatusMessage = "Adapter disconnected."
     }
 
     func toggleCapture() {
@@ -87,11 +101,13 @@ final class OBDCaptureViewModel: ObservableObject {
             shouldResumeCaptureAfterReconnect = false
             captureCoordinator.stopCapture()
             statusMessage = "Capture stopped. Pending payload: \(pendingUploadSummary.inlineDescription)."
+            captureStatusMessage = "Capture stopped. Pending payload: \(pendingUploadSummary.inlineDescription)."
             return
         }
 
         guard connectionState.isConnected else {
             statusMessage = "Connect an adapter before starting capture."
+            captureStatusMessage = "Connect an adapter before starting capture."
             return
         }
 
@@ -99,7 +115,8 @@ final class OBDCaptureViewModel: ObservableObject {
         sampleIntervalSecondsText = String(interval)
         captureCoordinator.startCapture(sampleIntervalSeconds: interval)
         uploadState = .idle
-        statusMessage = "Capturing signals every \(interval)s."
+        statusMessage = "Starting capture with \(interval)s interval..."
+        captureStatusMessage = "Initializing adapter..."
     }
 
     func uploadPendingBatch() {
@@ -134,6 +151,21 @@ final class OBDCaptureViewModel: ObservableObject {
         statusMessage = "Retrying queued uploads..."
     }
 
+    var retryQueuedUploadsButtonTitle: String {
+        guard let uploadRetryCountdownText else {
+            return "Retry Queued Uploads"
+        }
+        return "Retry Queued Uploads (\(uploadRetryCountdownText))"
+    }
+
+    var isRetryQueuedUploadsDisabled: Bool {
+        uploadRetryCountdownText != nil
+    }
+
+    var canCopyLastUploadIDs: Bool {
+        lastUploadReceipt != nil
+    }
+
     func refreshPendingBatchPreview() {
         let session = sessionProvider()
         guard let batchBundle = captureCoordinator.buildBatch(
@@ -153,6 +185,47 @@ final class OBDCaptureViewModel: ObservableObject {
             pendingBatchPreview = "Failed to encode pending payload: \(error.localizedDescription)"
             statusMessage = "Pending payload preview failed."
         }
+    }
+
+    func exportLastRunPack() {
+        guard let runPack = buildLastRunPackForExport() else {
+            lastRunPackExportSummary = "No completed run available. Stop a capture first."
+            statusMessage = "No completed run available. Stop a capture first."
+            return
+        }
+
+        do {
+            let url = try runPackStore.save(runPack)
+            runPackShareURL = url
+            lastRunPackExportSummary = "Exported \(url.lastPathComponent)"
+            statusMessage = "Exported run pack \(url.lastPathComponent)."
+        } catch {
+            runPackShareURL = nil
+            lastRunPackExportSummary = "Run pack export failed: \(error.localizedDescription)"
+            statusMessage = "Run pack export failed: \(error.localizedDescription)"
+        }
+    }
+
+    func prepareLastRunPackForShare() {
+        guard runPackShareURL == nil else {
+            return
+        }
+        exportLastRunPack()
+    }
+
+    func copyLastUploadIDs() {
+        guard let lastUploadReceipt else {
+            statusMessage = "No successful upload IDs available to copy."
+            return
+        }
+
+        let payload = Self.uploadIdentifierPayload(from: lastUploadReceipt)
+        #if canImport(UIKit)
+        UIPasteboard.general.string = payload
+        statusMessage = "Copied last upload IDs."
+        #else
+        statusMessage = "Clipboard copy is unavailable on this platform."
+        #endif
     }
 
     private var parsedSampleInterval: Int {
@@ -183,12 +256,14 @@ final class OBDCaptureViewModel: ObservableObject {
                         let interval = parsedSampleInterval
                         captureCoordinator.startCapture(sampleIntervalSeconds: interval)
                         statusMessage = "Adapter reconnected. Capture resumed every \(interval)s."
+                        captureStatusMessage = "Adapter reconnected. Resuming capture..."
                     }
                 case .reconnecting:
                     if isCapturing {
                         shouldResumeCaptureAfterReconnect = true
                         captureCoordinator.stopCapture()
                         statusMessage = "Adapter link dropped. Waiting to reconnect..."
+                        captureStatusMessage = "Adapter link dropped. Waiting to reconnect..."
                     }
                 case .error:
                     shouldResumeCaptureAfterReconnect = false
@@ -197,12 +272,14 @@ final class OBDCaptureViewModel: ObservableObject {
                     }
                     if case let .error(message) = state {
                         statusMessage = message
+                        captureStatusMessage = message
                     }
                 case .disconnected:
                     shouldResumeCaptureAfterReconnect = false
                     if isCapturing {
                         captureCoordinator.stopCapture()
                         statusMessage = "Capture stopped because adapter disconnected."
+                        captureStatusMessage = "Capture stopped because adapter disconnected."
                     }
                 case .scanning, .connecting:
                     break
@@ -211,8 +288,24 @@ final class OBDCaptureViewModel: ObservableObject {
             .store(in: &cancellables)
 
         captureCoordinator.$isCapturing
-            .sink { [weak self] in
-                self?.isCapturing = $0
+            .sink { [weak self] isCapturing in
+                guard let self else { return }
+                self.isCapturing = isCapturing
+                if isCapturing && !self.isCaptureStarting {
+                    self.captureStatusMessage = "Capture running."
+                }
+            }
+            .store(in: &cancellables)
+
+        captureCoordinator.$isBootstrapping
+            .sink { [weak self] isBootstrapping in
+                guard let self else { return }
+                self.isCaptureStarting = isBootstrapping
+                if isBootstrapping {
+                    self.captureStatusMessage = "Initializing adapter..."
+                } else if self.isCapturing {
+                    self.captureStatusMessage = "Capture running."
+                }
             }
             .store(in: &cancellables)
 
@@ -244,6 +337,7 @@ final class OBDCaptureViewModel: ObservableObject {
             .compactMap { $0 }
             .sink { [weak self] in
                 self?.statusMessage = $0
+                self?.captureStatusMessage = $0
             }
             .store(in: &cancellables)
 
@@ -303,6 +397,28 @@ final class OBDCaptureViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        Publishers.CombineLatest(
+            uploadQueueCoordinator.$lastSuccessfulUploadResponse,
+            uploadQueueCoordinator.$lastSuccessfulUploadAt
+        )
+        .sink { [weak self] response, uploadedAt in
+            guard let self else { return }
+            guard let response, let uploadedAt else {
+                return
+            }
+
+            let receipt = OBDRunPackUploadReceipt(
+                batchID: response.batchID,
+                ingestID: response.ingestID,
+                accepted: response.accepted,
+                uploadedAt: uploadedAt,
+                message: response.duplicate ? "duplicate batch" : nil
+            )
+            lastUploadReceipt = receipt
+            lastUploadIdentifiersSummary = Self.uploadIdentifierPayload(from: receipt)
+        }
+        .store(in: &cancellables)
+
         uploadQueueCoordinator.$isUploading
             .sink { [weak self] isUploading in
                 guard let self else { return }
@@ -326,5 +442,54 @@ final class OBDCaptureViewModel: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+
+        uploadQueueCoordinator.$nextRetryInSeconds
+            .sink { [weak self] nextRetryInSeconds in
+                guard let self else { return }
+                guard let nextRetryInSeconds, nextRetryInSeconds > 0 else {
+                    uploadRetryCountdownText = nil
+                    return
+                }
+                uploadRetryCountdownText = Self.formatRetryCountdown(nextRetryInSeconds)
+            }
+            .store(in: &cancellables)
+
+        captureCoordinator.$lastCompletedRunSessionID
+            .sink { [weak self] sessionID in
+                guard let self else { return }
+                guard let sessionID else {
+                    return
+                }
+                if runPackShareURL == nil {
+                    lastRunPackExportSummary = "Run \(sessionID.uuidString.lowercased()) ready to export."
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    private static func formatRetryCountdown(_ totalSeconds: Int) -> String {
+        let clampedSeconds = max(0, totalSeconds)
+        let hours = clampedSeconds / 3_600
+        let minutes = (clampedSeconds % 3_600) / 60
+        let seconds = clampedSeconds % 60
+
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
+        }
+        return String(format: "%02d:%02d", minutes, seconds)
+    }
+
+    private func buildLastRunPackForExport() -> OBDCaptureRunPack? {
+        let sessionContext = sessionProvider()
+        return captureCoordinator.buildLastRunPack(
+            sessionContext: sessionContext,
+            appVersion: appVersionProvider(),
+            adapterFingerprint: bleClient.adapterFingerprint,
+            uploadReceipt: lastUploadReceipt
+        )
+    }
+
+    private static func uploadIdentifierPayload(from receipt: OBDRunPackUploadReceipt) -> String {
+        "batch_id=\(receipt.batchID.uuidString.lowercased()) ingest_id=\(receipt.ingestID.uuidString.lowercased())"
     }
 }

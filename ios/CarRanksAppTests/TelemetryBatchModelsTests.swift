@@ -4,14 +4,17 @@ import XCTest
 final class TelemetryBatchModelsTests: XCTestCase {
     func testSignalRecordMapsFromOBDRecord() {
         let observedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let sessionID = UUID(uuidString: "b4e88ed2-3dbe-4ac2-9f14-f64f147ac98a")!
         let obdRecord = OBDSignalRecord(
             observedAt: observedAt,
+            sessionID: sessionID,
             signalKey: "speed.vehicle",
             valueNumber: 38.2,
             unit: "km/h",
             status: .ok,
             confidence: 0.98,
-            sourceSignal: "01_0D"
+            sourceSignal: "01_0D",
+            rawPayloadRef: "cmd=010D resp=41 0D 26"
         )
 
         let mapped = TelemetryBatchRequest.SignalRecord.from(obdRecord: obdRecord)
@@ -21,6 +24,8 @@ final class TelemetryBatchModelsTests: XCTestCase {
         XCTAssertEqual(mapped.status, "ok")
         XCTAssertEqual(mapped.unit, "km/h")
         XCTAssertEqual(mapped.sourceSignal, "01_0D")
+        XCTAssertEqual(mapped.rawPayloadRef, "cmd=010D resp=41 0D 26")
+        XCTAssertEqual(mapped.sessionID, sessionID)
         XCTAssertNotNil(mapped.observedAt)
     }
 
@@ -37,6 +42,7 @@ final class TelemetryBatchModelsTests: XCTestCase {
             records: [
                 .init(
                     observedAt: "2026-02-17T10:30:05.000Z",
+                    sessionID: UUID(uuidString: "9b2f73ce-6f8d-429f-9b9a-68b49b4e84ff"),
                     signalKey: "speed.vehicle",
                     valueNumber: 48.3,
                     valueString: nil,
@@ -45,7 +51,8 @@ final class TelemetryBatchModelsTests: XCTestCase {
                     unit: "km/h",
                     status: "ok",
                     confidence: 0.98,
-                    sourceSignal: "01_0D"
+                    sourceSignal: "01_0D",
+                    rawPayloadRef: "cmd=010D resp=41 0D 30"
                 ),
             ],
             sessionEvents: [],
@@ -61,6 +68,11 @@ final class TelemetryBatchModelsTests: XCTestCase {
         XCTAssertNotNil(payload["vehicle_uid"])
         XCTAssertNotNil(payload["capture_window"])
         XCTAssertNotNil(payload["records"])
+        let records = try XCTUnwrap(payload["records"] as? [[String: Any]])
+        XCTAssertEqual(
+            records.first?["session_id"] as? String,
+            "9b2f73ce-6f8d-429f-9b9a-68b49b4e84ff".uppercased()
+        )
     }
 
     func testDiagnosticEventMapsFromDiagnosticSnapshot() {

@@ -1,6 +1,6 @@
 import Foundation
 
-enum BackendError: Error, Equatable {
+enum BackendError: Error, Equatable, LocalizedError {
     case invalidURL
     case invalidResponse
     case server(statusCode: Int, message: String)
@@ -20,5 +20,9 @@ enum BackendError: Error, Equatable {
         case let .transport(message):
             return "Network request failed: \(message)"
         }
+    }
+
+    var errorDescription: String? {
+        displayMessage
     }
 }

@@ -14,9 +14,11 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
     private var connectedPeripheral: CBPeripheral?
     private var writeCharacteristic: CBCharacteristic?
     private var notifyCharacteristic: CBCharacteristic?
+    private var isNotifyChannelReady = false
 
     private var pendingCommandContinuation: CheckedContinuation<String, Error>?
     private var pendingCommandBuffer = ""
+    private var pendingCommandID: UUID?
     private var pendingCommandTimeoutTask: Task<Void, Never>?
     private let commandTimeoutNanoseconds: UInt64
     private let reconnectPolicy: OBDReconnectPolicy
@@ -26,7 +28,7 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
     private var pendingScanWhenPoweredOn = false
 
     override init() {
-        commandTimeoutNanoseconds = 5_000_000_000
+        commandTimeoutNanoseconds = 8_000_000_000
         reconnectPolicy = .standard
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: nil)
@@ -123,6 +125,7 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
         guard !trimmedCommand.isEmpty else {
             throw BackendError.transport("Command cannot be empty.")
         }
+        let commandLabel = trimmedCommand
 
         guard let commandData = "\(trimmedCommand)\r".data(using: .utf8) else {
             throw BackendError.transport("Failed to encode command.")
@@ -131,14 +134,33 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
         let writeType: CBCharacteristicWriteType = writeCharacteristic.properties.contains(.write) ? .withResponse : .withoutResponse
 
         return try await withCheckedThrowingContinuation { continuation in
+            let commandID = UUID()
             pendingCommandContinuation = continuation
             pendingCommandBuffer = ""
+            pendingCommandID = commandID
             pendingCommandTimeoutTask?.cancel()
             pendingCommandTimeoutTask = Task { [weak self] in
                 guard let self else { return }
                 try? await Task.sleep(nanoseconds: self.commandTimeoutNanoseconds)
                 await MainActor.run {
-                    self.finishPendingCommand(with: .failure(BackendError.transport("OBD adapter timeout while waiting for response.")))
+                    let bufferedResponse = self.pendingCommandBuffer
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !bufferedResponse.isEmpty {
+                        // Some adapters return data without a terminating prompt; use what we collected.
+                        self.finishPendingCommand(
+                            for: commandID,
+                            with: .success(bufferedResponse)
+                        )
+                    } else {
+                        self.finishPendingCommand(
+                            for: commandID,
+                            with: .failure(
+                                BackendError.transport(
+                                    "OBD adapter timeout while waiting for response to \(commandLabel)."
+                                )
+                            )
+                        )
+                    }
                 }
             }
             peripheral.writeValue(commandData, for: writeCharacteristic, type: writeType)
@@ -148,11 +170,18 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
     private func updateDiscoveredDevice(
         peripheral: CBPeripheral,
         advertisedServiceUUIDs: [String],
+        advertisedLocalName: String?,
+        isConnectable: Bool,
         rssi: Int
     ) {
+        let discoveredName = Self.resolveDiscoveredName(
+            peripheralName: peripheral.name,
+            advertisedLocalName: advertisedLocalName
+        )
         guard OBDAdapterDiscoveryFilter.isLikelyOBDAdapter(
-            name: peripheral.readableName,
-            advertisedServiceUUIDs: advertisedServiceUUIDs
+            name: discoveredName,
+            advertisedServiceUUIDs: advertisedServiceUUIDs,
+            isConnectable: isConnectable
         ) else {
             return
         }
@@ -161,7 +190,7 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
 
         let device = OBDAdapterDevice(
             id: peripheral.identifier,
-            name: peripheral.readableName,
+            name: discoveredName,
             rssi: rssi,
             advertisedServices: advertisedServiceUUIDs,
             lastSeenAt: Date()
@@ -179,33 +208,151 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
 
     private func refreshIOCharacteristics(for peripheral: CBPeripheral) {
         let services = peripheral.services ?? []
+        guard !services.isEmpty else {
+            return
+        }
+
+        // Wait until all services report their characteristic inventory so we can pick a coherent pair.
+        if services.contains(where: { $0.characteristics == nil }) {
+            return
+        }
+
         let prioritizedServices = services.sorted { lhs, rhs in
-            let lhsPriority = OBDBLEConstants.candidateServiceUUIDs.contains(lhs.uuid) ? 0 : 1
-            let rhsPriority = OBDBLEConstants.candidateServiceUUIDs.contains(rhs.uuid) ? 0 : 1
-            return lhsPriority < rhsPriority
+            servicePriority(lhs) < servicePriority(rhs)
         }
 
+        // First, try to keep write/notify on the same service to avoid mismatched UART channels.
+        let pairedCharacteristics = prioritizedServices.compactMap(ioCharacteristics(in:)).first
+        if let pairedCharacteristics {
+            apply(ioCharacteristics: pairedCharacteristics)
+            armNotifyChannel(for: peripheral)
+            return
+        }
+
+        // Last-resort fallback for unusual adapters that split write/notify across services.
         let allCharacteristics = prioritizedServices.flatMap { $0.characteristics ?? [] }
-        writeCharacteristic = allCharacteristics.first(where: { characteristic in
-            characteristic.properties.contains(.write) || characteristic.properties.contains(.writeWithoutResponse)
-        })
-        notifyCharacteristic = allCharacteristics.first(where: { characteristic in
-            characteristic.properties.contains(.notify) || characteristic.properties.contains(.indicate)
-        })
-
-        if let notifyCharacteristic {
-            peripheral.setNotifyValue(true, for: notifyCharacteristic)
-        }
-
-        if writeCharacteristic == nil || notifyCharacteristic == nil {
+        guard let writeCharacteristic = allCharacteristics.first(where: isWriteCharacteristic),
+              let notifyCharacteristic = allCharacteristics.first(where: isNotifyCharacteristic)
+        else {
             connectionState = .error("Connected adapter does not expose expected BLE UART characteristics.")
             return
         }
 
-        connectionState = .connected(peripheral.readableName)
+        apply(ioCharacteristics: (write: writeCharacteristic, notify: notifyCharacteristic))
+        armNotifyChannel(for: peripheral)
     }
 
-    private func finishPendingCommand(with result: Result<String, Error>) {
+    private func servicePriority(_ service: CBService) -> Int {
+        OBDBLEConstants.candidateServiceUUIDs.contains(service.uuid) ? 0 : 1
+    }
+
+    private func ioCharacteristics(in service: CBService) -> (write: CBCharacteristic, notify: CBCharacteristic)? {
+        guard let characteristics = service.characteristics else {
+            return nil
+        }
+        let dualPurpose = characteristics
+            .filter { isWriteCharacteristic($0) && isNotifyCharacteristic($0) }
+            .sorted(by: compareDualPurposeCharacteristic(_:_:))
+        if let sharedCharacteristic = dualPurpose.first {
+            return (write: sharedCharacteristic, notify: sharedCharacteristic)
+        }
+
+        let writeCandidates = characteristics
+            .filter(isWriteCharacteristic)
+            .sorted(by: compareWriteCharacteristic(_:_:))
+        let notifyCandidates = characteristics
+            .filter(isNotifyCharacteristic)
+            .sorted(by: compareNotifyCharacteristic(_:_:))
+
+        guard let write = writeCandidates.first,
+              let notify = notifyCandidates.first
+        else {
+            return nil
+        }
+        return (write: write, notify: notify)
+    }
+
+    private func apply(ioCharacteristics: (write: CBCharacteristic, notify: CBCharacteristic)) {
+        writeCharacteristic = ioCharacteristics.write
+        notifyCharacteristic = ioCharacteristics.notify
+        isNotifyChannelReady = false
+    }
+
+    private func armNotifyChannel(for peripheral: CBPeripheral) {
+        guard let notifyCharacteristic else {
+            connectionState = .error("Connected adapter does not expose expected BLE UART characteristics.")
+            return
+        }
+
+        if notifyCharacteristic.isNotifying {
+            isNotifyChannelReady = true
+            connectionState = .connected(peripheral.readableName)
+            return
+        }
+
+        connectionState = .connecting(peripheral.readableName)
+        peripheral.setNotifyValue(true, for: notifyCharacteristic)
+    }
+
+    private func isWriteCharacteristic(_ characteristic: CBCharacteristic) -> Bool {
+        characteristic.properties.contains(.write) || characteristic.properties.contains(.writeWithoutResponse)
+    }
+
+    private func isNotifyCharacteristic(_ characteristic: CBCharacteristic) -> Bool {
+        characteristic.properties.contains(.notify) || characteristic.properties.contains(.indicate)
+    }
+
+    private func compareWriteCharacteristic(_ lhs: CBCharacteristic, _ rhs: CBCharacteristic) -> Bool {
+        compareCharacteristic(lhs, rhs, preferredUUIDs: OBDBLEConstants.preferredWriteCharacteristicUUIDs)
+    }
+
+    private func compareNotifyCharacteristic(_ lhs: CBCharacteristic, _ rhs: CBCharacteristic) -> Bool {
+        compareCharacteristic(lhs, rhs, preferredUUIDs: OBDBLEConstants.preferredNotifyCharacteristicUUIDs)
+    }
+
+    private func compareDualPurposeCharacteristic(_ lhs: CBCharacteristic, _ rhs: CBCharacteristic) -> Bool {
+        let lhsRank = min(
+            preferenceRank(of: lhs, in: OBDBLEConstants.preferredWriteCharacteristicUUIDs),
+            preferenceRank(of: lhs, in: OBDBLEConstants.preferredNotifyCharacteristicUUIDs)
+        )
+        let rhsRank = min(
+            preferenceRank(of: rhs, in: OBDBLEConstants.preferredWriteCharacteristicUUIDs),
+            preferenceRank(of: rhs, in: OBDBLEConstants.preferredNotifyCharacteristicUUIDs)
+        )
+        if lhsRank != rhsRank {
+            return lhsRank < rhsRank
+        }
+        return lhs.uuid.uuidString < rhs.uuid.uuidString
+    }
+
+    private func compareCharacteristic(
+        _ lhs: CBCharacteristic,
+        _ rhs: CBCharacteristic,
+        preferredUUIDs: [CBUUID]
+    ) -> Bool {
+        let lhsRank = preferenceRank(of: lhs, in: preferredUUIDs)
+        let rhsRank = preferenceRank(of: rhs, in: preferredUUIDs)
+        if lhsRank != rhsRank {
+            return lhsRank < rhsRank
+        }
+        return lhs.uuid.uuidString < rhs.uuid.uuidString
+    }
+
+    private func preferenceRank(of characteristic: CBCharacteristic, in preferredUUIDs: [CBUUID]) -> Int {
+        if let index = preferredUUIDs.firstIndex(where: { $0 == characteristic.uuid }) {
+            return index
+        }
+        return preferredUUIDs.count + 100
+    }
+
+    private func finishPendingCommand(
+        for commandID: UUID? = nil,
+        with result: Result<String, Error>
+    ) {
+        if let commandID, pendingCommandID != commandID {
+            return
+        }
+
         pendingCommandTimeoutTask?.cancel()
         pendingCommandTimeoutTask = nil
 
@@ -214,6 +361,7 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
         }
 
         pendingCommandContinuation = nil
+        pendingCommandID = nil
         let rawOutput = pendingCommandBuffer
         pendingCommandBuffer = ""
 
@@ -312,12 +460,16 @@ extension CoreBluetoothOBDClient: CBCentralManagerDelegate {
         let serviceUUIDs = (advertisementData[CBAdvertisementDataServiceUUIDsKey] as? [CBUUID] ?? [])
             .map(\.uuidString)
             .sorted()
+        let advertisedLocalName = advertisementData[CBAdvertisementDataLocalNameKey] as? String
+        let isConnectable = (advertisementData[CBAdvertisementDataIsConnectable] as? NSNumber)?.boolValue ?? true
         let rssiValue = RSSI.intValue
 
         Task { @MainActor in
             updateDiscoveredDevice(
                 peripheral: peripheral,
                 advertisedServiceUUIDs: serviceUUIDs,
+                advertisedLocalName: advertisedLocalName,
+                isConnectable: isConnectable,
                 rssi: rssiValue
             )
         }
@@ -332,6 +484,7 @@ extension CoreBluetoothOBDClient: CBCentralManagerDelegate {
             peripheral.delegate = self
             writeCharacteristic = nil
             notifyCharacteristic = nil
+            isNotifyChannelReady = false
             adapterFingerprint = SHA256
                 .hash(data: Data(peripheral.identifier.uuidString.lowercased().utf8))
                 .hexString
@@ -345,6 +498,7 @@ extension CoreBluetoothOBDClient: CBCentralManagerDelegate {
             connectedPeripheral = nil
             writeCharacteristic = nil
             notifyCharacteristic = nil
+            isNotifyChannelReady = false
             let message = error?.localizedDescription ?? "Unknown connection failure."
             if scheduleReconnect(for: peripheral) {
                 return
@@ -362,6 +516,7 @@ extension CoreBluetoothOBDClient: CBCentralManagerDelegate {
             connectedPeripheral = nil
             writeCharacteristic = nil
             notifyCharacteristic = nil
+            isNotifyChannelReady = false
             finishPendingCommand(with: .failure(BackendError.transport("Adapter disconnected before command completed.")))
 
             if userInitiatedDisconnect {
@@ -411,6 +566,32 @@ extension CoreBluetoothOBDClient: CBPeripheralDelegate {
     }
 
     nonisolated func peripheral(
+        _ peripheral: CBPeripheral,
+        didUpdateNotificationStateFor characteristic: CBCharacteristic,
+        error: Error?
+    ) {
+        Task { @MainActor in
+            guard characteristic.uuid == notifyCharacteristic?.uuid else {
+                return
+            }
+
+            if let error {
+                isNotifyChannelReady = false
+                connectionState = .error("Failed to subscribe to adapter notifications: \(error.localizedDescription)")
+                return
+            }
+
+            if characteristic.isNotifying {
+                isNotifyChannelReady = true
+                connectionState = .connected(peripheral.readableName)
+            } else {
+                isNotifyChannelReady = false
+                connectionState = .error("Adapter notifications were disabled unexpectedly.")
+            }
+        }
+    }
+
+    nonisolated func peripheral(
         _: CBPeripheral,
         didUpdateValueFor characteristic: CBCharacteristic,
         error: Error?
@@ -446,6 +627,18 @@ private extension CBPeripheral {
     var readableName: String {
         if let name, !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return name
+        }
+        return "Unnamed OBD Adapter"
+    }
+}
+
+private extension CoreBluetoothOBDClient {
+    static func resolveDiscoveredName(peripheralName: String?, advertisedLocalName: String?) -> String {
+        if let advertisedLocalName, !advertisedLocalName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return advertisedLocalName
+        }
+        if let peripheralName, !peripheralName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return peripheralName
         }
         return "Unnamed OBD Adapter"
     }

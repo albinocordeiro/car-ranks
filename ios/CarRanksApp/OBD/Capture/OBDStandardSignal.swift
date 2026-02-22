@@ -6,15 +6,26 @@ enum OBDStandardSignal: CaseIterable {
     case controlModuleVoltage
     case ambientTemperature
 
-    var command: String {
+    /// Mode 01 PID used for this signal.
+    var mode1PID: UInt8 {
         switch self {
         case .vehicleSpeed:
-            return "010D"
+            return 0x0D
         case .controlModuleVoltage:
-            return "0142"
+            return 0x42
         case .ambientTemperature:
-            return "0146"
+            return 0x46
         }
+    }
+
+    /// PID support bitmask query base (`0100`, `0120`, `0140`, ...).
+    var supportBlockBasePID: UInt8 {
+        // Mode 01 support bitmasks report 32 PIDs per block.
+        ((mode1PID - 1) / 0x20) * 0x20
+    }
+
+    var command: String {
+        String(format: "01%02X", mode1PID)
     }
 
     var signalKey: String {

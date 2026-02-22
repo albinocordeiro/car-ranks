@@ -36,10 +36,14 @@ final class TelemetryUploadQueueCoordinatorTests: XCTestCase {
             coordinator.lastSuccessfulUploadSummary,
             "Batch AAAAAAAA uploaded at \(TelemetryTimestampFormatter.string(from: fixedNow))"
         )
+        XCTAssertEqual(coordinator.lastSuccessfulUploadResponse?.batchID, batch.batchID)
+        XCTAssertNotNil(coordinator.lastSuccessfulUploadAt)
+        XCTAssertNil(coordinator.nextRetryInSeconds)
     }
 
     func testTransientFailureKeepsBatchAndSchedulesRetry() async {
         let batchID = UUID(uuidString: "8E4FA0DF-9A83-40C0-A38E-E6166266A96A")!
+        let fixedNow = Date(timeIntervalSince1970: 1_700_000_123)
         let uploader = FakeTelemetryBatchUploader(
             results: [.failure(.server(statusCode: 503, message: "service unavailable"))]
         )
@@ -54,6 +58,7 @@ final class TelemetryUploadQueueCoordinatorTests: XCTestCase {
             uploader: uploader,
             store: store,
             retryPolicy: policy,
+            now: { fixedNow },
             autoUploadEnabled: false,
             enableNetworkMonitoring: false
         )
@@ -72,6 +77,7 @@ final class TelemetryUploadQueueCoordinatorTests: XCTestCase {
             coordinator.lastQueuedBatchSummary,
             "Batch 8E4FA0DF: 0 signals, 0 diagnostics, 0 session events"
         )
+        XCTAssertEqual(coordinator.nextRetryInSeconds, 60)
         XCTAssertNil(coordinator.lastSuccessfulUploadSummary)
     }
 
@@ -101,6 +107,7 @@ final class TelemetryUploadQueueCoordinatorTests: XCTestCase {
             coordinator.lastQueuedBatchSummary,
             "Batch 8E4FA0DF: 0 signals, 0 diagnostics, 0 session events"
         )
+        XCTAssertNil(coordinator.nextRetryInSeconds)
         XCTAssertNil(coordinator.lastSuccessfulUploadSummary)
         XCTAssertTrue(coordinator.lastUploadMessage?.hasPrefix("Dropped queued telemetry batch") == true)
     }

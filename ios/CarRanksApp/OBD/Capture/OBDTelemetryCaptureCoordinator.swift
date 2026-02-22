@@ -4,6 +4,7 @@ import Foundation
 @MainActor
 final class OBDTelemetryCaptureCoordinator: ObservableObject {
     @Published private(set) var isCapturing = false
+    @Published private(set) var isBootstrapping = false
     @Published private(set) var recentRecords: [OBDSignalRecord] = []
     @Published private(set) var pendingRecordCount = 0
     @Published private(set) var pendingDiagnosticCount = 0
@@ -13,6 +14,8 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
     @Published private(set) var initializationProfileSummary: String?
     @Published private(set) var latestDiagnosticSnapshot: OBDDiagnosticSnapshot?
     @Published private(set) var lastDiagnosticStateChangedAt: Date?
+    @Published private(set) var lastCompletedRunSessionID: UUID?
+    @Published private(set) var commandExchangeCount = 0
 
     private let commandExecutor: OBDCommandExecutor
     private let now: () -> Date
@@ -24,10 +27,14 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
     private var pendingDiagnostics: [OBDDiagnosticSnapshot] = []
     private var pendingSessionEvents: [TelemetryBatchRequest.SessionEvent] = []
     private var activeSessionID: UUID?
+    private var commandExchanges: [OBDCommandExchange] = []
+    private var lastCompletedRunSnapshot: CompletedRunSnapshot?
     private var lastDiagnosticPollAt: Date?
     private var lastDiagnosticStateSignature: String?
 
     private let diagnosticPollIntervalSeconds = 30.0
+    private let minimumUploadIntervalSeconds = 60
+    private let maxSessionEventRawPayloadRefLength = 500
 
     init(
         commandExecutor: OBDCommandExecutor,
@@ -35,31 +42,28 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
     ) {
         self.commandExecutor = commandExecutor
         self.now = now
+        commandExecutor.setCommandExchangeObserver { [weak self] exchange in
+            self?.appendCommandExchange(exchange)
+        }
     }
 
     func startCapture(sampleIntervalSeconds: Int) {
         guard !isCapturing else { return }
 
         currentSampleIntervalSeconds = max(1, sampleIntervalSeconds)
-        let startedAt = now()
-        captureWindowStartedAt = startedAt
+        if captureWindowStartedAt == nil {
+            captureWindowStartedAt = now()
+        }
         latestDiagnosticSnapshot = nil
         lastDiagnosticStateChangedAt = nil
         lastDiagnosticPollAt = nil
         lastDiagnosticStateSignature = nil
-        activeSessionID = UUID()
-        if let activeSessionID {
-            pendingSessionEvents.append(
-                TelemetryBatchRequest.SessionEvent(
-                    eventType: "drive_session_start",
-                    observedAt: TelemetryTimestampFormatter.string(from: startedAt),
-                    sessionID: activeSessionID
-                )
-            )
-        }
-        refreshPendingCounts()
+        activeSessionID = nil
+        commandExchanges.removeAll()
+        commandExchangeCount = 0
 
         isCapturing = true
+        isBootstrapping = true
         lastCaptureError = nil
 
         captureTask = Task { [weak self] in
@@ -71,11 +75,13 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
         guard isCapturing else { return }
 
         isCapturing = false
+        isBootstrapping = false
         captureTask?.cancel()
         captureTask = nil
         commandExecutor.resetBootstrapState()
 
         let stoppedAt = now()
+        let finalizedSessionID = activeSessionID
         if let activeSessionID {
             pendingSessionEvents.append(
                 TelemetryBatchRequest.SessionEvent(
@@ -84,6 +90,20 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
                     sessionID: activeSessionID
                 )
             )
+        }
+        if let finalizedSessionID,
+           let captureWindowStartedAt
+        {
+            lastCompletedRunSnapshot = CompletedRunSnapshot(
+                sessionID: finalizedSessionID,
+                captureWindowStartedAt: captureWindowStartedAt,
+                captureWindowEndedAt: stoppedAt,
+                sampleIntervalSeconds: currentSampleIntervalSeconds,
+                adapterIdentitySummary: adapterIdentitySummary,
+                initializationProfileSummary: initializationProfileSummary,
+                commandExchanges: commandExchanges
+            )
+            lastCompletedRunSessionID = finalizedSessionID
         }
         activeSessionID = nil
         refreshPendingCounts()
@@ -112,7 +132,8 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
             captureWindow: .init(
                 startedAt: TelemetryTimestampFormatter.string(from: captureWindowStartedAt),
                 endedAt: TelemetryTimestampFormatter.string(from: endedAt),
-                sampleIntervalSeconds: currentSampleIntervalSeconds
+                // Backend currently validates this field against upload cadence bounds (>= 60s).
+                sampleIntervalSeconds: max(minimumUploadIntervalSeconds, currentSampleIntervalSeconds)
             ),
             records: pendingRecords.map(TelemetryBatchRequest.SignalRecord.from),
             sessionEvents: pendingSessionEvents,
@@ -130,13 +151,55 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
         captureWindowStartedAt = endedAt
     }
 
+    func buildLastRunPack(
+        sessionContext: SessionContext,
+        appVersion: String,
+        adapterFingerprint: String?,
+        uploadReceipt: OBDRunPackUploadReceipt?
+    ) -> OBDCaptureRunPack? {
+        guard let snapshot = lastCompletedRunSnapshot else {
+            return nil
+        }
+
+        return OBDCaptureRunPack(
+            sessionID: snapshot.sessionID,
+            userID: sessionContext.userID,
+            vehicleUID: sessionContext.vehicleUID,
+            appVersion: appVersion,
+            adapterFingerprint: adapterFingerprint,
+            adapterIdentitySummary: snapshot.adapterIdentitySummary,
+            initializationProfileSummary: snapshot.initializationProfileSummary,
+            captureWindowStartedAt: snapshot.captureWindowStartedAt,
+            captureWindowEndedAt: snapshot.captureWindowEndedAt,
+            sampleIntervalSeconds: snapshot.sampleIntervalSeconds,
+            commandExchanges: snapshot.commandExchanges,
+            uploadReceipt: uploadReceipt
+        )
+    }
+
     private func runCaptureLoop() async {
+        defer {
+            captureTask = nil
+        }
+
         do {
             try await commandExecutor.bootstrapAdapterIfNeeded()
+            guard isCapturing, !Task.isCancelled else {
+                return
+            }
+            isBootstrapping = false
             initializationProfileSummary = commandExecutor.activeInitializationProfile?.rawValue.uppercased()
             adapterIdentitySummary = commandExecutor.detectedIdentity?.normalizedValue ?? "Unknown adapter identity"
+            beginDriveSession(
+                rawPayloadRef: commandExecutor.bootstrapSessionEventPayloadRef
+            )
         } catch {
-            lastCaptureError = OBDErrorPresentation.message(from: error)
+            isBootstrapping = false
+            lastCaptureError = "Capture failed to start: \(OBDErrorPresentation.message(from: error))"
+            activeSessionID = nil
+            if pendingRecords.isEmpty && pendingSessionEvents.isEmpty && pendingDiagnostics.isEmpty {
+                captureWindowStartedAt = nil
+            }
             isCapturing = false
             return
         }
@@ -149,7 +212,7 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
                 }
 
                 let record = await commandExecutor.poll(signal: signal, observedAt: observedAt)
-                append(record: record)
+                append(record: record.withSessionID(activeSessionID))
             }
 
             if shouldPollDiagnostics(at: observedAt),
@@ -161,6 +224,42 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
             let sleepNanoseconds = UInt64(currentSampleIntervalSeconds) * 1_000_000_000
             try? await Task.sleep(nanoseconds: sleepNanoseconds)
         }
+    }
+
+    private func beginDriveSession(rawPayloadRef: String?) {
+        let startedAt = now()
+        activeSessionID = UUID()
+        if let activeSessionID {
+            pendingSessionEvents.append(
+                TelemetryBatchRequest.SessionEvent(
+                    eventType: "drive_session_start",
+                    observedAt: TelemetryTimestampFormatter.string(from: startedAt),
+                    sessionID: activeSessionID,
+                    rawPayloadRef: truncateSessionEventRawPayloadRef(rawPayloadRef)
+                )
+            )
+            refreshPendingCounts()
+        }
+    }
+
+    private func truncateSessionEventRawPayloadRef(_ value: String?) -> String? {
+        guard let value else {
+            return nil
+        }
+
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return nil
+        }
+        guard trimmed.count > maxSessionEventRawPayloadRefLength else {
+            return trimmed
+        }
+
+        let endIndex = trimmed.index(
+            trimmed.startIndex,
+            offsetBy: maxSessionEventRawPayloadRefLength - 3
+        )
+        return "\(trimmed[..<endIndex])..."
     }
 
     private func append(record: OBDSignalRecord) {
@@ -200,9 +299,24 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
         refreshPendingCounts()
     }
 
+    private func appendCommandExchange(_ exchange: OBDCommandExchange) {
+        commandExchanges.append(exchange)
+        commandExchangeCount = commandExchanges.count
+    }
+
     private func refreshPendingCounts() {
         pendingRecordCount = pendingRecords.count
         pendingDiagnosticCount = pendingDiagnostics.count
         pendingSessionEventCount = pendingSessionEvents.count
     }
+}
+
+private struct CompletedRunSnapshot {
+    let sessionID: UUID
+    let captureWindowStartedAt: Date
+    let captureWindowEndedAt: Date
+    let sampleIntervalSeconds: Int
+    let adapterIdentitySummary: String?
+    let initializationProfileSummary: String?
+    let commandExchanges: [OBDCommandExchange]
 }

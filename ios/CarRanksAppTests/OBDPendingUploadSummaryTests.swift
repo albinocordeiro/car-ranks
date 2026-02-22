@@ -15,6 +15,7 @@ final class OBDPendingUploadSummaryTests: XCTestCase {
             records: [
                 .init(
                     observedAt: "2026-02-21T00:00:05.000Z",
+                    sessionID: nil,
                     signalKey: "speed.vehicle",
                     valueNumber: 54,
                     valueString: nil,
@@ -23,10 +24,12 @@ final class OBDPendingUploadSummaryTests: XCTestCase {
                     unit: "km/h",
                     status: "ok",
                     confidence: 0.99,
-                    sourceSignal: "01_0D"
+                    sourceSignal: "01_0D",
+                    rawPayloadRef: nil
                 ),
                 .init(
                     observedAt: "2026-02-21T00:00:10.000Z",
+                    sessionID: nil,
                     signalKey: "soc.display",
                     valueNumber: 72,
                     valueString: nil,
@@ -35,7 +38,8 @@ final class OBDPendingUploadSummaryTests: XCTestCase {
                     unit: "%",
                     status: "ok",
                     confidence: 0.99,
-                    sourceSignal: "01_5B"
+                    sourceSignal: "01_5B",
+                    rawPayloadRef: nil
                 ),
             ],
             sessionEvents: [

@@ -65,6 +65,7 @@ struct TelemetryBatchRequest: Codable, Equatable {
 
     struct SignalRecord: Codable, Equatable {
         let observedAt: String
+        let sessionID: UUID?
         let signalKey: String
         let valueNumber: Double?
         let valueString: String?
@@ -74,9 +75,11 @@ struct TelemetryBatchRequest: Codable, Equatable {
         let status: String
         let confidence: Double?
         let sourceSignal: String?
+        let rawPayloadRef: String?
 
         private enum CodingKeys: String, CodingKey {
             case observedAt = "observed_at"
+            case sessionID = "session_id"
             case signalKey = "signal_key"
             case valueNumber = "value_number"
             case valueString = "value_string"
@@ -86,6 +89,7 @@ struct TelemetryBatchRequest: Codable, Equatable {
             case status
             case confidence
             case sourceSignal = "source_signal"
+            case rawPayloadRef = "raw_payload_ref"
         }
     }
 
@@ -93,11 +97,25 @@ struct TelemetryBatchRequest: Codable, Equatable {
         let eventType: String
         let observedAt: String
         let sessionID: UUID
+        let rawPayloadRef: String?
+
+        init(
+            eventType: String,
+            observedAt: String,
+            sessionID: UUID,
+            rawPayloadRef: String? = nil
+        ) {
+            self.eventType = eventType
+            self.observedAt = observedAt
+            self.sessionID = sessionID
+            self.rawPayloadRef = rawPayloadRef
+        }
 
         private enum CodingKeys: String, CodingKey {
             case eventType = "event_type"
             case observedAt = "observed_at"
             case sessionID = "session_id"
+            case rawPayloadRef = "raw_payload_ref"
         }
     }
 
@@ -166,6 +184,7 @@ extension TelemetryBatchRequest.SignalRecord {
     static func from(obdRecord: OBDSignalRecord) -> Self {
         Self(
             observedAt: TelemetryTimestampFormatter.string(from: obdRecord.observedAt),
+            sessionID: obdRecord.sessionID,
             signalKey: obdRecord.signalKey,
             valueNumber: obdRecord.valueNumber,
             valueString: nil,
@@ -174,7 +193,8 @@ extension TelemetryBatchRequest.SignalRecord {
             unit: obdRecord.unit,
             status: obdRecord.status.rawValue,
             confidence: obdRecord.confidence,
-            sourceSignal: obdRecord.sourceSignal
+            sourceSignal: obdRecord.sourceSignal,
+            rawPayloadRef: obdRecord.rawPayloadRef
         )
     }
 }

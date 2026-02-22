@@ -136,7 +136,7 @@ struct OBDCaptureView: View {
             }
 
             HStack {
-                Button(viewModel.isCapturing ? "Stop Capture" : "Start Capture") {
+                Button(captureButtonLabel) {
                     viewModel.toggleCapture()
                 }
                 .buttonStyle(.borderedProminent)
@@ -155,6 +155,22 @@ struct OBDCaptureView: View {
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
             }
+
+            if viewModel.isCaptureStarting {
+                HStack(spacing: 8) {
+                    ProgressView()
+                    Text("Starting capture...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityIdentifier("obd-capture-starting")
+            }
+
+            Text(viewModel.captureStatusMessage)
+                .font(.caption)
+                .foregroundStyle(captureStatusColor)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("obd-capture-status")
         }
     }
 
@@ -166,17 +182,52 @@ struct OBDCaptureView: View {
             .buttonStyle(.borderedProminent)
             .accessibilityIdentifier("obd-upload-button")
 
-            Button("Retry Queued Uploads") {
+            Button(viewModel.retryQueuedUploadsButtonTitle) {
                 viewModel.retryQueuedUploads()
             }
             .buttonStyle(.bordered)
+            .disabled(viewModel.isRetryQueuedUploadsDisabled)
             .accessibilityIdentifier("obd-retry-queued-button")
+
+            if let retryCountdown = viewModel.uploadRetryCountdownText {
+                Label("Automatic retry in \(retryCountdown)", systemImage: "timer")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.orange)
+                    .monospacedDigit()
+                    .accessibilityIdentifier("obd-upload-retry-countdown")
+            }
 
             Button("Preview Next Batch JSON") {
                 viewModel.refreshPendingBatchPreview()
             }
             .buttonStyle(.bordered)
             .accessibilityIdentifier("obd-preview-batch-button")
+
+            Button("Export Last Run Pack") {
+                viewModel.exportLastRunPack()
+            }
+            .buttonStyle(.bordered)
+            .accessibilityIdentifier("obd-export-run-pack-button")
+
+            if let runPackShareURL = viewModel.runPackShareURL {
+                ShareLink(item: runPackShareURL) {
+                    Label("Share Last Run Pack", systemImage: "square.and.arrow.up")
+                }
+                .accessibilityIdentifier("obd-share-run-pack-button")
+            } else {
+                Button("Share Last Run Pack") {
+                    viewModel.prepareLastRunPackForShare()
+                }
+                .buttonStyle(.bordered)
+                .accessibilityIdentifier("obd-share-run-pack-button")
+            }
+
+            Button("Copy Last Upload IDs") {
+                viewModel.copyLastUploadIDs()
+            }
+            .buttonStyle(.bordered)
+            .disabled(!viewModel.canCopyLastUploadIDs)
+            .accessibilityIdentifier("obd-copy-last-upload-ids-button")
 
             Text("Queued batches: \(viewModel.queuedBatchCount)")
                 .font(.caption.weight(.semibold))
@@ -200,6 +251,19 @@ struct OBDCaptureView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("obd-last-uploaded-summary")
+
+            Text("Last upload IDs: \(viewModel.lastUploadIdentifiersSummary)")
+                .font(.caption2.monospaced())
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .textSelection(.enabled)
+                .accessibilityIdentifier("obd-last-upload-ids-summary")
+
+            Text("Run pack: \(viewModel.lastRunPackExportSummary)")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("obd-last-run-pack-summary")
 
             Text(viewModel.pendingBatchPreview)
                 .font(.caption2.monospaced())
@@ -286,6 +350,12 @@ struct OBDCaptureView: View {
                                 .font(.caption.weight(.semibold))
                                 .monospacedDigit()
                         }
+                        if let rawPayloadRef = record.rawPayloadRef, !rawPayloadRef.isEmpty {
+                            Text("Raw: \(rawPayloadRef)")
+                                .font(.caption2.monospaced())
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
                         Text(TelemetryTimestampFormatter.string(from: record.observedAt))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
@@ -318,6 +388,20 @@ struct OBDCaptureView: View {
         case nil:
             return .secondary
         }
+    }
+
+    private var captureButtonLabel: String {
+        if viewModel.isCaptureStarting {
+            return "Starting..."
+        }
+        return viewModel.isCapturing ? "Stop Capture" : "Start Capture"
+    }
+
+    private var captureStatusColor: Color {
+        if viewModel.captureStatusMessage.lowercased().contains("failed") {
+            return .red
+        }
+        return .secondary
     }
 }
 

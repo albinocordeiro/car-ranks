@@ -7,6 +7,8 @@ pub(crate) struct SessionEventInput {
     pub(crate) event_type: String,
     pub(crate) observed_at: DateTime<Utc>,
     pub(crate) session_id: Uuid,
+    #[serde(default)]
+    pub(crate) raw_payload_ref: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]

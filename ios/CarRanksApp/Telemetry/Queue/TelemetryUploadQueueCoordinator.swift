@@ -9,6 +9,9 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
     @Published private(set) var lastUploadMessage: String?
     @Published private(set) var lastQueuedBatchSummary: String?
     @Published private(set) var lastSuccessfulUploadSummary: String?
+    @Published private(set) var lastSuccessfulUploadResponse: TelemetryBatchUploadResponse?
+    @Published private(set) var lastSuccessfulUploadAt: Date?
+    @Published private(set) var nextRetryInSeconds: Int?
 
     private let uploader: TelemetryBatchUploader
     private let store: TelemetryUploadQueueStore
@@ -19,6 +22,7 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
     private var queue: [TelemetryPendingBatch]
     private var flushTask: Task<Void, Never>?
     private var retryWakeTask: Task<Void, Never>?
+    private var retryCountdownTask: Task<Void, Never>?
 
     private var pathMonitor: NWPathMonitor?
     private let pathMonitorQueue = DispatchQueue(label: "com.albinocordeiro.carranks.telemetry.queue.monitor")
@@ -59,6 +63,7 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
     deinit {
         flushTask?.cancel()
         retryWakeTask?.cancel()
+        retryCountdownTask?.cancel()
         pathMonitor?.cancel()
     }
 
@@ -74,6 +79,7 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
         pendingBatchCount = queue.count
         lastQueuedBatchSummary = "Batch \(Self.shortBatchID(batch.batchID)): \(Self.payloadSummary(for: batch))"
         lastUploadMessage = "Queued telemetry batch for upload."
+        refreshRetryCountdownState()
         scheduleFlush(force: false)
     }
 
@@ -122,13 +128,16 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
 
             isUploading = true
             do {
-                _ = try await uploader.upload(batch: head.request)
+                let uploadResponse = try await uploader.upload(batch: head.request)
                 queue.removeFirst()
                 persistQueue()
                 pendingBatchCount = queue.count
                 let uploadedAt = now()
+                lastSuccessfulUploadResponse = uploadResponse
+                lastSuccessfulUploadAt = uploadedAt
                 lastSuccessfulUploadSummary = "Batch \(Self.shortBatchID(head.request.batchID)) uploaded at \(TelemetryTimestampFormatter.string(from: uploadedAt))"
                 lastUploadMessage = "Uploaded queued telemetry batch."
+                refreshRetryCountdownState()
             } catch let backendError as BackendError {
                 handleUploadFailure(error: backendError, head: head)
                 return
@@ -155,6 +164,7 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
             queue[0] = updated
             persistQueue()
             lastUploadMessage = "Telemetry upload failed. Retry \(updatedRetryCount)/\(retryPolicy.maxAttempts) scheduled in \(Int(delaySeconds))s."
+            refreshRetryCountdownState()
             return
         }
 
@@ -162,6 +172,7 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
         persistQueue()
         pendingBatchCount = queue.count
         lastUploadMessage = "Dropped queued telemetry batch: \(error.displayMessage)"
+        refreshRetryCountdownState()
     }
 
     private func persistQueue() {
@@ -177,9 +188,11 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
         retryWakeTask = nil
 
         guard autoUploadEnabled, let nextRetryAt = queue.first?.nextRetryAt else {
+            refreshRetryCountdownState()
             return
         }
 
+        refreshRetryCountdownState()
         let delaySeconds = max(0, nextRetryAt.timeIntervalSince(now()))
         let delayNanoseconds = UInt64(delaySeconds * 1_000_000_000)
         retryWakeTask = Task { [weak self] in
@@ -188,6 +201,36 @@ final class TelemetryUploadQueueCoordinator: ObservableObject {
             }
             await MainActor.run {
                 self?.scheduleFlush(force: false)
+            }
+        }
+    }
+
+    private func refreshRetryCountdownState() {
+        guard let nextRetryAt = queue.first?.nextRetryAt else {
+            nextRetryInSeconds = nil
+            retryCountdownTask?.cancel()
+            retryCountdownTask = nil
+            return
+        }
+
+        let remaining = max(0, Int(ceil(nextRetryAt.timeIntervalSince(now()))))
+        nextRetryInSeconds = remaining
+        if remaining == 0 {
+            retryCountdownTask?.cancel()
+            retryCountdownTask = nil
+            return
+        }
+
+        if retryCountdownTask != nil {
+            return
+        }
+
+        retryCountdownTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                await MainActor.run {
+                    self?.refreshRetryCountdownState()
+                }
             }
         }
     }

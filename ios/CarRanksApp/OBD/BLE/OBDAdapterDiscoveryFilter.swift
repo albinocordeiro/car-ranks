@@ -28,23 +28,39 @@ enum OBDAdapterDiscoveryFilter {
         "BEATS",
     ]
 
-    static func isLikelyOBDAdapter(name: String, advertisedServiceUUIDs: [String]) -> Bool {
-        let uppercaseName = name.uppercased()
-        let candidateServices = Set(OBDBLEConstants.candidateServiceUUIDs.map { $0.uuidString.uppercased() })
-        let advertisedServices = Set(advertisedServiceUUIDs.map { $0.uppercased() })
-
-        if !advertisedServices.intersection(candidateServices).isEmpty {
-            return true
-        }
-
-        if excludedNameTokens.contains(where: { uppercaseName.contains($0) }) {
+    static func isLikelyOBDAdapter(
+        name: String,
+        advertisedServiceUUIDs: [String],
+        isConnectable: Bool = true
+    ) -> Bool {
+        // Ignore broadcast-only peripherals because we cannot connect to them anyway.
+        guard isConnectable else {
             return false
         }
 
-        if uppercaseName == "UNNAMED OBD ADAPTER" {
+        let normalizedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let uppercaseName = normalizedName.uppercased()
+        let candidateServices = Set(OBDBLEConstants.candidateServiceUUIDs.map { $0.uuidString.uppercased() })
+        let advertisedServices = Set(advertisedServiceUUIDs.map { $0.uppercased() })
+        let hasCandidateService = !advertisedServices.intersection(candidateServices).isEmpty
+        let isPlaceholderName = uppercaseName.isEmpty || uppercaseName == "UNNAMED OBD ADAPTER"
+        let isExcludedName = excludedNameTokens.contains(where: { uppercaseName.contains($0) })
+        let hasLikelyNameToken = !isPlaceholderName && likelyNameTokens.contains(where: { uppercaseName.contains($0) })
+
+        // Avoid showing obvious personal devices even if they advertise common UART services.
+        if isExcludedName && !hasLikelyNameToken {
+            return false
+        }
+
+        if hasLikelyNameToken {
             return true
         }
 
-        return likelyNameTokens.contains(where: { uppercaseName.contains($0) })
+        // Unknown names must advertise a known UART service to be shown.
+        if isPlaceholderName {
+            return hasCandidateService
+        }
+
+        return hasCandidateService
     }
 }
