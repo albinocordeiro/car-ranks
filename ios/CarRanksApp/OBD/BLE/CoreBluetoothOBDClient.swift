@@ -150,6 +150,13 @@ final class CoreBluetoothOBDClient: NSObject, ObservableObject, OBDBLETransport 
         advertisedServiceUUIDs: [String],
         rssi: Int
     ) {
+        guard OBDAdapterDiscoveryFilter.isLikelyOBDAdapter(
+            name: peripheral.readableName,
+            advertisedServiceUUIDs: advertisedServiceUUIDs
+        ) else {
+            return
+        }
+
         discoveredPeripheralByID[peripheral.identifier] = peripheral
 
         let device = OBDAdapterDevice(

@@ -57,7 +57,9 @@ final class OBDCaptureViewModel: ObservableObject {
 
     func startScanning() {
         bleClient.startScanning()
-        statusMessage = "Scanning for OBD adapters..."
+        if case .scanning = bleClient.connectionState {
+            statusMessage = "Scanning for OBD adapters..."
+        }
     }
 
     func stopScanning() {

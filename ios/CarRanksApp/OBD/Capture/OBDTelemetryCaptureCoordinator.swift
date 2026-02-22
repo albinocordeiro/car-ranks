@@ -136,7 +136,7 @@ final class OBDTelemetryCaptureCoordinator: ObservableObject {
             initializationProfileSummary = commandExecutor.activeInitializationProfile?.rawValue.uppercased()
             adapterIdentitySummary = commandExecutor.detectedIdentity?.normalizedValue ?? "Unknown adapter identity"
         } catch {
-            lastCaptureError = error.localizedDescription
+            lastCaptureError = OBDErrorPresentation.message(from: error)
             isCapturing = false
             return
         }
