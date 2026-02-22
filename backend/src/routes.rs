@@ -14,6 +14,7 @@ pub(crate) fn build_router(app_state: crate::AppState) -> Router {
             "/v1/telemetry/batches",
             post(crate::handlers::post_telemetry_batches),
         )
+        .route("/v1/telemetry/raw", get(crate::handlers::get_raw_telemetry))
         .route("/v1/kpis/me", get(crate::handlers::get_kpis_me))
         .route("/v1/kpis/charging", get(crate::handlers::get_kpis_charging))
         .route(

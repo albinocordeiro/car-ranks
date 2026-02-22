@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
-use axum::Json;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
+use axum::Json;
 use chrono::{DateTime, Duration, Utc};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Connection, Executor};
@@ -237,6 +237,510 @@ async fn insert_vehicle_owner_access(
     .context("failed to insert postgres vehicle access")?;
 
     Ok(())
+}
+
+#[tokio::test]
+async fn postgres_raw_telemetry_endpoint_returns_command_payload_refs_when_env_set() -> Result<()> {
+    let Some(ctx) = PostgresTestContext::maybe_new().await? else {
+        return Ok(());
+    };
+
+    let result = async {
+        let state = ctx.app_state().await?;
+        let user_id = Uuid::new_v4();
+        let vehicle_uid = Uuid::new_v4();
+        let now = now_str();
+
+        insert_vehicle_owner_access(
+            &state.pg_pool,
+            &vehicle_uid.to_string(),
+            user_id,
+            &now,
+            "Test",
+            "Raw",
+        )
+        .await?;
+
+        let started_at = DateTime::parse_from_rfc3339("2026-02-21T10:00:00Z")?.with_timezone(&Utc);
+        let ended_at = DateTime::parse_from_rfc3339("2026-02-21T10:01:00Z")?.with_timezone(&Utc);
+        let session_id = Uuid::new_v4();
+        let mut records = vec![number_record(
+            started_at + Duration::seconds(10),
+            "speed.vehicle",
+            42.0,
+            Some("km/h"),
+            Some(session_id),
+        )];
+        records[0].raw_payload_ref = Some("cmd=010D resp=41 0D 2A".to_string());
+
+        let payload = ingest_payload(
+            vehicle_uid,
+            Uuid::new_v4(),
+            started_at,
+            ended_at,
+            records,
+            vec![SessionEventInput {
+                event_type: "drive_session_start".to_string(),
+                observed_at: started_at + Duration::seconds(25),
+                session_id,
+                raw_payload_ref: Some("profile=elm327 | pids=ok".to_string()),
+            }],
+        );
+
+        let Json(ingest_response) = crate::handlers::post_telemetry_batches(
+            State(state.clone()),
+            auth_context(user_id),
+            Json(payload),
+        )
+        .await
+        .map_err(|err| anyhow::anyhow!("postgres raw ingest failed: {}", err.message))?;
+        assert!(ingest_response.accepted);
+
+        let Json(raw_response) = crate::handlers::get_raw_telemetry(
+            State(state.clone()),
+            auth_context(user_id),
+            Query(RawTelemetryQuery {
+                vehicle_uid,
+                limit: Some(20),
+                signal_key: None,
+                include_session_events: Some(false),
+                batch_id: None,
+                session_id: None,
+                cursor_observed_at: None,
+                cursor_observation_id: None,
+            }),
+        )
+        .await
+        .map_err(|err| anyhow::anyhow!("raw telemetry endpoint failed: {}", err.message))?;
+
+        assert!(!raw_response.rows.is_empty());
+        assert_eq!(raw_response.rows[0].signal_key, "speed.vehicle");
+        assert_eq!(
+            raw_response.rows[0].raw_payload_ref.as_deref(),
+            Some("cmd=010D resp=41 0D 2A")
+        );
+        Ok::<(), anyhow::Error>(())
+    }
+    .await;
+
+    ctx.cleanup().await?;
+    result
+}
+
+#[tokio::test]
+async fn postgres_raw_telemetry_endpoint_can_include_session_events_when_requested() -> Result<()> {
+    let Some(ctx) = PostgresTestContext::maybe_new().await? else {
+        return Ok(());
+    };
+
+    let result = async {
+        let state = ctx.app_state().await?;
+        let user_id = Uuid::new_v4();
+        let vehicle_uid = Uuid::new_v4();
+        let now = now_str();
+        let session_id = Uuid::new_v4();
+
+        insert_vehicle_owner_access(
+            &state.pg_pool,
+            &vehicle_uid.to_string(),
+            user_id,
+            &now,
+            "Test",
+            "RawSessionEvents",
+        )
+        .await?;
+
+        let started_at = DateTime::parse_from_rfc3339("2026-02-21T11:00:00Z")?.with_timezone(&Utc);
+        let ended_at = DateTime::parse_from_rfc3339("2026-02-21T11:01:00Z")?.with_timezone(&Utc);
+        let payload = ingest_payload(
+            vehicle_uid,
+            Uuid::new_v4(),
+            started_at,
+            ended_at,
+            vec![number_record(
+                started_at + Duration::seconds(10),
+                "speed.vehicle",
+                32.0,
+                Some("km/h"),
+                Some(session_id),
+            )],
+            vec![SessionEventInput {
+                event_type: "drive_session_start".to_string(),
+                observed_at: started_at + Duration::seconds(2),
+                session_id,
+                raw_payload_ref: Some("profile=elm327 | ATDP raw=AUTO, ISO 15765-4".to_string()),
+            }],
+        );
+
+        let Json(ingest_response) = crate::handlers::post_telemetry_batches(
+            State(state.clone()),
+            auth_context(user_id),
+            Json(payload),
+        )
+        .await
+        .map_err(|err| anyhow::anyhow!("postgres raw-session ingest failed: {}", err.message))?;
+        assert!(ingest_response.accepted);
+
+        let Json(signal_only_response) = crate::handlers::get_raw_telemetry(
+            State(state.clone()),
+            auth_context(user_id),
+            Query(RawTelemetryQuery {
+                vehicle_uid,
+                limit: Some(20),
+                signal_key: None,
+                include_session_events: Some(false),
+                batch_id: None,
+                session_id: None,
+                cursor_observed_at: None,
+                cursor_observation_id: None,
+            }),
+        )
+        .await
+        .map_err(|err| {
+            anyhow::anyhow!("raw telemetry signal-only endpoint failed: {}", err.message)
+        })?;
+        assert_eq!(signal_only_response.include_session_events, false);
+        assert!(signal_only_response
+            .rows
+            .iter()
+            .all(|row| !row.signal_key.starts_with("session.")));
+
+        let Json(with_events_response) = crate::handlers::get_raw_telemetry(
+            State(state.clone()),
+            auth_context(user_id),
+            Query(RawTelemetryQuery {
+                vehicle_uid,
+                limit: Some(20),
+                signal_key: None,
+                include_session_events: Some(true),
+                batch_id: None,
+                session_id: None,
+                cursor_observed_at: None,
+                cursor_observation_id: None,
+            }),
+        )
+        .await
+        .map_err(|err| {
+            anyhow::anyhow!(
+                "raw telemetry include-events endpoint failed: {}",
+                err.message
+            )
+        })?;
+        assert_eq!(with_events_response.include_session_events, true);
+
+        let session_row = with_events_response
+            .rows
+            .iter()
+            .find(|row| row.signal_key == "session.drive.start")
+            .expect("expected a session event row when include_session_events=true");
+        assert_eq!(
+            session_row.raw_payload_ref.as_deref(),
+            Some("profile=elm327 | ATDP raw=AUTO, ISO 15765-4")
+        );
+
+        Ok::<(), anyhow::Error>(())
+    }
+    .await;
+
+    ctx.cleanup().await?;
+    result
+}
+
+#[tokio::test]
+async fn postgres_raw_telemetry_endpoint_supports_batch_and_session_filters() -> Result<()> {
+    let Some(ctx) = PostgresTestContext::maybe_new().await? else {
+        return Ok(());
+    };
+
+    let result = async {
+        let state = ctx.app_state().await?;
+        let user_id = Uuid::new_v4();
+        let vehicle_uid = Uuid::new_v4();
+        let now = now_str();
+
+        insert_vehicle_owner_access(
+            &state.pg_pool,
+            &vehicle_uid.to_string(),
+            user_id,
+            &now,
+            "Test",
+            "RawFilters",
+        )
+        .await?;
+
+        let started_at = DateTime::parse_from_rfc3339("2026-02-21T12:00:00Z")?.with_timezone(&Utc);
+        let ended_at = DateTime::parse_from_rfc3339("2026-02-21T12:02:00Z")?.with_timezone(&Utc);
+
+        let first_batch_id = Uuid::new_v4();
+        let first_session_id = Uuid::new_v4();
+        let mut first_records = vec![number_record(
+            started_at + Duration::seconds(10),
+            "speed.vehicle",
+            24.0,
+            Some("km/h"),
+            Some(first_session_id),
+        )];
+        first_records[0].raw_payload_ref = Some("cmd=010D resp=41 0D 18".to_string());
+        let first_payload = ingest_payload(
+            vehicle_uid,
+            first_batch_id,
+            started_at,
+            ended_at,
+            first_records,
+            vec![SessionEventInput {
+                event_type: "drive_session_start".to_string(),
+                observed_at: started_at + Duration::seconds(1),
+                session_id: first_session_id,
+                raw_payload_ref: Some("profile=elm327 | first session".to_string()),
+            }],
+        );
+
+        let second_batch_id = Uuid::new_v4();
+        let second_session_id = Uuid::new_v4();
+        let mut second_records = vec![number_record(
+            started_at + Duration::seconds(70),
+            "speed.vehicle",
+            42.0,
+            Some("km/h"),
+            Some(second_session_id),
+        )];
+        second_records[0].raw_payload_ref = Some("cmd=010D resp=41 0D 2A".to_string());
+        let second_payload = ingest_payload(
+            vehicle_uid,
+            second_batch_id,
+            started_at + Duration::seconds(60),
+            ended_at + Duration::seconds(60),
+            second_records,
+            vec![SessionEventInput {
+                event_type: "drive_session_start".to_string(),
+                observed_at: started_at + Duration::seconds(61),
+                session_id: second_session_id,
+                raw_payload_ref: Some("profile=elm327 | second session".to_string()),
+            }],
+        );
+
+        let Json(first_ingest_response) = crate::handlers::post_telemetry_batches(
+            State(state.clone()),
+            auth_context(user_id),
+            Json(first_payload),
+        )
+        .await
+        .map_err(|err| anyhow::anyhow!("first raw-filter ingest failed: {}", err.message))?;
+        assert!(first_ingest_response.accepted);
+
+        let Json(second_ingest_response) = crate::handlers::post_telemetry_batches(
+            State(state.clone()),
+            auth_context(user_id),
+            Json(second_payload),
+        )
+        .await
+        .map_err(|err| anyhow::anyhow!("second raw-filter ingest failed: {}", err.message))?;
+        assert!(second_ingest_response.accepted);
+
+        let Json(batch_filtered) = crate::handlers::get_raw_telemetry(
+            State(state.clone()),
+            auth_context(user_id),
+            Query(RawTelemetryQuery {
+                vehicle_uid,
+                limit: Some(20),
+                signal_key: None,
+                include_session_events: Some(false),
+                batch_id: Some(first_batch_id),
+                session_id: None,
+                cursor_observed_at: None,
+                cursor_observation_id: None,
+            }),
+        )
+        .await
+        .map_err(|err| anyhow::anyhow!("raw telemetry batch filter failed: {}", err.message))?;
+        assert_eq!(batch_filtered.returned_count, 1);
+        let expected_first_batch_id = first_batch_id.to_string();
+        assert_eq!(
+            batch_filtered.rows[0].batch_id.as_deref(),
+            Some(expected_first_batch_id.as_str())
+        );
+
+        let Json(session_filtered) = crate::handlers::get_raw_telemetry(
+            State(state.clone()),
+            auth_context(user_id),
+            Query(RawTelemetryQuery {
+                vehicle_uid,
+                limit: Some(20),
+                signal_key: None,
+                include_session_events: Some(true),
+                batch_id: None,
+                session_id: Some(second_session_id),
+                cursor_observed_at: None,
+                cursor_observation_id: None,
+            }),
+        )
+        .await
+        .map_err(|err| anyhow::anyhow!("raw telemetry session filter failed: {}", err.message))?;
+
+        let expected_second_session_id = second_session_id.to_string();
+        assert!(session_filtered
+            .rows
+            .iter()
+            .all(|row| { row.session_id.as_deref() == Some(expected_second_session_id.as_str()) }));
+        assert!(session_filtered
+            .rows
+            .iter()
+            .any(|row| row.signal_key == "session.drive.start"));
+
+        Ok::<(), anyhow::Error>(())
+    }
+    .await;
+
+    ctx.cleanup().await?;
+    result
+}
+
+#[tokio::test]
+async fn postgres_raw_telemetry_endpoint_supports_cursor_pagination() -> Result<()> {
+    let Some(ctx) = PostgresTestContext::maybe_new().await? else {
+        return Ok(());
+    };
+
+    let result = async {
+        let state = ctx.app_state().await?;
+        let user_id = Uuid::new_v4();
+        let vehicle_uid = Uuid::new_v4();
+        let now = now_str();
+
+        insert_vehicle_owner_access(
+            &state.pg_pool,
+            &vehicle_uid.to_string(),
+            user_id,
+            &now,
+            "Test",
+            "RawCursor",
+        )
+        .await?;
+
+        let started_at = DateTime::parse_from_rfc3339("2026-02-21T13:00:00Z")?.with_timezone(&Utc);
+        let ended_at = DateTime::parse_from_rfc3339("2026-02-21T13:03:00Z")?.with_timezone(&Utc);
+        let session_id = Uuid::new_v4();
+        let mut records = vec![
+            number_record(
+                started_at + Duration::seconds(10),
+                "speed.vehicle",
+                10.0,
+                Some("km/h"),
+                Some(session_id),
+            ),
+            number_record(
+                started_at + Duration::seconds(20),
+                "speed.vehicle",
+                20.0,
+                Some("km/h"),
+                Some(session_id),
+            ),
+            number_record(
+                started_at + Duration::seconds(30),
+                "speed.vehicle",
+                30.0,
+                Some("km/h"),
+                Some(session_id),
+            ),
+        ];
+        records[0].raw_payload_ref = Some("cmd=010D resp=41 0D 0A".to_string());
+        records[1].raw_payload_ref = Some("cmd=010D resp=41 0D 14".to_string());
+        records[2].raw_payload_ref = Some("cmd=010D resp=41 0D 1E".to_string());
+
+        let payload = ingest_payload(
+            vehicle_uid,
+            Uuid::new_v4(),
+            started_at,
+            ended_at,
+            records,
+            vec![SessionEventInput {
+                event_type: "drive_session_start".to_string(),
+                observed_at: started_at + Duration::seconds(25),
+                session_id,
+                raw_payload_ref: Some("profile=elm327 | pids=ok".to_string()),
+            }],
+        );
+
+        let Json(ingest_response) = crate::handlers::post_telemetry_batches(
+            State(state.clone()),
+            auth_context(user_id),
+            Json(payload),
+        )
+        .await
+        .map_err(|err| anyhow::anyhow!("cursor ingest failed: {}", err.message))?;
+        assert!(ingest_response.accepted);
+
+        let Json(first_page) = crate::handlers::get_raw_telemetry(
+            State(state.clone()),
+            auth_context(user_id),
+            Query(RawTelemetryQuery {
+                vehicle_uid,
+                limit: Some(2),
+                signal_key: None,
+                include_session_events: Some(true),
+                batch_id: None,
+                session_id: None,
+                cursor_observed_at: None,
+                cursor_observation_id: None,
+            }),
+        )
+        .await
+        .map_err(|err| anyhow::anyhow!("first cursor page failed: {}", err.message))?;
+
+        assert_eq!(first_page.returned_count, 2);
+        let first_cursor_observed_at = first_page.next_cursor_observed_at.clone();
+        let first_cursor_observation_id = first_page.next_cursor_observation_id.clone();
+        assert!(first_cursor_observed_at.is_some());
+        assert!(first_cursor_observation_id.is_some());
+
+        let Json(second_page) = crate::handlers::get_raw_telemetry(
+            State(state.clone()),
+            auth_context(user_id),
+            Query(RawTelemetryQuery {
+                vehicle_uid,
+                limit: Some(2),
+                signal_key: None,
+                include_session_events: Some(true),
+                batch_id: None,
+                session_id: None,
+                cursor_observed_at: first_cursor_observed_at,
+                cursor_observation_id: first_cursor_observation_id,
+            }),
+        )
+        .await
+        .map_err(|err| anyhow::anyhow!("second cursor page failed: {}", err.message))?;
+
+        assert_eq!(second_page.returned_count, 2);
+        let first_page_ids: std::collections::HashSet<String> = first_page
+            .rows
+            .iter()
+            .map(|row| row.observation_id.clone())
+            .collect();
+        let second_page_ids: std::collections::HashSet<String> = second_page
+            .rows
+            .iter()
+            .map(|row| row.observation_id.clone())
+            .collect();
+        assert!(first_page_ids.is_disjoint(&second_page_ids));
+        let combined_rows: Vec<_> = first_page
+            .rows
+            .iter()
+            .chain(second_page.rows.iter())
+            .collect();
+        for pair in combined_rows.windows(2) {
+            let previous = pair[0];
+            let current = pair[1];
+            let previous_ts = parse_ts(&previous.observed_at);
+            let current_ts = parse_ts(&current.observed_at);
+            assert!(previous_ts >= current_ts);
+        }
+
+        Ok::<(), anyhow::Error>(())
+    }
+    .await;
+
+    ctx.cleanup().await?;
+    result
 }
 
 #[tokio::test]
@@ -1158,11 +1662,13 @@ async fn postgres_internal_job_handler_runs_native_pipeline_when_env_set() -> Re
                     event_type: "charging_session_start".to_string(),
                     observed_at: charge_start,
                     session_id,
+                    raw_payload_ref: None,
                 },
                 SessionEventInput {
                     event_type: "charging_session_stop".to_string(),
                     observed_at: charge_stop,
                     session_id,
+                    raw_payload_ref: None,
                 },
             ],
         );

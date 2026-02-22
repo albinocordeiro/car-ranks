@@ -4,6 +4,7 @@ Current API surface:
 - `GET /health`
 - `GET /v1/config/sampling`
 - `POST /v1/telemetry/batches`
+- `GET /v1/telemetry/raw`
 - `GET /v1/kpis/me`
 - `GET /v1/kpis/charging`
 - `GET /v1/kpis/readiness`
@@ -65,6 +66,15 @@ curl -X POST http://127.0.0.1:8080/v1/telemetry/batches \
   -H 'x-user-id: <user_uuid>' \
   -H 'content-type: application/json' \
   --data @/Users/albinocordeiro/Code/car_ranks/docs/contracts/examples/telemetry-batch-request.json
+
+curl -H 'x-user-id: <user_uuid>' \
+  "http://127.0.0.1:8080/v1/telemetry/raw?vehicle_uid=<vehicle_uuid>&limit=50"
+
+curl -H 'x-user-id: <user_uuid>' \
+  "http://127.0.0.1:8080/v1/telemetry/raw?vehicle_uid=<vehicle_uuid>&session_id=<session_uuid>&include_session_events=true&limit=200"
+
+curl -H 'x-user-id: <user_uuid>' \
+  "http://127.0.0.1:8080/v1/telemetry/raw?vehicle_uid=<vehicle_uuid>&limit=200&cursor_observed_at=<rfc3339>&cursor_observation_id=<observation_uuid>"
 ```
 
 2. Recompute KPIs/rankings:
@@ -140,6 +150,7 @@ curl -H 'x-user-id: <user_uuid>' "http://127.0.0.1:8080/v1/rankings?ranking_type
   - `/health`
   - `/v1/config/sampling`
   - `/v1/telemetry/batches`
+  - `/v1/telemetry/raw`
   - `/v1/kpis/me`
   - `/v1/kpis/charging`
   - `/v1/kpis/readiness`

@@ -17,6 +17,7 @@ mod metrics;
 mod migrations;
 mod models;
 mod rankings;
+mod raw_telemetry;
 mod routes;
 mod runtime_env;
 mod signals;
