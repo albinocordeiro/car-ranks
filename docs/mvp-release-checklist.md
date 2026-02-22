@@ -16,9 +16,9 @@ Goal: submit the MVP iOS app to App Store review by **February 28, 2026**.
 ## Must-Have Scope (Ship Blockers)
 
 Current reality check (2026-02-20):
-- The repository currently contains backend + docs only; no iOS app target exists yet.
-- App Store/TestFlight execution items remain blocked until an iOS project baseline is created.
-- iOS bootstrap plan: `/Users/albinocordeiro/Code/car_ranks/docs/ios-mvp-bootstrap-plan.md`.
+- The repository now contains backend + iOS app targets with simulator and device build paths.
+- App Store/TestFlight execution is unblocked and shifted to stabilization + release hardening.
+- iOS bootstrap baseline is complete; focus is replay/live validation and defect burn-down.
 
 ### Backend
 
@@ -30,22 +30,22 @@ Current reality check (2026-02-20):
 
 ### Mobile App
 
-- [ ] Sign-in/auth flow complete for production configuration. (`Due: 2026-02-24`, `Status: BLOCKED - iOS app not scaffolded`)
-- [ ] Vehicle linkage and vehicle selection flow complete. (`Due: 2026-02-24`, `Status: BLOCKED - iOS app not scaffolded`)
-- [ ] KPI and ranking views complete for MVP scenarios. (`Due: 2026-02-25`, `Status: BLOCKED - iOS app not scaffolded`)
-- [ ] Empty/loading/error states implemented and verified for all core screens. (`Due: 2026-02-25`, `Status: BLOCKED - iOS app not scaffolded`)
-- [ ] Crash-free smoke run on target devices and latest iOS versions in scope. (`Due: 2026-02-26`, `Status: BLOCKED - no iOS build yet`)
-- [ ] No open P0/P1 mobile defects. (`Due: 2026-02-27`, `Status: BLOCKED - no iOS defect surface yet`)
+- [ ] Sign-in/auth flow complete for production configuration. (`Due: 2026-02-24`, `Status: TODO`)
+- [ ] Vehicle linkage and vehicle selection flow complete. (`Due: 2026-02-24`, `Status: TODO`)
+- [ ] KPI and ranking views complete for MVP scenarios. (`Due: 2026-02-25`, `Status: IN_PROGRESS - baseline screens implemented`)
+- [ ] Empty/loading/error states implemented and verified for all core screens. (`Due: 2026-02-25`, `Status: IN_PROGRESS - simulator coverage complete, replay/live hardening ongoing`)
+- [ ] Crash-free smoke run on target devices and latest iOS versions in scope. (`Due: 2026-02-26`, `Status: IN_PROGRESS - simulator suite green, physical device matrix pending`)
+- [ ] No open P0/P1 mobile defects. (`Due: 2026-02-27`, `Status: TODO`)
 
 ### Release Operations
 
 - [ ] App Store Connect app metadata complete (name, subtitle, description, keywords, category). (`Due: 2026-02-26`, `Status: IN_PROGRESS`)
-- [ ] Screenshots prepared for required device classes. (`Due: 2026-02-26`, `Status: BLOCKED - no iOS screens yet`)
-- [ ] App icon and launch assets finalized. (`Due: 2026-02-25`, `Status: BLOCKED - no iOS target assets yet`)
+- [ ] Screenshots prepared for required device classes. (`Due: 2026-02-26`, `Status: IN_PROGRESS - simulator checkpoint tooling active`)
+- [ ] App icon and launch assets finalized. (`Due: 2026-02-25`, `Status: TODO`)
 - [ ] Privacy policy URL and support URL published and verified. (`Due: 2026-02-25`, `Status: IN_PROGRESS`)
 - [ ] App Privacy questionnaire completed and consistent with implementation. (`Due: 2026-02-26`, `Status: IN_PROGRESS`)
 - [x] Review notes drafted for App Review (test account, key flows, known constraints). (`Due: 2026-02-27`, `Completed: 2026-02-20`, `Status: DONE`)
-- [ ] TestFlight build signed, distributed, and accepted by internal QA. (`Due: 2026-02-26`, `Status: BLOCKED - no iOS build yet`)
+- [ ] TestFlight build signed, distributed, and accepted by internal QA. (`Due: 2026-02-26`, `Status: IN_PROGRESS`)
 
 ## Explicitly Deferred Until After Submission
 
@@ -78,6 +78,7 @@ Current reality check (2026-02-20):
   - `postgres_recompute_job_conflict_includes_lock_diagnostics_when_env_set`
   - `postgres_internal_job_handler_runs_native_pipeline_when_env_set`
 - API contracts are updated in `/Users/albinocordeiro/Code/car_ranks/docs/contracts/` (`kpi-api.md`, `ranking-api.md`, `internal-jobs-api.md`, and matching `examples/*.json`).
+- iOS test baseline now includes full unit + UI suites green via `xcodebuild ... test` (116 tests total in current matrix).
 - Release package drafts created under `/Users/albinocordeiro/Code/car_ranks/docs/release/`:
   - `app-store-metadata.md`
   - `app-privacy-questionnaire.md`

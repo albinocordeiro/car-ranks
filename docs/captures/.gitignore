@@ -1,0 +1,6 @@
+*
+!.gitignore
+!README.md
+!golden-run-playbook.md
+!curated/
+!curated/**
