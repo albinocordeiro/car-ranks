@@ -21,8 +21,10 @@ This directory stores exported real-world OBD capture packs produced by:
 
 Each curated fixture should contain:
 
-1. `ios-command-fixture.json`
-2. `manifest.md`
+1. `manifest.md`
+2. one primary replay artifact:
+   - `ios-command-fixture.json`, or
+   - an iOS-exported run-pack JSON file (`<session_id>.json`) containing `command_exchanges`
 3. optional helper artifacts (for example small derived summaries used by tests)
 
 ## Exporter Guarantees

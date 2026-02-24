@@ -3,10 +3,14 @@ import XCTest
 
 @MainActor
 final class OBDTelemetryCaptureReplayTests: XCTestCase {
-    private let curatedFixtureName = "veepak-golden-sample"
+    private let curatedFixtureName = "veepak-live-20260224"
+    private let curatedFixtureFileName = "8198ea51-1ec3-46fe-8ea0-999b5e576f9a.json"
 
     func testReplayCaptureBuildsBatchWithSessionCorrelation() async throws {
-        let fixture = try RunPackReplayFixture.loadCuratedFixture(named: curatedFixtureName)
+        let fixture = try RunPackReplayFixture.loadCuratedFixture(
+            named: curatedFixtureName,
+            fileName: curatedFixtureFileName
+        )
         let transport = ReplayOBDTransport(steps: try fixture.replaySteps())
         let executor = OBDCommandExecutor(transport: transport)
         let coordinator = OBDTelemetryCaptureCoordinator(commandExecutor: executor)
@@ -41,7 +45,10 @@ final class OBDTelemetryCaptureReplayTests: XCTestCase {
     }
 
     func testReplayCaptureRecordsCommandExchangesForRunPackExport() async throws {
-        let fixture = try RunPackReplayFixture.loadCuratedFixture(named: curatedFixtureName)
+        let fixture = try RunPackReplayFixture.loadCuratedFixture(
+            named: curatedFixtureName,
+            fileName: curatedFixtureFileName
+        )
         let transport = ReplayOBDTransport(steps: try fixture.replaySteps())
         let executor = OBDCommandExecutor(transport: transport)
         let coordinator = OBDTelemetryCaptureCoordinator(commandExecutor: executor)

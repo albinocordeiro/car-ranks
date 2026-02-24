@@ -3,7 +3,8 @@ import XCTest
 
 @MainActor
 final class OBDCaptureViewModelTests: XCTestCase {
-    private let replayFixtureName = "veepak-golden-sample"
+    private let replayFixtureName = "veepak-live-20260224"
+    private let replayFixtureFileName = "8198ea51-1ec3-46fe-8ea0-999b5e576f9a.json"
 
     func testExportLastRunPackShowsNoCompletedRunMessageWhenCaptureHasNotCompleted() {
         let coordinator = makeCaptureCoordinatorWithEmptyReplay()
@@ -112,7 +113,10 @@ final class OBDCaptureViewModelTests: XCTestCase {
     }
 
     func testExportLastRunPackCreatesShareableFileAfterReplayCapture() async throws {
-        let fixture = try RunPackReplayFixture.loadCuratedFixture(named: replayFixtureName)
+        let fixture = try RunPackReplayFixture.loadCuratedFixture(
+            named: replayFixtureName,
+            fileName: replayFixtureFileName
+        )
         let replayTransport = ReplayOBDTransport(steps: try fixture.replaySteps())
         let commandExecutor = OBDCommandExecutor(transport: replayTransport)
         let captureCoordinator = OBDTelemetryCaptureCoordinator(commandExecutor: commandExecutor)

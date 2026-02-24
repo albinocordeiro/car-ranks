@@ -1,0 +1,740 @@
+{
+  "adapter_fingerprint" : "33977f8a53765991ccdf42488ac5eecb3d0356b4d84e8f97b9af041715b02be8",
+  "adapter_identity_summary" : "ELM327 v1.5",
+  "app_version" : "1.0.0",
+  "capture_window_ended_at" : "2026-02-24T05:50:53Z",
+  "capture_window_started_at" : "2026-02-24T05:49:31Z",
+  "command_exchanges" : [
+    {
+      "command" : "ATI",
+      "ended_at" : "2026-02-24T05:49:31Z",
+      "id" : "527A7491-D23B-46DF-94EF-B2CB09C07FC2",
+      "parse_outcome" : "ok",
+      "raw_response" : "ELM327 v1.5",
+      "started_at" : "2026-02-24T05:49:31Z"
+    },
+    {
+      "command" : "ATZ",
+      "ended_at" : "2026-02-24T05:49:31Z",
+      "id" : "A776DF25-AD86-4898-8996-43E58B57BBAF",
+      "parse_outcome" : "ok",
+      "raw_response" : "�\r\rELM327 v1.5",
+      "started_at" : "2026-02-24T05:49:31Z"
+    },
+    {
+      "command" : "ATE0",
+      "ended_at" : "2026-02-24T05:49:31Z",
+      "id" : "2D64F175-8791-4F9C-98C9-21C40EBCBD69",
+      "parse_outcome" : "ok",
+      "raw_response" : "ATE0\rOK",
+      "started_at" : "2026-02-24T05:49:31Z"
+    },
+    {
+      "command" : "ATL0",
+      "ended_at" : "2026-02-24T05:49:31Z",
+      "id" : "179A7ACC-6AB7-4EA9-A928-3F01D6C71A7B",
+      "parse_outcome" : "ok",
+      "raw_response" : "OK",
+      "started_at" : "2026-02-24T05:49:31Z"
+    },
+    {
+      "command" : "ATS0",
+      "ended_at" : "2026-02-24T05:49:32Z",
+      "id" : "C452C876-28A1-4274-A28F-8F5EF4B4B86A",
+      "parse_outcome" : "ok",
+      "raw_response" : "OK",
+      "started_at" : "2026-02-24T05:49:31Z"
+    },
+    {
+      "command" : "ATH0",
+      "ended_at" : "2026-02-24T05:49:32Z",
+      "id" : "CFD4E29B-214D-45DD-918C-585B6CAC44D0",
+      "parse_outcome" : "ok",
+      "raw_response" : "OK",
+      "started_at" : "2026-02-24T05:49:32Z"
+    },
+    {
+      "command" : "ATSP0",
+      "ended_at" : "2026-02-24T05:49:32Z",
+      "id" : "DC343947-3A4D-42C8-9A8C-E06984B2B7E8",
+      "parse_outcome" : "ok",
+      "raw_response" : "OK",
+      "started_at" : "2026-02-24T05:49:32Z"
+    },
+    {
+      "command" : "ATAT1",
+      "ended_at" : "2026-02-24T05:49:32Z",
+      "id" : "3B74271E-DC11-454F-96FD-11BE2357B376",
+      "parse_outcome" : "ok",
+      "raw_response" : "OK",
+      "started_at" : "2026-02-24T05:49:32Z"
+    },
+    {
+      "command" : "ATAL",
+      "ended_at" : "2026-02-24T05:49:32Z",
+      "id" : "6D43E87A-F32E-4D63-9B46-9C421371E3FC",
+      "parse_outcome" : "ok",
+      "raw_response" : "OK",
+      "started_at" : "2026-02-24T05:49:32Z"
+    },
+    {
+      "command" : "ATSP6",
+      "ended_at" : "2026-02-24T05:49:32Z",
+      "id" : "C5BE8DB9-D4C8-4FEC-8215-3390224237EC",
+      "parse_outcome" : "ok",
+      "raw_response" : "OK",
+      "started_at" : "2026-02-24T05:49:32Z"
+    },
+    {
+      "command" : "0100",
+      "ended_at" : "2026-02-24T05:49:32Z",
+      "id" : "6E6515F4-3AB8-487F-B695-9A6DCBD56E5B",
+      "parse_outcome" : "ok",
+      "raw_response" : "000000\r410000000000000\r410000000000000\r410000000000",
+      "started_at" : "2026-02-24T05:49:32Z"
+    },
+    {
+      "command" : "0140",
+      "ended_at" : "2026-02-24T05:49:32Z",
+      "id" : "8E712814-FFD2-49E9-ACF1-E6AED6E7A621",
+      "parse_outcome" : "ok",
+      "raw_response" : "414000000021",
+      "started_at" : "2026-02-24T05:49:32Z"
+    },
+    {
+      "command" : "ATSP0",
+      "ended_at" : "2026-02-24T05:49:32Z",
+      "id" : "2B9474F5-E9A1-49EF-A60A-07BFE2C85229",
+      "parse_outcome" : "ok",
+      "raw_response" : "OK",
+      "started_at" : "2026-02-24T05:49:32Z"
+    },
+    {
+      "command" : "0100",
+      "ended_at" : "2026-02-24T05:49:34Z",
+      "id" : "2D5B1106-E41F-4535-B23A-AD013338B685",
+      "parse_outcome" : "ok",
+      "raw_response" : "HIHIHI..\r\r410080000000\r410000000000\r000000000\r000000000",
+      "started_at" : "2026-02-24T05:49:32Z"
+    },
+    {
+      "command" : "0140",
+      "ended_at" : "2026-02-24T05:49:35Z",
+      "id" : "2AD035FA-14A2-4227-A01B-253F44B83ACD",
+      "parse_outcome" : "ok",
+      "raw_response" : "414000000021",
+      "started_at" : "2026-02-24T05:49:34Z"
+    },
+    {
+      "command" : "ATDP",
+      "ended_at" : "2026-02-24T05:49:35Z",
+      "id" : "5EDD8C0B-E76B-49E2-ACB8-C4AFCA8AE22A",
+      "parse_outcome" : "ok",
+      "raw_response" : "AUTO, ISO 15765-4 (CAN 11\/500)",
+      "started_at" : "2026-02-24T05:49:35Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:49:35Z",
+      "id" : "8CAE4F93-EFFE-4B14-8AE8-D51882EDFB55",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:49:35Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:49:35Z",
+      "id" : "FC59B234-8BC8-4A09-B984-A3034764F1F2",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:49:35Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:49:35Z",
+      "id" : "A5D09138-4FE0-4231-8549-3E7FE132024F",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:49:35Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:49:35Z",
+      "id" : "9FCF21E2-396B-4C5D-B99C-1CA306BE5314",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:49:35Z"
+    },
+    {
+      "command" : "0101",
+      "ended_at" : "2026-02-24T05:49:36Z",
+      "id" : "7F4738DC-EE84-407E-98F6-D7E6944A5317",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "000000\r000000\r000000",
+      "signal_key" : "diag.readiness_summary",
+      "source_signal" : "01_01",
+      "started_at" : "2026-02-24T05:49:35Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:49:41Z",
+      "id" : "C56A467E-D5E5-49C4-8D75-B6924637BCFA",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:49:41Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:49:41Z",
+      "id" : "20264CF5-5AB3-481D-851F-7B58861C7DD1",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:49:41Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:49:41Z",
+      "id" : "30A43883-F5EC-4C8C-A0B8-5F85E7E05253",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:49:41Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:49:41Z",
+      "id" : "0A3EAF12-6B8D-4A75-B307-87C95B62F337",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:49:41Z"
+    },
+    {
+      "command" : "0101",
+      "ended_at" : "2026-02-24T05:49:42Z",
+      "id" : "45F6310D-1E37-4594-AF42-4F2CA2140FDC",
+      "parse_outcome" : "ok",
+      "raw_response" : "100040000\r100040000\r410100000000",
+      "signal_key" : "diag.readiness_summary",
+      "source_signal" : "01_01",
+      "started_at" : "2026-02-24T05:49:41Z"
+    },
+    {
+      "command" : "03",
+      "ended_at" : "2026-02-24T05:49:42Z",
+      "id" : "9652A785-8505-4486-8856-4357B8344DA2",
+      "parse_outcome" : "ok",
+      "raw_response" : "4300\r4300",
+      "signal_key" : "diag.dtcs_active",
+      "source_signal" : "03",
+      "started_at" : "2026-02-24T05:49:42Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:49:47Z",
+      "id" : "C1EBC82B-B74E-459D-B1E3-15F69978D654",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:49:47Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:49:48Z",
+      "id" : "F5615579-75A5-49CA-B51E-35DCDCA4489F",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:49:47Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:49:48Z",
+      "id" : "E49D27DB-9C76-4244-9FD6-BCC1AD397545",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:49:48Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:49:48Z",
+      "id" : "164BE011-A812-4AEB-9A05-4741BBEA07E8",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:49:48Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:49:53Z",
+      "id" : "66C32686-C66E-49DF-97DC-B6FB35F2A8EC",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:49:53Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:49:53Z",
+      "id" : "103229F0-C828-4745-A232-AE71B1C03973",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:49:53Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:49:53Z",
+      "id" : "39A6FE59-1B25-4A71-B75C-6FDBBFDCA373",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:49:53Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:49:54Z",
+      "id" : "7328FF53-2D86-48C4-B1E0-57C27D75B4EB",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:49:53Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:49:59Z",
+      "id" : "707378DC-9089-4D9E-9024-41C9D567172E",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:49:59Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:49:59Z",
+      "id" : "AD093674-3BDA-469B-9A83-B7C2FD1251D0",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:49:59Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:49:59Z",
+      "id" : "24A9466C-AAAA-4A5E-BE8A-0B71D0DD84AC",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:49:59Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:50:00Z",
+      "id" : "276DAF8C-F229-4523-99E8-49E62667EA12",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:49:59Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:50:05Z",
+      "id" : "09A9BDE5-385B-4290-9701-3F28D7470679",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:50:05Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:50:05Z",
+      "id" : "B64E4B4D-B0D9-45D3-8BBD-6F24DD4C09E0",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:50:05Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:50:05Z",
+      "id" : "2D5DB25E-1EF1-413F-B207-D0D29540A136",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:50:05Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:50:05Z",
+      "id" : "1D007861-23C4-4932-AB24-C61AAB3A59A3",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:50:05Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:50:11Z",
+      "id" : "B87104D3-30F7-4E73-AFC2-9A9D1388A585",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:50:11Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:50:11Z",
+      "id" : "061DD76C-5A1C-4871-9D7F-07D61C1CB7C4",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:50:11Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:50:11Z",
+      "id" : "D3CFEE5F-A967-40DC-88B3-182E89C7414E",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:50:11Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:50:11Z",
+      "id" : "E4CE068D-3E95-4DE4-B292-1408453BFF3D",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:50:11Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:50:17Z",
+      "id" : "870DBD54-C931-4619-A516-FC67D857347E",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:50:16Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:50:17Z",
+      "id" : "AC7D2245-7145-41BC-8CB3-9C96B0E317AF",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:50:17Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:50:17Z",
+      "id" : "D4C82595-6EC1-4209-9F7F-468140932A0A",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:50:17Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:50:17Z",
+      "id" : "1B232BFC-429D-4FF7-8F9E-F15C7E119BA8",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:50:17Z"
+    },
+    {
+      "command" : "0101",
+      "ended_at" : "2026-02-24T05:50:17Z",
+      "id" : "F324CED9-C8E8-4462-A0BF-4B94CCC9518A",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "000000\r000000\r000000",
+      "signal_key" : "diag.readiness_summary",
+      "source_signal" : "01_01",
+      "started_at" : "2026-02-24T05:50:17Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:50:23Z",
+      "id" : "4DA193B5-548B-4FFD-AF09-2B0467696968",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:50:23Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:50:23Z",
+      "id" : "D8EBC7AB-744F-4D69-B4EF-DBA1EF48ACDD",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:50:23Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:50:23Z",
+      "id" : "55B90048-8C9E-4235-997A-7E75E6EF4623",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:50:23Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:50:23Z",
+      "id" : "A433A2BE-B0A9-489F-AB76-4360462C8D14",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:50:23Z"
+    },
+    {
+      "command" : "0101",
+      "ended_at" : "2026-02-24T05:50:23Z",
+      "id" : "B1517654-6296-4D1C-B14C-FABB615FEF5B",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "000000\r000000\r000000",
+      "signal_key" : "diag.readiness_summary",
+      "source_signal" : "01_01",
+      "started_at" : "2026-02-24T05:50:23Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:50:29Z",
+      "id" : "6DB6435F-DBED-4D1A-BE4D-68D79AE6B3E8",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "O DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:50:29Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:50:29Z",
+      "id" : "FF690A2F-E653-4D5A-8CD9-DE8221CA7594",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:50:29Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:50:29Z",
+      "id" : "4666A970-4D6E-42E9-9EE3-E9E489063B52",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:50:29Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:50:29Z",
+      "id" : "CE1DD279-77D5-4936-8AFF-13C845CA6241",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:50:29Z"
+    },
+    {
+      "command" : "0101",
+      "ended_at" : "2026-02-24T05:50:29Z",
+      "id" : "D6420FA0-A9EC-4073-8DCC-932BA7EACAFB",
+      "parse_outcome" : "ok",
+      "raw_response" : "100040000\r410100100040000\r410100000000",
+      "signal_key" : "diag.readiness_summary",
+      "source_signal" : "01_01",
+      "started_at" : "2026-02-24T05:50:29Z"
+    },
+    {
+      "command" : "03",
+      "ended_at" : "2026-02-24T05:50:29Z",
+      "id" : "362BC1DB-DAF7-478E-9D1A-3639B816C478",
+      "parse_outcome" : "ok",
+      "raw_response" : "4300\r4300\r4300\r4300",
+      "signal_key" : "diag.dtcs_active",
+      "source_signal" : "03",
+      "started_at" : "2026-02-24T05:50:29Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:50:35Z",
+      "id" : "77672679-4225-400F-9700-439B73FC261F",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:50:35Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:50:35Z",
+      "id" : "DEA8938C-0DB5-4436-96A0-CE0E91CC914A",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:50:35Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:50:35Z",
+      "id" : "8952B92F-38CB-423E-87CC-D8122F203FAC",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:50:35Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:50:36Z",
+      "id" : "4445B945-56A7-46D8-950D-EE3C85B8B467",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:50:35Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:50:41Z",
+      "id" : "322E4971-CF18-4FF0-9252-2BD433F8175F",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:50:41Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:50:41Z",
+      "id" : "E1392307-CE64-40C1-829F-83B678B50CB1",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:50:41Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:50:41Z",
+      "id" : "430076EF-3A13-4A07-B797-2BE2C566A7AF",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:50:41Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:50:42Z",
+      "id" : "9B5C4F02-02A2-4325-B5BD-055E102D73A8",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:50:41Z"
+    },
+    {
+      "command" : "010D",
+      "ended_at" : "2026-02-24T05:50:50Z",
+      "id" : "BE74F553-B93A-4674-B4A4-742145816AA5",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "speed.vehicle",
+      "source_signal" : "01_0D",
+      "started_at" : "2026-02-24T05:50:50Z"
+    },
+    {
+      "command" : "0142",
+      "ended_at" : "2026-02-24T05:50:50Z",
+      "id" : "B015E8BD-CE8E-40D6-8231-7F97964A856F",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "01_42",
+      "started_at" : "2026-02-24T05:50:50Z"
+    },
+    {
+      "command" : "ATRV",
+      "ended_at" : "2026-02-24T05:50:50Z",
+      "id" : "E62A551D-D9A8-4EA7-AF56-3B35C98E8064",
+      "parse_outcome" : "ok",
+      "raw_response" : "13.6V",
+      "signal_key" : "power.battery_voltage",
+      "source_signal" : "AT_RV",
+      "started_at" : "2026-02-24T05:50:50Z"
+    },
+    {
+      "command" : "0146",
+      "ended_at" : "2026-02-24T05:50:51Z",
+      "id" : "C3C9A737-E132-47FB-B401-E92A74A6E379",
+      "parse_outcome" : "unavailable",
+      "raw_response" : "NO DATA",
+      "signal_key" : "environment.ambient_temp_c",
+      "source_signal" : "01_46",
+      "started_at" : "2026-02-24T05:50:50Z"
+    }
+  ],
+  "generated_at" : "2026-02-24T05:58:38Z",
+  "id" : "8198EA51-1EC3-46FE-8EA0-999B5E576F9A",
+  "initialization_profile_summary" : "ELM327",
+  "sample_interval_seconds" : 5,
+  "session_id" : "8198EA51-1EC3-46FE-8EA0-999B5E576F9A",
+  "upload_receipt" : {
+    "accepted" : true,
+    "batch_id" : "6EF537A8-1682-4D0C-A5DD-A3A29D3C1E55",
+    "ingest_id" : "4B8FE39D-40CC-48F9-9BFA-D490F04F7C99",
+    "uploaded_at" : "2026-02-24T05:50:58Z"
+  },
+  "user_id" : "06B3FFF1-BFCC-4CDA-840B-D512963BC239",
+  "vehicle_uid" : "E11889BF-504C-4238-9583-BC8840F20E19"
+}
