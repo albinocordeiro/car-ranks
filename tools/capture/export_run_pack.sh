@@ -451,8 +451,8 @@ cat > "$manifest_path" <<MANIFEST
 ## Notes
 
 - Cursor pagination was followed until no next cursor remained.
-- `ios-command-fixture.json` keeps command/response timeline hints for parser replay.
-- `backend-ingest-fixture.json` is a normalized candidate payload for backend test seeding.
+- ios-command-fixture.json keeps command/response timeline hints for parser replay.
+- backend-ingest-fixture.json is a normalized candidate payload for backend test seeding.
 MANIFEST
 
 validate_json_query "$run_meta_path" '
